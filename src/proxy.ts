@@ -117,7 +117,7 @@ export async function proxy(request: NextRequest) {
             if (accessToken && email) {
                 const userInfo = await getUserInfo();
 
-                if (userInfo.needPasswordChange) {
+                if (userInfo && userInfo.needPasswordChange) {
                     return NextResponse.next();
                 } else {
                     return NextResponse.redirect(
@@ -210,11 +210,10 @@ export async function proxy(request: NextRequest) {
             return NextResponse.next();
         }
 
-        //Rule-6 User trying to visit role based protected but doesn't have required role -> redirect to their default dashboard
+        // Rule-6 User trying to visit role based protected but doesn't have required role -> redirect to their default dashboard
         if (
-            routerOwner === "ADMIN" ||
-            routerOwner === "DOCTOR" ||
-            routerOwner === "PATIENT"
+            routerOwner === "ADMIN" || routerOwner === "SUPER_ADMIN" ||
+            routerOwner === "CUSTOMER"
         ) {
             if (routerOwner !== userRole) {
                 return NextResponse.redirect(

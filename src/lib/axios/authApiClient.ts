@@ -3,8 +3,6 @@
  * All methods handle request/response serialization and error normalization
  */
 
-"use server";
-
 import { httpClient } from "./httpClient";
 import {
     ILoginPayload,

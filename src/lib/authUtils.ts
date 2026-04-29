@@ -1,4 +1,6 @@
-import { UserRole } from "@/types/auth.types";
+import type { UserRole } from "@/types/auth.types";
+
+export type { UserRole } from "@/types/auth.types";
 
 export const authRoutes = [
     "/login",
@@ -29,7 +31,7 @@ export const commonProtectedRoutes: RouteConfig = {
  * Admin dashboard routes (ADMIN, SUPER_ADMIN)
  */
 export const adminProtectedRoutes: RouteConfig = {
-    pattern: [/^\/admin\/dashboard/],
+    pattern: [/^\/admin(\/.*)?$/],
     exact: [],
 };
 
@@ -37,7 +39,7 @@ export const adminProtectedRoutes: RouteConfig = {
  * Customer dashboard routes
  */
 export const customerProtectedRoutes: RouteConfig = {
-    pattern: [/^\/dashboard/],
+    pattern: [/^\/dashboard(\/.*)?$/],
     exact: ["/cart", "/orders", "/wishlist"],
 };
 

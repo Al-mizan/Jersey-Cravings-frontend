@@ -26,6 +26,7 @@ type AppFieldProps = {
     className?: string;
     disabled?: boolean;
     inputMode?: React.InputHTMLAttributes<HTMLInputElement>["inputMode"];
+    onValueChange?: (value: string) => void;
 };
 
 const AppField = ({
@@ -38,6 +39,7 @@ const AppField = ({
     className,
     disabled = false,
     inputMode,
+    onValueChange,
 }: AppFieldProps) => {
     const firstError =
         field.state.meta.isTouched && field.state.meta.errors.length > 0
@@ -69,7 +71,10 @@ const AppField = ({
                     value={field.state.value}
                     placeholder={placeholder}
                     onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
+                    onChange={(e) => {
+                        field.handleChange(e.target.value);
+                        onValueChange?.(e.target.value);
+                    }}
                     disabled={disabled}
                     inputMode={inputMode}
                     aria-invalid={hasError}

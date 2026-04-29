@@ -18,15 +18,33 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface LoginFormProps {
     redirectPath?: string;
 }
 
+const isRedirectError = (error: unknown): boolean => {
+    if (!error || typeof error !== "object") {
+        return false;
+    }
+
+    const maybeRedirectError = error as {
+        digest?: string;
+        message?: string;
+    };
+
+    return (
+        maybeRedirectError.digest?.startsWith("NEXT_REDIRECT") === true ||
+        maybeRedirectError.message === "NEXT_REDIRECT"
+    );
+};
+
 const LoginForm = ({ redirectPath }: LoginFormProps) => {
     // const queryClient = useQueryClient();
 
+    const router = useRouter();
     const [serverError, setServerError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
 
@@ -50,7 +68,13 @@ const LoginForm = ({ redirectPath }: LoginFormProps) => {
                     setServerError(result.message || "Login failed");
                     return;
                 }
+
+                router.replace(result.redirectTo);
+                router.refresh();
             } catch (error: any) {
+                if (isRedirectError(error)) {
+                    throw error; // let Next.js handle redirect
+                }
                 console.log(`Login failed: ${error.message}`);
                 setServerError(`Login failed: ${error.message}`);
             }

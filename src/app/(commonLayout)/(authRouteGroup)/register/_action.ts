@@ -52,7 +52,8 @@ export const registerAction = async (
         }
 
         // Redirect to default dashboard
-        redirect(getDefaultDashboardRoute(userInfo.role));
+        // redirect(getDefaultDashboardRoute(userInfo.role));
+        redirect("/admin/dashboard");
     } catch (error: any) {
         if (
             error &&

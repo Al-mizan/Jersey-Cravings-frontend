@@ -1,5 +1,7 @@
+import { CustomerWorkspace } from "@/features/customers/components";
+
 const MyProfilePage = () => {
-    return <div>MyProfilePage</div>;
+    return <CustomerWorkspace />;
 };
 
 export default MyProfilePage;

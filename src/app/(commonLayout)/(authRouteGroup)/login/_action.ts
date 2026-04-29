@@ -10,7 +10,6 @@ import { loginZodSchema, ILoginPayload } from "@/zod/auth.validation";
 import { loginUser, getUserInfo } from "@/services/auth.services";
 import {
     getAccountStateRedirect,
-    buildAuthRedirectUrl,
 } from "@/lib/authHelpers";
 import {
     isValidRedirectForRole,
@@ -53,6 +52,7 @@ export const loginAction = async (
                 message: "Failed to fetch user information",
             };
         }
+        console.log("userInfo", userInfo);
 
         // Check if user needs to verify email or change password
         const accountStateRedirect = getAccountStateRedirect(userInfo, "/");
@@ -69,22 +69,19 @@ export const loginAction = async (
         const targetPath = isValidRedirect
             ? redirectPath || getDefaultDashboardRoute(normalizedRole)
             : getDefaultDashboardRoute(normalizedRole);
-
+        // console.log("targetPath", targetPath, isValidRedirect, normalizedRole);
         redirect(targetPath);
     } catch (error: any) {
-        if (
-            error &&
-            typeof error === "object" &&
-            "digest" in error &&
-            typeof error.digest === "string" &&
-            error.digest.startsWith("NEXT_REDIRECT")
-        ) {
+        if (error && typeof error === "object" && "digest" in error && typeof error.digest === "string" && error.digest.startsWith("NEXT_REDIRECT")) {
             throw error;
         }
 
+        if (error && error.response && error.response.data.message === "Email not verified") {
+            redirect(`/verify-email?email=${payload.email}`);
+        }
         return {
             success: false,
-            message: error instanceof Error ? error.message : "Login failed",
-        };
+            message: `Login failed: ${error.response?.status === 404 ? `API endpoint not found at ${process.env.NEXT_PUBLIC_API_BASE_URL}` : error.message}`,
+        }
     }
 };

@@ -23,9 +23,11 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const RegisterForm = () => {
+    const router = useRouter();
     const [serverError, setServerError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
 
@@ -49,6 +51,9 @@ const RegisterForm = () => {
                     setServerError(result.message || "Registration failed");
                     return;
                 }
+
+                router.replace(result.redirectTo);
+                router.refresh();
             } catch (error: any) {
                 console.log(`Registration failed: ${error.message}`);
                 setServerError(`Registration failed: ${error.message}`);

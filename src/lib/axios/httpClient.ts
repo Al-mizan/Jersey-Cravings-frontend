@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * Centralized HTTP client for all API requests
@@ -9,51 +8,19 @@
  * - Session-refresh header monitoring
  */
 
-import { getNewTokensWithRefreshToken } from "@/services/auth.services";
 import { ApiResponse } from "@/types/api.types";
-import axios, { AxiosError } from "axios";
-import { cookies, headers } from "next/headers";
+import axios from "axios";
+import { parseAxiosError } from "./parseAxiosError";
 import { isTokenExpiringSoon } from "../tokenUtils";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const IS_SERVER = typeof window === "undefined";
+const BROWSER_PROXY_BASE_URL = "/api/proxy";
 
 if (!API_BASE_URL) {
     throw new Error(
         "NEXT_PUBLIC_API_BASE_URL is not defined in environment variables",
     );
-}
-
-/**
- * Error handler that normalizes axios errors to readable messages
- */
-function parseAxiosError(error: any): string {
-    if (error instanceof AxiosError) {
-        const status = error.response?.status;
-        const data = error.response?.data;
-
-        if (data && typeof data === "object" && "message" in data) {
-            return (data as any).message;
-        }
-
-        if (status === 401) {
-            return "Unauthorized. Please login again.";
-        }
-        if (status === 403) {
-            return "Access denied.";
-        }
-        if (status === 404) {
-            return "Resource not found.";
-        }
-        if (status === 500) {
-            return "Server error. Please try again later.";
-        }
-
-        return error.message || "An error occurred";
-    }
-
-    return error instanceof Error
-        ? error.message
-        : "An unexpected error occurred";
 }
 
 /**
@@ -67,6 +34,11 @@ async function tryRefreshToken(
         return;
     }
 
+    if (typeof window !== "undefined") {
+        return;
+    }
+
+    const { headers } = await import("next/headers");
     const requestHeader = await headers();
 
     if (requestHeader.get("x-token-refreshed") === "1") {
@@ -74,8 +46,11 @@ async function tryRefreshToken(
     }
 
     try {
+        const { getNewTokensWithRefreshToken } = await import(
+            "@/services/auth.services"
+        );
         await getNewTokensWithRefreshToken(refreshToken);
-    } catch (error: any) {
+    } catch (error) {
         console.error("Error refreshing token in http client:", error);
     }
 }
@@ -84,25 +59,31 @@ async function tryRefreshToken(
  * Create axios instance with cookies and authorization headers
  */
 const axiosInstance = async () => {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get("accessToken")?.value;
-    const refreshToken = cookieStore.get("refreshToken")?.value;
+    let cookieHeader = "";
 
-    if (accessToken && refreshToken) {
-        await tryRefreshToken(accessToken, refreshToken);
+    if (IS_SERVER) {
+        const { cookies } = await import("next/headers");
+        const cookieStore = await cookies();
+        const accessToken = cookieStore.get("accessToken")?.value;
+        const refreshToken = cookieStore.get("refreshToken")?.value;
+
+        if (accessToken && refreshToken) {
+            await tryRefreshToken(accessToken, refreshToken);
+        }
+
+        cookieHeader = cookieStore
+            .getAll()
+            .map((cookie) => `${cookie.name}=${cookie.value}`)
+            .join("; ");
     }
 
-    const cookieHeader = cookieStore
-        .getAll()
-        .map((cookie) => `${cookie.name}=${cookie.value}`)
-        .join("; ");
-
     const instance = axios.create({
-        baseURL: API_BASE_URL,
+        baseURL: IS_SERVER ? API_BASE_URL : BROWSER_PROXY_BASE_URL,
         timeout: 30000,
+        withCredentials: true,
         headers: {
             "Content-Type": "application/json",
-            Cookie: cookieHeader,
+            ...(cookieHeader ? { Cookie: cookieHeader } : {}),
         },
     });
 
