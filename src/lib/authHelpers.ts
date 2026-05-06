@@ -4,6 +4,7 @@
  */
 
 import { IUserInfo, UserRole } from "@/types/auth.types";
+import { getDefaultDashboardRoute, isValidRedirectForRole } from "./authUtils";
 
 /**
  * Determine if user needs to verify email before proceeding
@@ -54,6 +55,27 @@ export function getAccountStateRedirect(
 }
 
 /**
+ * Redirect user away from auth-state pages when the requirement is already satisfied.
+ */
+export function getResolvedAuthStatePageRedirect(
+    user: IUserInfo | null,
+    currentPath: string,
+    fallbackPath: string,
+): string | null {
+    if (!user) return null;
+
+    if (currentPath === "/verify-email" && !requiresEmailVerification(user)) {
+        return fallbackPath;
+    }
+
+    if (currentPath === "/reset-password" && !requiresPasswordChange(user)) {
+        return fallbackPath;
+    }
+
+    return null;
+}
+
+/**
  * Normalize user role for consistency
  * SUPER_ADMIN is treated as ADMIN in most frontend logic
  */
@@ -62,6 +84,29 @@ export function normalizeUserRole(role: UserRole): UserRole {
         return "ADMIN";
     }
     return role;
+}
+
+/**
+ * Resolve final redirect destination after successful auth while preserving account-state rules.
+ */
+export function resolvePostAuthRedirectPath(
+    user: IUserInfo,
+    requestedRedirect?: string,
+): string {
+    const accountStateRedirect = getAccountStateRedirect(user, "/");
+    if (accountStateRedirect) {
+        return accountStateRedirect;
+    }
+
+    const normalizedRole = normalizeUserRole(user.role);
+    if (
+        requestedRedirect &&
+        isValidRedirectForRole(requestedRedirect, normalizedRole)
+    ) {
+        return requestedRedirect;
+    }
+
+    return getDefaultDashboardRoute(normalizedRole);
 }
 
 /**

@@ -1,4 +1,5 @@
 import { adminApiClient } from "@/lib/axios/adminApiClient";
+import { safeServiceCall } from "@/services/service-utils";
 import {
     ICatalogStats,
     ICustomerStats,
@@ -11,40 +12,36 @@ import {
 } from "@/types/admin.types";
 
 // Dashboard Services
-export async function getDashboardSummary(): Promise<IDashboardSummary | null> {
-    try {
-        return await adminApiClient.getDashboardSummary();
-    } catch (error) {
-        console.error("Failed to fetch dashboard summary:", error);
-        return null;
-    }
+export async function getDashboardSummary(): Promise<IDashboardSummary  | null | undefined> {
+    return safeServiceCall(
+        () => adminApiClient.getDashboardSummary(),
+        null,
+        "Failed to fetch dashboard summary:",
+    );
 }
 
-export async function getCatalogStats(): Promise<ICatalogStats | null> {
-    try {
-        return await adminApiClient.getCatalogStats();
-    } catch (error) {
-        console.error("Failed to fetch catalog stats:", error);
-        return null;
-    }
+export async function getCatalogStats(): Promise<ICatalogStats  | null | undefined> {
+    return safeServiceCall(
+        () => adminApiClient.getCatalogStats(),
+        null,
+        "Failed to fetch catalog stats:",
+    );
 }
 
-export async function getOrderStats(): Promise<IOrderStats | null> {
-    try {
-        return await adminApiClient.getOrderStats();
-    } catch (error) {
-        console.error("Failed to fetch order stats:", error);
-        return null;
-    }
+export async function getOrderStats(): Promise<IOrderStats  | null | undefined> {
+    return safeServiceCall(
+        () => adminApiClient.getOrderStats(),
+        null,
+        "Failed to fetch order stats:",
+    );
 }
 
-export async function getCustomerStats(): Promise<ICustomerStats | null> {
-    try {
-        return await adminApiClient.getCustomerStats();
-    } catch (error) {
-        console.error("Failed to fetch customer stats:", error);
-        return null;
-    }
+export async function getCustomerStats(): Promise<ICustomerStats  | null | undefined> {
+    return safeServiceCall(
+        () => adminApiClient.getCustomerStats(),
+        null,
+        "Failed to fetch customer stats:",
+    );
 }
 
 // Admin Management Services
@@ -53,27 +50,20 @@ export async function getAllAdmins(
     page: number = 1,
     limit: number = 10,
     isDeleted?: boolean,
-): Promise<IAdminListResponse | null> {
-    try {
-        return await adminApiClient.getAllAdmins(
-            searchTerm,
-            page,
-            limit,
-            isDeleted,
-        );
-    } catch (error) {
-        console.error("Failed to fetch admins:", error);
-        return null;
-    }
+): Promise<IAdminListResponse  | null | undefined> {
+    return safeServiceCall(
+        () => adminApiClient.getAllAdmins(searchTerm, page, limit, isDeleted),
+        null,
+        "Failed to fetch admins:",
+    );
 }
 
-export async function getAdminById(id: string): Promise<IAdmin | null> {
-    try {
-        return await adminApiClient.getAdminById(id);
-    } catch (error) {
-        console.error("Failed to fetch admin:", error);
-        return null;
-    }
+export async function getAdminById(id: string): Promise<IAdmin  | null | undefined> {
+    return safeServiceCall(
+        () => adminApiClient.getAdminById(id),
+        null,
+        "Failed to fetch admin:",
+    );
 }
 
 // Audit Log Services
@@ -81,37 +71,34 @@ export async function getAuditLogs(
     searchTerm?: string,
     page: number = 1,
     limit: number = 10,
-): Promise<IAuditLogListResponse | null> {
-    try {
-        return await adminApiClient.getAuditLogs(searchTerm, page, limit);
-    } catch (error) {
-        console.error("Failed to fetch audit logs:", error);
-        return null;
-    }
+): Promise<IAuditLogListResponse  | null | undefined> {
+    return safeServiceCall(
+        () => adminApiClient.getAuditLogs(searchTerm, page, limit),
+        null,
+        "Failed to fetch audit logs:",
+    );
 }
 
 export async function getMyActivity(
     page: number = 1,
     limit: number = 10,
-): Promise<IActivityFeedResponse | null> {
-    try {
-        return await adminApiClient.getMyActivity(page, limit);
-    } catch (error) {
-        console.error("Failed to fetch my activity:", error);
-        return null;
-    }
+): Promise<IActivityFeedResponse  | null | undefined> {
+    return safeServiceCall(
+        () => adminApiClient.getMyActivity(page, limit),
+        null,
+        "Failed to fetch my activity:",
+    );
 }
 
 export async function getActivityTimeline(
     page: number = 1,
     limit: number = 10,
-): Promise<IActivityFeedResponse | null> {
-    try {
-        return await adminApiClient.getActivityTimeline(page, limit);
-    } catch (error) {
-        console.error("Failed to fetch activity timeline:", error);
-        return null;
-    }
+): Promise<IActivityFeedResponse  | null | undefined> {
+    return safeServiceCall(
+        () => adminApiClient.getActivityTimeline(page, limit),
+        null,
+        "Failed to fetch activity timeline:",
+    );
 }
 
 export async function getEntityAuditLogs(
@@ -119,16 +106,16 @@ export async function getEntityAuditLogs(
     entityId: string,
     page: number = 1,
     limit: number = 10,
-): Promise<IAuditLogListResponse | null> {
-    try {
-        return await adminApiClient.getEntityAuditLogs(
-            entityType,
-            entityId,
-            page,
-            limit,
-        );
-    } catch (error) {
-        console.error("Failed to fetch entity audit logs:", error);
-        return null;
-    }
+): Promise<IAuditLogListResponse  | null | undefined> {
+    return safeServiceCall(
+        () =>
+            adminApiClient.getEntityAuditLogs(
+                entityType,
+                entityId,
+                page,
+                limit,
+            ),
+        null,
+        "Failed to fetch entity audit logs:",
+    );
 }

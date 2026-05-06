@@ -8,7 +8,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowDown, ArrowUp, Save, Trash2, Upload } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
-import { productApiClient } from "@/lib/axios/productApiClient";
+import {
+    createProductMedia,
+    deleteProductMedia,
+    reorderProductMedia,
+} from "@/services/product.services";
+import { useFormError } from "@/hooks/useFormError";
 import type { IProductMedia } from "@/types/product.types";
 
 interface MediaManagerProps {
@@ -26,7 +31,7 @@ const MediaManager = ({
 }: MediaManagerProps) => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [altText, setAltText] = useState("");
-    const [serverError, setServerError] = useState<string | null>(null);
+    const { serverError, clearError, handleError } = useFormError();
     const [localOrder, setLocalOrder] = useState<IProductMedia[]>([]);
 
     useEffect(() => {
@@ -43,50 +48,45 @@ const MediaManager = ({
             formData.append("file", selectedFile);
             if (altText) formData.append("altText", altText);
 
-            return await productApiClient.createProductMedia(
-                productId,
-                formData,
-            );
+            return await createProductMedia(productId, formData);
         },
     });
 
-    const { mutateAsync: deleteMedia, isPending: isDeleting } = useMutation({
-        mutationFn: async (mediaId: string) => {
-            await productApiClient.deleteProductMedia(productId, mediaId);
-        },
-    });
+    const { mutateAsync: deleteMediaMutation, isPending: isDeleting } =
+        useMutation({
+            mutationFn: async (mediaId: string) => {
+                await deleteProductMedia(productId, mediaId);
+            },
+        });
 
-    const { mutateAsync: reorderMedia, isPending: isReordering } = useMutation({
-        mutationFn: async (payload: {
-            mediaOrder: { id: string; sortOrder: number }[];
-        }) => {
-            await productApiClient.reorderProductMedia(productId, payload);
-        },
-    });
+    const { mutateAsync: reorderMediaMutation, isPending: isReordering } =
+        useMutation({
+            mutationFn: async (payload: {
+                mediaOrder: { id: string; sortOrder: number }[];
+            }) => {
+                await reorderProductMedia(productId, payload);
+            },
+        });
 
     const handleUpload = async () => {
-        setServerError(null);
+        clearError();
         try {
             await uploadMedia();
             setSelectedFile(null);
             setAltText("");
             onRefresh();
         } catch (error) {
-            const message =
-                error instanceof Error ? error.message : "Upload failed";
-            setServerError(message);
+            handleError(error);
         }
     };
 
     const handleDelete = async (mediaId: string) => {
-        setServerError(null);
+        clearError();
         try {
-            await deleteMedia(mediaId);
+            await deleteMediaMutation(mediaId);
             onRefresh();
         } catch (error) {
-            const message =
-                error instanceof Error ? error.message : "Delete failed";
-            setServerError(message);
+            handleError(error);
         }
     };
 
@@ -102,18 +102,16 @@ const MediaManager = ({
     };
 
     const handleSaveOrder = async () => {
-        setServerError(null);
+        clearError();
         try {
             const mediaOrder = localOrder.map((item, index) => ({
                 id: item.id,
                 sortOrder: index,
             }));
-            await reorderMedia({ mediaOrder });
+            await reorderMediaMutation({ mediaOrder });
             onRefresh();
         } catch (error) {
-            const message =
-                error instanceof Error ? error.message : "Reorder failed";
-            setServerError(message);
+            handleError(error);
         }
     };
 

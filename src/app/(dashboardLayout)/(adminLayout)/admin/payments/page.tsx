@@ -12,13 +12,18 @@ import {
 import { Button } from "@/components/ui/button";
 import PaymentsTable from "@/components/modules/Orders/PaymentsTable";
 import { getAllPayments } from "@/services/order.services";
+import { orderQueryKeys } from "@/hooks/queries/orderQueryKeys";
 
 export default function AdminPaymentsPage() {
     const [status, setStatus] = useState<string | undefined>(undefined);
     const [page, setPage] = useState(1);
 
     const { data, isLoading } = useQuery({
-        queryKey: ["admin-payments", status, page],
+        queryKey: orderQueryKeys.payments.adminList({
+            status,
+            page,
+            limit: 10,
+        }),
         queryFn: () => getAllPayments(status, page, 10),
         staleTime: 30000,
     });

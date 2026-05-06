@@ -1,4 +1,4 @@
-import { customerApiClient } from "@/features/customers/services/customer.api";
+import { customerApiClient } from "@/components/modules/Customer";
 import {
     IAddressQueryParams,
     IChangeCustomerStatusPayload,

@@ -51,7 +51,6 @@ The structure below reflects the current codebase, not an idealized target. Stat
 - `src/app/error.tsx` ✅ global error boundary
 - `src/app/(commonLayout)` ✅ public/auth shell
 - `src/app/(dashboardLayout)` ✅ authenticated shell and admin/customer route groups
-- `src/app/api/proxy/[...path]/route.ts` ✅ browser proxy to backend API
 
 ### `src/components`
 
@@ -64,9 +63,6 @@ The structure below reflects the current codebase, not an idealized target. Stat
 - `src/components/modules/Orders` ✅ order and payment tables/cards
 - `src/components/modules/Admin` ⚠️ contains legacy admin modules unrelated to Jersey Cravings core scope and should be treated as cleanup candidates unless still imported
 
-### `src/features`
-
-- `src/features/customers` ✅ customer profile, address, review, loyalty, referral, and admin customer management workspace
 
 ### `src/hooks`
 
@@ -640,8 +636,8 @@ Current note:
 ## 5.4 Admin Product CRUD Flow
 
 1. Admin opens `/admin/products`.
-2. The list page fetches product and category data.
-3. Admin filters, searches, or bulk-selects products.
+2. The list page fetches product and category data using tanstack table.
+3. Admin filters, searches, or bulk-selects products using tanstack table.
 4. Admin opens create or edit pages for a product.
 5. Product form submits to the product API.
 6. Variant and media pages manage subresources independently.
@@ -902,6 +898,7 @@ The preferred data strategy is the advanced SSR pattern from TanStack Query: ser
 - Decide whether `dashboard.services.ts` remains separate or is merged into admin service layers.
 - Wire the logout action from the user dropdown to the real auth flow.
 - Standardize all admin list pages on the same table state and query key pattern.
+- All tables to Tanstack table
 
 ### Remains to build
 

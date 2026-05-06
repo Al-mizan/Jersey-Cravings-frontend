@@ -8,13 +8,7 @@
 
 import { loginZodSchema, ILoginPayload } from "@/zod/auth.validation";
 import { loginUser, getUserInfo } from "@/services/auth.services";
-import {
-    getAccountStateRedirect,
-} from "@/lib/authHelpers";
-import {
-    isValidRedirectForRole,
-    getDefaultDashboardRoute,
-} from "@/lib/authUtils";
+import { resolvePostAuthRedirectPath } from "@/lib/authHelpers";
 import { ILoginResponse } from "@/types/auth.types";
 import { ApiErrorResponse } from "@/types/api.types";
 import { redirect } from "next/navigation";
@@ -52,36 +46,30 @@ export const loginAction = async (
                 message: "Failed to fetch user information",
             };
         }
-        console.log("userInfo", userInfo);
 
-        // Check if user needs to verify email or change password
-        const accountStateRedirect = getAccountStateRedirect(userInfo, "/");
-        if (accountStateRedirect) {
-            redirect(accountStateRedirect);
-        }
-
-        // Determine final redirect destination with role-aware fallback
-        const normalizedRole = userInfo.role;
-        const isValidRedirect = isValidRedirectForRole(
-            redirectPath || "",
-            normalizedRole,
-        );
-        const targetPath = isValidRedirect
-            ? redirectPath || getDefaultDashboardRoute(normalizedRole)
-            : getDefaultDashboardRoute(normalizedRole);
-        // console.log("targetPath", targetPath, isValidRedirect, normalizedRole);
+        const targetPath = resolvePostAuthRedirectPath(userInfo, redirectPath);
         redirect(targetPath);
     } catch (error: any) {
-        if (error && typeof error === "object" && "digest" in error && typeof error.digest === "string" && error.digest.startsWith("NEXT_REDIRECT")) {
+        if (
+            error &&
+            typeof error === "object" &&
+            "digest" in error &&
+            typeof error.digest === "string" &&
+            error.digest.startsWith("NEXT_REDIRECT")
+        ) {
             throw error;
         }
 
-        if (error && error.response && error.response.data.message === "Email not verified") {
+        if (
+            error &&
+            error.response &&
+            error.response.data.message === "Email not verified"
+        ) {
             redirect(`/verify-email?email=${payload.email}`);
         }
         return {
             success: false,
             message: `Login failed: ${error.response?.status === 404 ? `API endpoint not found at ${process.env.NEXT_PUBLIC_API_BASE_URL}` : error.message}`,
-        }
+        };
     }
 };

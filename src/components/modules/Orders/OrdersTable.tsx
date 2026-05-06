@@ -1,26 +1,26 @@
 "use client";
 
-import React from "react";
-import Link from "next/link";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+import { useMemo } from "react";
+import { ColumnDef } from "@tanstack/react-table";
+import DataTable from "@/components/shared/table/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Eye } from "lucide-react";
+import Link from "next/link";
+import { Eye } from "lucide-react";
 import type { IOrder } from "@/types/order.types";
+import type { PaginationState, SortingState } from "@tanstack/react-table";
+import type { PaginationMeta } from "@/types/api.types";
 
-interface OrdersTableProps {
-    orders: IOrder[] | null;
+interface AdminOrdersTableProps {
+    orders: IOrder[];
+    meta?: PaginationMeta;
     isLoading?: boolean;
     baseRoute: string;
+    paginationState: PaginationState;
+    sortingState: SortingState;
+    onPaginationChange: (state: PaginationState) => void;
+    onSortingChange: (state: SortingState) => void;
+    onView?: (order: IOrder) => void;
 }
 
 const getStatusVariant = (
@@ -32,108 +32,85 @@ const getStatusVariant = (
     return "outline";
 };
 
-const OrdersTable = ({ orders, isLoading, baseRoute }: OrdersTableProps) => {
-    if (isLoading) {
-        return (
-            <div className="rounded-md border">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Order</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Payment</TableHead>
-                            <TableHead>Total</TableHead>
-                            <TableHead>Placed</TableHead>
-                            <TableHead className="w-20">Action</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {Array.from({ length: 6 }).map((_, i) => (
-                            <TableRow key={i}>
-                                <TableCell>
-                                    <Skeleton className="h-4 w-24" />
-                                </TableCell>
-                                <TableCell>
-                                    <Skeleton className="h-4 w-16" />
-                                </TableCell>
-                                <TableCell>
-                                    <Skeleton className="h-4 w-20" />
-                                </TableCell>
-                                <TableCell>
-                                    <Skeleton className="h-4 w-16" />
-                                </TableCell>
-                                <TableCell>
-                                    <Skeleton className="h-4 w-20" />
-                                </TableCell>
-                                <TableCell>
-                                    <Skeleton className="h-8 w-10" />
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
-        );
-    }
-
-    if (!orders || orders.length === 0) {
-        return (
-            <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>No orders found.</AlertDescription>
-            </Alert>
-        );
-    }
+export default function OrdersTable({
+    orders,
+    meta,
+    isLoading,
+    baseRoute,
+    paginationState,
+    sortingState,
+    onPaginationChange,
+    onSortingChange,
+    onView,
+}: AdminOrdersTableProps) {
+    const columns = useMemo<ColumnDef<IOrder>[]>(() => {
+        return [
+            {
+                accessorKey: "orderNumber",
+                header: "Order",
+                cell: ({ row }) => (
+                    <div className="space-y-1">
+                        <p className="font-medium">
+                            {row.original.orderNumber}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                            {row.original.paymentMethod}
+                        </p>
+                    </div>
+                ),
+            },
+            {
+                accessorKey: "status",
+                header: "Status",
+                cell: ({ row }) => (
+                    <Badge variant={getStatusVariant(row.original.status)}>
+                        {row.original.status}
+                    </Badge>
+                ),
+            },
+            {
+                accessorKey: "paymentStatus",
+                header: "Payment",
+                cell: ({ row }) => row.original.paymentStatus,
+            },
+            {
+                accessorKey: "totalAmount",
+                header: "Total",
+                cell: ({ row }) => `৳${row.original.totalAmount}`,
+            },
+            {
+                accessorKey: "placedAt",
+                header: "Placed",
+                cell: ({ row }) =>
+                    new Date(row.original.placedAt).toLocaleDateString(),
+            },
+            {
+                id: "actions",
+                header: "Action",
+                enableSorting: false,
+                cell: ({ row }) => (
+                    <Button asChild variant="ghost" size="sm">
+                        <Link
+                            href={`${baseRoute}/${row.original.id}`}
+                            onClick={() => onView?.(row.original)}
+                        >
+                            <Eye className="h-4 w-4" />
+                        </Link>
+                    </Button>
+                ),
+            },
+        ];
+    }, [baseRoute, onView]);
 
     return (
-        <div className="rounded-md border overflow-x-auto">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Order</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Payment</TableHead>
-                        <TableHead>Total</TableHead>
-                        <TableHead>Placed</TableHead>
-                        <TableHead className="w-20">Action</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {orders.map((order) => (
-                        <TableRow key={order.id}>
-                            <TableCell>
-                                <div className="space-y-1">
-                                    <p className="font-medium">
-                                        {order.orderNumber}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {order.paymentMethod}
-                                    </p>
-                                </div>
-                            </TableCell>
-                            <TableCell>
-                                <Badge variant={getStatusVariant(order.status)}>
-                                    {order.status}
-                                </Badge>
-                            </TableCell>
-                            <TableCell>{order.paymentStatus}</TableCell>
-                            <TableCell>৳{order.totalAmount}</TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                                {new Date(order.placedAt).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>
-                                <Button asChild variant="ghost" size="sm">
-                                    <Link href={`${baseRoute}/${order.id}`}>
-                                        <Eye className="h-4 w-4" />
-                                    </Link>
-                                </Button>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </div>
+        <DataTable
+            data={orders}
+            columns={columns}
+            isLoading={isLoading}
+            meta={meta}
+            pagination={{ state: paginationState, onPaginationChange }}
+            sorting={{ state: sortingState, onSortingChange }}
+            emptyMessage="No orders found."
+        />
     );
-};
-
-export default OrdersTable;
+}

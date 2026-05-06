@@ -19,7 +19,8 @@ import {
     createVariantZodSchema,
     updateVariantZodSchema,
 } from "@/zod/product.validation";
-import { productApiClient } from "@/lib/axios/productApiClient";
+import { createVariant, updateVariant } from "@/services/product.services";
+import { useFormError } from "@/hooks/useFormError";
 import type {
     ICreateVariantPayload,
     IProductVariant,
@@ -39,7 +40,7 @@ const VariantForm = ({
     onSuccess,
     onCancel,
 }: VariantFormProps) => {
-    const [serverError, setServerError] = useState<string | null>(null);
+    const { serverError, clearError, handleError } = useFormError();
     const isEdit = Boolean(initialVariant);
 
     const { mutateAsync, isPending } = useMutation({
@@ -47,13 +48,13 @@ const VariantForm = ({
             payload: ICreateVariantPayload | IUpdateVariantPayload,
         ) => {
             if (isEdit && initialVariant) {
-                return await productApiClient.updateVariant(
+                return await updateVariant(
                     productId,
                     initialVariant.id,
                     payload as IUpdateVariantPayload,
                 );
             }
-            return await productApiClient.createVariant(
+            return await createVariant(
                 productId,
                 payload as ICreateVariantPayload,
             );
@@ -73,7 +74,7 @@ const VariantForm = ({
             isActive: initialVariant?.isActive ?? true,
         },
         onSubmit: async ({ value }) => {
-            setServerError(null);
+            clearError();
             try {
                 const payload: ICreateVariantPayload | IUpdateVariantPayload =
                     isEdit
@@ -100,11 +101,7 @@ const VariantForm = ({
                 await mutateAsync(payload);
                 onSuccess();
             } catch (error) {
-                const message =
-                    error instanceof Error
-                        ? error.message
-                        : "An error occurred";
-                setServerError(message);
+                handleError(error);
             }
         },
     });
@@ -150,7 +147,9 @@ const VariantForm = ({
                             <Select
                                 value={field.state.value}
                                 onValueChange={(value) =>
-                                    field.handleChange(value)
+                                    field.handleChange(
+                                        value as typeof field.state.value,
+                                    )
                                 }
                                 disabled={isEdit}
                             >
@@ -179,7 +178,9 @@ const VariantForm = ({
                             <Select
                                 value={field.state.value}
                                 onValueChange={(value) =>
-                                    field.handleChange(value)
+                                    field.handleChange(
+                                        value as typeof field.state.value,
+                                    )
                                 }
                                 disabled={isEdit}
                             >
@@ -211,7 +212,9 @@ const VariantForm = ({
                             <Select
                                 value={field.state.value}
                                 onValueChange={(value) =>
-                                    field.handleChange(value)
+                                    field.handleChange(
+                                        value as typeof field.state.value,
+                                    )
                                 }
                                 disabled={isEdit}
                             >
@@ -229,12 +232,7 @@ const VariantForm = ({
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-                <form.Field
-                    name="priceAmount"
-                    validators={{
-                        onChange: createVariantZodSchema.shape.priceAmount,
-                    }}
-                >
+                <form.Field name="priceAmount">
                     {(field) => (
                         <AppField
                             field={field}
@@ -267,12 +265,7 @@ const VariantForm = ({
                     )}
                 </form.Field>
 
-                <form.Field
-                    name="stockQty"
-                    validators={{
-                        onChange: createVariantZodSchema.shape.stockQty,
-                    }}
-                >
+                <form.Field name="stockQty">
                     {(field) => (
                         <AppField
                             field={field}
@@ -285,12 +278,7 @@ const VariantForm = ({
             </div>
 
             {isEdit && (
-                <form.Field
-                    name="isActive"
-                    validators={{
-                        onChange: updateVariantZodSchema.shape.isActive,
-                    }}
-                >
+                <form.Field name="isActive">
                     {(field) => (
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <div>

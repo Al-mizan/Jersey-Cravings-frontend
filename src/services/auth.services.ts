@@ -138,15 +138,19 @@ export async function logoutUser(): Promise<{
     success: boolean;
     message: string;
 }> {
+    let success = true;
+    let message = "Logout successful";
+
     try {
         await authApiClient.logout();
-        await clearAuthTokens();
-        return { success: true, message: "Logout successful" };
     } catch (error) {
-        const message =
-            error instanceof Error ? error.message : "Logout failed";
-        return { success: false, message };
+        success = false;
+        message = error instanceof Error ? error.message : "Logout failed";
+    } finally {
+        await clearAuthTokens();
     }
+
+    return { success, message };
 }
 
 /**

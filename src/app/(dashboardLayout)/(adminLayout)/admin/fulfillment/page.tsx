@@ -13,6 +13,7 @@ import {
 import PickupLocationsTable from "@/components/modules/Commerce/PickupLocationsTable";
 import PickupLocationForm from "@/components/modules/Commerce/PickupLocationForm";
 import { getPickupLocations } from "@/services/commerce.services";
+import { commerceQueryKeys } from "@/components/modules/Commerce/constants/query-keys";
 import { Plus } from "lucide-react";
 
 export default function AdminFulfillmentPage() {
@@ -20,7 +21,10 @@ export default function AdminFulfillmentPage() {
     const [page, setPage] = useState(1);
 
     const { data, isLoading, refetch } = useQuery({
-        queryKey: ["pickup-locations", page],
+        queryKey: commerceQueryKeys.pickupLocations.list({
+            page,
+            limit: 10,
+        }),
         queryFn: () => getPickupLocations(page, 10),
         staleTime: 30000,
     });

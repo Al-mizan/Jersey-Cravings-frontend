@@ -18,7 +18,7 @@ import type { IApiResponse } from "@/types/auth.types";
 
 class AdminApiClient {
     // Dashboard Endpoints
-    async getDashboardSummary(): Promise<IDashboardSummary> {
+    async getDashboardSummary(): Promise<IDashboardSummary | undefined> {
         const { data } =
             await httpClient.get<IApiResponse<IDashboardSummary>>(
                 "/dashboard/summary",
@@ -26,7 +26,7 @@ class AdminApiClient {
         return data.data;
     }
 
-    async getCatalogStats(): Promise<ICatalogStats> {
+    async getCatalogStats(): Promise<ICatalogStats | undefined> {
         const { data } =
             await httpClient.get<IApiResponse<ICatalogStats>>(
                 "/dashboard/catalog",
@@ -34,7 +34,7 @@ class AdminApiClient {
         return data.data;
     }
 
-    async getOrderStats(): Promise<IOrderStats> {
+    async getOrderStats(): Promise<IOrderStats | undefined> {
         const { data } =
             await httpClient.get<IApiResponse<IOrderStats>>(
                 "/dashboard/orders",
@@ -42,7 +42,7 @@ class AdminApiClient {
         return data.data;
     }
 
-    async getCustomerStats(): Promise<ICustomerStats> {
+    async getCustomerStats(): Promise<ICustomerStats | undefined> {
         const { data } = await httpClient.get<IApiResponse<ICustomerStats>>(
             "/dashboard/customers",
         );
@@ -55,7 +55,7 @@ class AdminApiClient {
         page: number = 1,
         limit: number = 10,
         isDeleted?: boolean,
-    ): Promise<IAdminListResponse> {
+    ): Promise<IAdminListResponse | undefined> {
         const params = new URLSearchParams();
         if (searchTerm) params.append("searchTerm", searchTerm);
         if (page) params.append("page", page.toString());
@@ -69,14 +69,14 @@ class AdminApiClient {
         return data.data;
     }
 
-    async getAdminById(id: string): Promise<IAdmin> {
+    async getAdminById(id: string): Promise<IAdmin | undefined> {
         const { data } = await httpClient.get<IApiResponse<IAdmin>>(
             `/admins/${id}`,
         );
         return data.data;
     }
 
-    async createAdmin(payload: ICreateAdminPayload): Promise<IAdmin> {
+    async createAdmin(payload: ICreateAdminPayload): Promise<IAdmin | undefined> {
         const { data } = await httpClient.post<IApiResponse<IAdmin>>(
             "/admins",
             payload,
@@ -87,7 +87,7 @@ class AdminApiClient {
     async updateAdmin(
         id: string,
         payload: IUpdateAdminPayload,
-    ): Promise<IAdmin> {
+    ): Promise<IAdmin | undefined> {
         const { data } = await httpClient.patch<IApiResponse<IAdmin>>(
             `/admins/${id}`,
             payload,
@@ -102,7 +102,7 @@ class AdminApiClient {
     // User Management Endpoints
     async changeUserStatus(
         payload: IChangeUserStatusPayload,
-    ): Promise<{ message: string }> {
+    ): Promise<{ message: string } | undefined> {
         const { data } = await httpClient.patch<
             IApiResponse<{ message: string }>
         >("/admins/user/status", payload);
@@ -118,7 +118,7 @@ class AdminApiClient {
         searchTerm?: string,
         page: number = 1,
         limit: number = 10,
-    ): Promise<IAuditLogListResponse> {
+    ): Promise<IAuditLogListResponse | undefined> {
         const params = new URLSearchParams();
         if (searchTerm) params.append("searchTerm", searchTerm);
         if (page) params.append("page", page.toString());
@@ -130,7 +130,7 @@ class AdminApiClient {
         return data.data;
     }
 
-    async getAuditLogById(id: string): Promise<IAuditLog> {
+    async getAuditLogById(id: string): Promise<IAuditLog | undefined> {
         const { data } = await httpClient.get<IApiResponse<IAuditLog>>(
             `/audit-logs/${id}`,
         );
@@ -140,7 +140,7 @@ class AdminApiClient {
     async getMyActivity(
         page: number = 1,
         limit: number = 10,
-    ): Promise<IActivityFeedResponse> {
+    ): Promise<IActivityFeedResponse | undefined> {
         const params = new URLSearchParams();
         params.append("page", page.toString());
         params.append("limit", limit.toString());
@@ -154,7 +154,7 @@ class AdminApiClient {
     async getActivityTimeline(
         page: number = 1,
         limit: number = 10,
-    ): Promise<IActivityFeedResponse> {
+    ): Promise<IActivityFeedResponse | undefined> {
         const params = new URLSearchParams();
         params.append("page", page.toString());
         params.append("limit", limit.toString());
@@ -170,7 +170,7 @@ class AdminApiClient {
         entityId: string,
         page: number = 1,
         limit: number = 10,
-    ): Promise<IAuditLogListResponse> {
+    ): Promise<IAuditLogListResponse | undefined> {
         const params = new URLSearchParams();
         params.append("page", page.toString());
         params.append("limit", limit.toString());

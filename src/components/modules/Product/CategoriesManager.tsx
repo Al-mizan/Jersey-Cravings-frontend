@@ -9,21 +9,17 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { useQuery } from "@tanstack/react-query";
 import CategoriesTable from "@/components/modules/Product/CategoriesTable";
 import CategoryForm from "@/components/modules/Product/CategoryForm";
-import { getAllCategories } from "@/services/product.services";
-import { productApiClient } from "@/lib/axios/productApiClient";
 import { Plus } from "lucide-react";
-import type { ICategory, ICategoryListResponse } from "@/types/product.types";
-
-const emptyCategoriesResponse: ICategoryListResponse = {
-    data: [],
-    total: 0,
-    page: 1,
-    limit: 10,
-    totalPages: 0,
-};
+import type { ICategory } from "@/types/product.types";
+import {
+    useBulkToggleCategoriesMutation,
+    useDeleteCategoryMutation,
+    useManagedCategories,
+    useRestoreCategoryMutation,
+    useUpdateCategoryMutation,
+} from "./hooks/useCategoriesManagement";
 
 const CategoriesManager = () => {
     const [page, setPage] = useState(1);
@@ -34,22 +30,11 @@ const CategoriesManager = () => {
         null,
     );
 
-    const { data, isLoading, refetch } = useQuery({
-        queryKey: ["categories", "manage", page],
-        queryFn: async () => {
-            const response = await getAllCategories(
-                undefined,
-                page,
-                10,
-                undefined,
-                undefined,
-                "updatedAt",
-                "desc",
-            );
-            return response ?? { ...emptyCategoriesResponse, page };
-        },
-        staleTime: 30000,
-    });
+    const { data, isLoading } = useManagedCategories(page, 10);
+    const deleteCategoryMutation = useDeleteCategoryMutation();
+    const restoreCategoryMutation = useRestoreCategoryMutation();
+    const updateCategoryMutation = useUpdateCategoryMutation();
+    const bulkToggleCategoriesMutation = useBulkToggleCategoriesMutation();
 
     const categories = data?.data || [];
     const isAllSelected = useMemo(
@@ -83,31 +68,30 @@ const CategoriesManager = () => {
             `Are you sure you want to delete ${category.name}?`,
         );
         if (!confirmed) return;
-        await productApiClient.deleteCategory(category.id);
-        refetch();
+        await deleteCategoryMutation.mutateAsync(category.id);
     };
 
     const handleRestore = async (category: ICategory) => {
-        await productApiClient.restoreCategory(category.id);
-        refetch();
+        await restoreCategoryMutation.mutateAsync(category.id);
     };
 
     const handleToggleActive = async (
         category: ICategory,
         isActive: boolean,
     ) => {
-        await productApiClient.updateCategory(category.id, { isActive });
-        refetch();
+        await updateCategoryMutation.mutateAsync({
+            categoryId: category.id,
+            payload: { isActive },
+        });
     };
 
     const handleBulkToggle = async (isActive: boolean) => {
         if (selectedIds.length === 0) return;
-        await productApiClient.bulkToggleCategories({
+        await bulkToggleCategoriesMutation.mutateAsync({
             categoryIds: selectedIds,
             isActive,
         });
         setSelectedIds([]);
-        refetch();
     };
 
     return (
@@ -134,7 +118,6 @@ const CategoriesManager = () => {
                             mode="create"
                             onSuccess={() => {
                                 setCreateOpen(false);
-                                refetch();
                             }}
                             onCancel={() => setCreateOpen(false)}
                         />
@@ -213,7 +196,6 @@ const CategoriesManager = () => {
                             onSuccess={() => {
                                 setEditOpen(false);
                                 setActiveCategory(null);
-                                refetch();
                             }}
                             onCancel={() => {
                                 setEditOpen(false);

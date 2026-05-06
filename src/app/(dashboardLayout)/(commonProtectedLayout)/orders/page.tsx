@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import OrdersTable from "@/components/modules/Orders/OrdersTable";
 import { useQuery } from "@tanstack/react-query";
 import { getMyOrders } from "@/services/order.services";
+import type { PaginationState, SortingState } from "@tanstack/react-table";
 import {
     Select,
     SelectContent,
@@ -11,15 +12,27 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+import { orderQueryKeys } from "@/hooks/queries/orderQueryKeys";
 
 export default function MyOrdersPage() {
     const [status, setStatus] = useState<string | undefined>(undefined);
-    const [page, setPage] = useState(1);
+    const [paginationState, setPaginationState] = useState<PaginationState>({
+        pageIndex: 0,
+        pageSize: 10,
+    });
+    const [sortingState, setSortingState] = useState<SortingState>([]);
+
+    const page = paginationState.pageIndex + 1;
+    const limit = paginationState.pageSize;
 
     const { data, isLoading } = useQuery({
-        queryKey: ["my-orders", status, page],
-        queryFn: () => getMyOrders(status, page, 10),
+        queryKey: orderQueryKeys.myOrders.list({
+            status,
+            page,
+            limit,
+        }),
+        queryFn: () => getMyOrders(status, page, limit),
+        placeholderData: (previousData) => previousData,
         staleTime: 30000,
     });
 
@@ -37,7 +50,10 @@ export default function MyOrdersPage() {
                     value={status}
                     onValueChange={(value) => {
                         setStatus(value === "ALL" ? undefined : value);
-                        setPage(1);
+                        setPaginationState((state) => ({
+                            ...state,
+                            pageIndex: 0,
+                        }));
                     }}
                 >
                     <SelectTrigger className="w-full md:w-56">
@@ -58,36 +74,15 @@ export default function MyOrdersPage() {
             </div>
 
             <OrdersTable
-                orders={data?.data || null}
+                orders={data?.data || []}
+                meta={data ?? undefined}
                 isLoading={isLoading}
                 baseRoute="/orders"
+                paginationState={paginationState}
+                sortingState={sortingState}
+                onPaginationChange={setPaginationState}
+                onSortingChange={setSortingState}
             />
-
-            {data && data.totalPages > 1 && (
-                <div className="flex justify-center gap-2">
-                    <Button
-                        variant="outline"
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                        disabled={page === 1}
-                    >
-                        Previous
-                    </Button>
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">
-                            Page {page} of {data.totalPages}
-                        </span>
-                    </div>
-                    <Button
-                        variant="outline"
-                        onClick={() =>
-                            setPage((p) => Math.min(data.totalPages, p + 1))
-                        }
-                        disabled={page === data.totalPages}
-                    >
-                        Next
-                    </Button>
-                </div>
-            )}
         </div>
     );
 }

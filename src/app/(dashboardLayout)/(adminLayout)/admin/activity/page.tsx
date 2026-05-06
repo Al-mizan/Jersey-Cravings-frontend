@@ -2,23 +2,16 @@
 
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useQuery } from "@tanstack/react-query";
+import type { ColumnDef } from "@tanstack/react-table";
+import DataTable from "@/components/shared/table/DataTable";
 import { getActivityTimeline } from "@/services/admin.services";
 import type { IActivityFeedItem } from "@/types/admin.types";
+import { adminDashboardKeys } from "@/hooks/queries/adminQueryKeys";
 
 const getActionBadgeColor = (
     action: string,
@@ -31,12 +24,65 @@ const getActionBadgeColor = (
     return "outline";
 };
 
+const columns: ColumnDef<IActivityFeedItem>[] = [
+    {
+        accessorKey: "adminName",
+        header: "Admin",
+        cell: ({ row }) => (
+            <div>
+                <p className="font-medium">{row.original.adminName}</p>
+                <p className="text-xs text-muted-foreground">
+                    {row.original.adminEmail}
+                </p>
+            </div>
+        ),
+    },
+    {
+        accessorKey: "action",
+        header: "Action",
+        cell: ({ row }) => (
+            <Badge variant={getActionBadgeColor(row.original.action)}>
+                {row.original.action}
+            </Badge>
+        ),
+    },
+    {
+        accessorKey: "entityType",
+        header: "Entity Type",
+    },
+    {
+        accessorKey: "entityId",
+        header: "Entity ID",
+        cell: ({ row }) => (
+            <span className="truncate text-sm text-muted-foreground">
+                {row.original.entityId}
+            </span>
+        ),
+    },
+    {
+        accessorKey: "description",
+        header: "Description",
+        cell: ({ row }) => (
+            <span className="truncate text-sm">{row.original.description}</span>
+        ),
+    },
+    {
+        accessorKey: "timestamp",
+        header: "Timestamp",
+        cell: ({ row }) => new Date(row.original.timestamp).toLocaleString(),
+    },
+];
+
 export default function ActivityPage() {
     const [page, setPage] = useState(1);
     const limit = 20;
 
     const { data, isLoading } = useQuery({
-        queryKey: ["activity-timeline", page],
+        queryKey: adminDashboardKeys.activityTimeline({
+            searchTerm: "",
+            page,
+            limit,
+        }),
         queryFn: () => getActivityTimeline(page, limit),
         staleTime: 30000,
     });
@@ -59,13 +105,7 @@ export default function ActivityPage() {
                     <CardTitle>Activity Timeline</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {isLoading ? (
-                        <div className="space-y-3">
-                            {Array.from({ length: 10 }).map((_, i) => (
-                                <Skeleton key={i} className="h-12" />
-                            ))}
-                        </div>
-                    ) : !data || data.data.length === 0 ? (
+                    {!data || data.data.length === 0 ? (
                         <Alert>
                             <AlertCircle className="h-4 w-4" />
                             <AlertDescription>
@@ -74,65 +114,12 @@ export default function ActivityPage() {
                         </Alert>
                     ) : (
                         <>
-                            <div className="rounded-md border overflow-x-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Admin</TableHead>
-                                            <TableHead>Action</TableHead>
-                                            <TableHead>Entity Type</TableHead>
-                                            <TableHead>Entity ID</TableHead>
-                                            <TableHead>Description</TableHead>
-                                            <TableHead>Timestamp</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {data.data.map(
-                                            (activity: IActivityFeedItem) => (
-                                                <TableRow key={activity.id}>
-                                                    <TableCell className="font-medium">
-                                                        <div>
-                                                            <p>
-                                                                {
-                                                                    activity.adminName
-                                                                }
-                                                            </p>
-                                                            <p className="text-xs text-muted-foreground">
-                                                                {
-                                                                    activity.adminEmail
-                                                                }
-                                                            </p>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge
-                                                            variant={getActionBadgeColor(
-                                                                activity.action,
-                                                            )}
-                                                        >
-                                                            {activity.action}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="text-sm">
-                                                        {activity.entityType}
-                                                    </TableCell>
-                                                    <TableCell className="text-sm text-muted-foreground truncate max-w-xs">
-                                                        {activity.entityId}
-                                                    </TableCell>
-                                                    <TableCell className="text-sm truncate max-w-xs">
-                                                        {activity.description}
-                                                    </TableCell>
-                                                    <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                                                        {new Date(
-                                                            activity.timestamp,
-                                                        ).toLocaleString()}
-                                                    </TableCell>
-                                                </TableRow>
-                                            ),
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </div>
+                            <DataTable
+                                data={data.data}
+                                columns={columns}
+                                isLoading={isLoading}
+                                emptyMessage="No activity found."
+                            />
 
                             {/* Pagination */}
                             {data.totalPages > 1 && (

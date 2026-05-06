@@ -205,7 +205,7 @@ const CreateAdminForm = ({
                 )}
             </form.Field>
 
-            {/* Profile Photo URL Field */}
+            {/* Profile Photo URL Field
             <form.Field
                 name="admin.profilePhoto"
                 validators={{
@@ -221,7 +221,7 @@ const CreateAdminForm = ({
                         placeholder="https://example.com/photo.jpg"
                     />
                 )}
-            </form.Field>
+            </form.Field> */}
 
             {/* Form Actions */}
             <div className="flex gap-2 pt-4">

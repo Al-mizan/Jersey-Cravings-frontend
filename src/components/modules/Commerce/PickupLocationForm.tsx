@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import AppField from "@/components/shared/form/AppField";
 import AppSubmitButton from "@/components/shared/form/AppSubmitButton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -14,7 +14,8 @@ import {
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { createPickupLocationZodSchema } from "@/zod/commerce.validation";
-import { commerceApiClient } from "@/lib/axios/commerceApiClient";
+import { createPickupLocation } from "@/services/commerce.services";
+import { useFormError } from "@/hooks/useFormError";
 import type {
     IPickupLocation,
     ICreatePickupLocationPayload,
@@ -29,11 +30,11 @@ const PickupLocationForm = ({
     onSuccess,
     onCancel,
 }: PickupLocationFormProps) => {
-    const [serverError, setServerError] = useState<string | null>(null);
+    const { serverError, clearError, handleError } = useFormError();
 
     const { mutateAsync, isPending } = useMutation({
         mutationFn: async (payload: ICreatePickupLocationPayload) => {
-            return await commerceApiClient.createPickupLocation(payload);
+            return await createPickupLocation(payload);
         },
     });
 
@@ -50,7 +51,7 @@ const PickupLocationForm = ({
             isDefault: false,
         },
         onSubmit: async ({ value }) => {
-            setServerError(null);
+            clearError();
             try {
                 const payload: ICreatePickupLocationPayload = {
                     name: value.name,
@@ -66,11 +67,7 @@ const PickupLocationForm = ({
                 const location = await mutateAsync(payload);
                 onSuccess(location);
             } catch (error) {
-                const message =
-                    error instanceof Error
-                        ? error.message
-                        : "Failed to create location";
-                setServerError(message);
+                handleError(error);
             }
         },
     });

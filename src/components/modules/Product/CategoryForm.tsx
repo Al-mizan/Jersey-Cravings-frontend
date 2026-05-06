@@ -1,22 +1,24 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import AppField from "@/components/shared/form/AppField";
 import AppSubmitButton from "@/components/shared/form/AppSubmitButton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "@tanstack/react-form";
-import { useMutation } from "@tanstack/react-query";
 import {
     createCategoryZodSchema,
     updateCategoryZodSchema,
 } from "@/zod/product.validation";
-import { productApiClient } from "@/lib/axios/productApiClient";
+import { useFormError } from "@/hooks/useFormError";
+import { slugify } from "@/lib/utils";
 import type {
     ICategory,
     ICreateCategoryPayload,
     IUpdateCategoryPayload,
 } from "@/types/product.types";
+import { useCategoryFormMutation } from "./hooks/useCategoriesManagement";
+import { useSlugFieldSync } from "./hooks/useSlugFieldSync";
 
 interface CategoryFormProps {
     mode: "create" | "edit";
@@ -25,38 +27,14 @@ interface CategoryFormProps {
     onCancel?: () => void;
 }
 
-const slugify = (value: string) =>
-    value
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)+/g, "");
-
 const CategoryForm = ({
     mode,
     initialCategory,
     onSuccess,
     onCancel,
 }: CategoryFormProps) => {
-    const [serverError, setServerError] = useState<string | null>(null);
-    const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+    const { serverError, clearError, handleError } = useFormError();
     const isEdit = mode === "edit" && Boolean(initialCategory);
-
-    const { mutateAsync, isPending } = useMutation({
-        mutationFn: async (
-            payload: ICreateCategoryPayload | IUpdateCategoryPayload,
-        ) => {
-            if (isEdit && initialCategory) {
-                return await productApiClient.updateCategory(
-                    initialCategory.id,
-                    payload as IUpdateCategoryPayload,
-                );
-            }
-            return await productApiClient.createCategory(
-                payload as ICreateCategoryPayload,
-            );
-        },
-    });
 
     const form = useForm({
         defaultValues: {
@@ -65,7 +43,7 @@ const CategoryForm = ({
             isActive: initialCategory?.isActive ?? true,
         },
         onSubmit: async ({ value }) => {
-            setServerError(null);
+            clearError();
             try {
                 const payload: ICreateCategoryPayload | IUpdateCategoryPayload =
                     isEdit
@@ -82,14 +60,19 @@ const CategoryForm = ({
                 const category = await mutateAsync(payload);
                 onSuccess(category);
             } catch (error) {
-                const message =
-                    error instanceof Error
-                        ? error.message
-                        : "Failed to save category";
-                setServerError(message);
+                handleError(error);
             }
         },
     });
+
+    const { handleSourceValueChange, markSlugAsEdited } = useSlugFieldSync({
+        onSlugChange: (value) => form.setFieldValue("slug", value),
+    });
+
+    const { mutateAsync, isPending } = useCategoryFormMutation(
+        mode,
+        initialCategory?.id,
+    );
 
     return (
         <form
@@ -116,11 +99,7 @@ const CategoryForm = ({
                         field={field}
                         label="Category Name"
                         placeholder="National Teams"
-                        onValueChange={(value) => {
-                            if (!slugManuallyEdited) {
-                                form.setFieldValue("slug", slugify(value));
-                            }
-                        }}
+                        onValueChange={handleSourceValueChange}
                     />
                 )}
             </form.Field>
@@ -134,18 +113,13 @@ const CategoryForm = ({
                         field={field}
                         label="Slug"
                         placeholder="national-teams"
-                        onValueChange={() => setSlugManuallyEdited(true)}
+                        onValueChange={markSlugAsEdited}
                     />
                 )}
             </form.Field>
 
             {isEdit && (
-                <form.Field
-                    name="isActive"
-                    validators={{
-                        onChange: updateCategoryZodSchema.shape.isActive,
-                    }}
-                >
+                <form.Field name="isActive">
                     {(field) => (
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <div>

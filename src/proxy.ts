@@ -5,6 +5,11 @@ import {
     isAuthRoute,
     UserRole,
 } from "./lib/authUtils";
+import {
+    getAccountStateRedirect,
+    getResolvedAuthStatePageRedirect,
+    normalizeUserRole,
+} from "./lib/authHelpers";
 import { jwtUtils } from "./lib/jwtUtils";
 import { isTokenExpiringSoon } from "./lib/tokenUtils";
 import {
@@ -54,10 +59,9 @@ export async function proxy(request: NextRequest) {
 
         const routerOwner = getRouteOwner(pathname);
 
-        const unifySuperAdminAndAdminRole =
-            userRole === "SUPER_ADMIN" ? "ADMIN" : userRole;
-
-        userRole = unifySuperAdminAndAdminRole;
+        if (userRole) {
+            userRole = normalizeUserRole(userRole);
+        }
 
         const isAuth = isAuthRoute(pathname);
 
@@ -149,57 +153,34 @@ export async function proxy(request: NextRequest) {
             return NextResponse.redirect(loginUrl);
         }
 
-        //Rule - Enforcing user to stay in reset password or verify email page if their needPasswordChange or isEmailVerified flags are not satisfied respectively
+        // Rule - Enforce account-state gating with shared helper logic.
         if (accessToken) {
             const userInfo = await getUserInfo();
             if (userInfo) {
-                // need email verification scenario
-                if (userInfo.emailVerified === false) {
-                    if (pathname !== "/verify-email") {
-                        const verifyEmailUrl = new URL(
-                            "/verify-email",
-                            request.url,
-                        );
-                        verifyEmailUrl.searchParams.set(
-                            "email",
-                            userInfo.email,
-                        );
-                        return NextResponse.redirect(verifyEmailUrl);
-                    }
-                    return NextResponse.next();
-                }
-                if (userInfo.emailVerified && pathname === "/verify-email") {
+                const fallbackDashboard = getDefaultDashboardRoute(
+                    (userRole || normalizeUserRole(userInfo.role)) as UserRole,
+                );
+
+                const pendingAccountStateRedirect = getAccountStateRedirect(
+                    userInfo,
+                    pathname,
+                );
+                if (pendingAccountStateRedirect) {
                     return NextResponse.redirect(
-                        new URL(
-                            getDefaultDashboardRoute(userRole as UserRole),
-                            request.url,
-                        ),
+                        new URL(pendingAccountStateRedirect, request.url),
                     );
                 }
-                // need password change scenario
-                if (userInfo.needPasswordChange) {
-                    if (pathname !== "/reset-password") {
-                        const resetPasswordUrl = new URL(
-                            "/reset-password",
-                            request.url,
-                        );
-                        resetPasswordUrl.searchParams.set(
-                            "email",
-                            userInfo.email,
-                        );
-                        return NextResponse.redirect(resetPasswordUrl);
-                    }
-                    return NextResponse.next();
-                }
-                if (
-                    !userInfo.needPasswordChange &&
-                    pathname === "/reset-password"
-                ) {
+
+                const resolvedAuthStatePageRedirect =
+                    getResolvedAuthStatePageRedirect(
+                        userInfo,
+                        pathname,
+                        fallbackDashboard,
+                    );
+
+                if (resolvedAuthStatePageRedirect) {
                     return NextResponse.redirect(
-                        new URL(
-                            getDefaultDashboardRoute(userRole as UserRole),
-                            request.url,
-                        ),
+                        new URL(resolvedAuthStatePageRedirect, request.url),
                     );
                 }
             }
@@ -212,7 +193,8 @@ export async function proxy(request: NextRequest) {
 
         // Rule-6 User trying to visit role based protected but doesn't have required role -> redirect to their default dashboard
         if (
-            routerOwner === "ADMIN" || routerOwner === "SUPER_ADMIN" ||
+            routerOwner === "ADMIN" ||
+            routerOwner === "SUPER_ADMIN" ||
             routerOwner === "CUSTOMER"
         ) {
             if (routerOwner !== userRole) {

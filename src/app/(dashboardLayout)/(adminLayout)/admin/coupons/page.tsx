@@ -13,6 +13,7 @@ import {
 import CouponsTable from "@/components/modules/Commerce/CouponsTable";
 import CouponForm from "@/components/modules/Commerce/CouponForm";
 import { getAllCoupons } from "@/services/commerce.services";
+import { commerceQueryKeys } from "@/components/modules/Commerce/constants/query-keys";
 import { Plus } from "lucide-react";
 
 export default function AdminCouponsPage() {
@@ -20,7 +21,11 @@ export default function AdminCouponsPage() {
     const [page, setPage] = useState(1);
 
     const { data, isLoading, refetch } = useQuery({
-        queryKey: ["coupons", page],
+        queryKey: commerceQueryKeys.coupons.list({
+            page,
+            limit: 10,
+            isDeleted: false,
+        }),
         queryFn: () => getAllCoupons(undefined, undefined, false, page, 10),
         staleTime: 30000,
     });

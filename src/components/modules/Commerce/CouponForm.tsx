@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import AppField from "@/components/shared/form/AppField";
 import AppSubmitButton from "@/components/shared/form/AppSubmitButton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -14,7 +14,8 @@ import {
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { createCouponZodSchema } from "@/zod/commerce.validation";
-import { commerceApiClient } from "@/lib/axios/commerceApiClient";
+import { createCoupon } from "@/services/commerce.services";
+import { useFormError } from "@/hooks/useFormError";
 import type { ICoupon, ICreateCouponPayload } from "@/types/commerce.types";
 
 interface CouponFormProps {
@@ -23,11 +24,11 @@ interface CouponFormProps {
 }
 
 const CouponForm = ({ onSuccess, onCancel }: CouponFormProps) => {
-    const [serverError, setServerError] = useState<string | null>(null);
+    const { serverError, clearError, handleError } = useFormError();
 
     const { mutateAsync, isPending } = useMutation({
         mutationFn: async (payload: ICreateCouponPayload) => {
-            return await commerceApiClient.createCoupon(payload);
+            return await createCoupon(payload);
         },
     });
 
@@ -43,7 +44,7 @@ const CouponForm = ({ onSuccess, onCancel }: CouponFormProps) => {
             isActive: true,
         },
         onSubmit: async ({ value }) => {
-            setServerError(null);
+            clearError();
             try {
                 const payload: ICreateCouponPayload = {
                     code: value.code,
@@ -58,11 +59,7 @@ const CouponForm = ({ onSuccess, onCancel }: CouponFormProps) => {
                 const coupon = await mutateAsync(payload);
                 onSuccess(coupon);
             } catch (error) {
-                const message =
-                    error instanceof Error
-                        ? error.message
-                        : "Failed to create coupon";
-                setServerError(message);
+                handleError(error);
             }
         },
     });
