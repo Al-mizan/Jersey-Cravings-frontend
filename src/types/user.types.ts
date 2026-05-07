@@ -1,4 +1,4 @@
-import { UserRole } from "@/lib/authUtils";
+import { UserRole } from "@/types/auth.types";
 
 export interface UserInfo {
     id: string;

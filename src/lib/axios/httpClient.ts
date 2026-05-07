@@ -1,6 +1,6 @@
 
-/**
- * Centralized HTTP client for all API requests
+/*
+ * Centralized HTTP client for all API requests.
  * Handles:
  * - Automatic cookie inclusion
  * - Proactive token refresh before expiry
@@ -11,7 +11,7 @@
 import { ApiResponse } from "@/types/api.types";
 import axios from "axios";
 import { parseAxiosError } from "./parseAxiosError";
-import { isTokenExpiringSoon } from "../tokenUtils";
+import { isTokenExpiringSoon } from "../auth/tokenUtils";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const IS_SERVER = typeof window === "undefined";
@@ -23,9 +23,7 @@ if (!API_BASE_URL) {
     );
 }
 
-/**
- * Proactive token refresh if expiring soon
- */
+// Proactive token refresh if expiring soon
 async function tryRefreshToken(
     accessToken: string,
     refreshToken: string,
@@ -55,9 +53,7 @@ async function tryRefreshToken(
     }
 }
 
-/**
- * Create axios instance with cookies and authorization headers
- */
+// Create axios instance with cookies and authorization headers
 const axiosInstance = async () => {
     let cookieHeader = "";
 
@@ -95,9 +91,7 @@ export interface ApiRequestOptions {
     headers?: Record<string, string>;
 }
 
-/**
- * GET request with response parsing
- */
+// GET request with response parsing
 const httpGet = async <TData>(
     endpoint: string,
     options?: ApiRequestOptions,
@@ -116,9 +110,7 @@ const httpGet = async <TData>(
     }
 };
 
-/**
- * POST request with response parsing
- */
+// POST request with response parsing
 const httpPost = async <TData>(
     endpoint: string,
     data: unknown,
@@ -142,9 +134,7 @@ const httpPost = async <TData>(
     }
 };
 
-/**
- * PUT request with response parsing
- */
+// PUT request with response parsing
 const httpPut = async <TData>(
     endpoint: string,
     data: unknown,
@@ -168,9 +158,7 @@ const httpPut = async <TData>(
     }
 };
 
-/**
- * PATCH request with response parsing
- */
+// PATCH request with response parsing
 const httpPatch = async <TData>(
     endpoint: string,
     data: unknown,
@@ -194,9 +182,7 @@ const httpPatch = async <TData>(
     }
 };
 
-/**
- * DELETE request with response parsing
- */
+// DELETE request with response parsing
 const httpDelete = async <TData>(
     endpoint: string,
     options?: ApiRequestOptions,

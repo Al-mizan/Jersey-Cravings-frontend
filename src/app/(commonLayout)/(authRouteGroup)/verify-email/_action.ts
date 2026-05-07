@@ -9,7 +9,7 @@ import {
     IVerifyEmailPayload,
 } from "@/zod/auth.validation";
 import { verifyEmail, getUserInfo } from "@/services/auth.services";
-import { getDefaultDashboardRoute } from "@/lib/authUtils";
+import { getDefaultDashboardRoute } from "@/lib/auth";
 import { ApiErrorResponse } from "@/types/api.types";
 import { redirect } from "next/navigation";
 

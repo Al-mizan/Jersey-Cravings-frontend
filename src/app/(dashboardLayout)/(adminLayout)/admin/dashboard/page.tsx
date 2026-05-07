@@ -1,4 +1,4 @@
-import { createServerQueryClient } from "@/lib/queryClient";
+import { createServerQueryClient } from "@/lib/api";
 import {
     getActivityTimeline,
     getCatalogStats,

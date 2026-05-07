@@ -1,5 +1,5 @@
+import { AdminCustomerDetailsWorkspace } from "@/components/modules/Customer/components/admin/AdminCustomerDetailsWorkspace";
 import { Button } from "@/components/ui/button";
-import { AdminCustomerDetailsWorkspace } from "@/features/customers/components/admin/AdminCustomerDetailsWorkspace";
 import Link from "next/link";
 
 interface AdminCustomerDetailsPageProps {

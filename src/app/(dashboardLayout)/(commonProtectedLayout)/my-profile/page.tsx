@@ -1,4 +1,4 @@
-import { CustomerWorkspace } from "@/features/customers/components";
+import { CustomerWorkspace } from "@/components/modules/Customer";
 
 const MyProfilePage = () => {
     return <CustomerWorkspace />;

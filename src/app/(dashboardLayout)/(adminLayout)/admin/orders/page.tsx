@@ -1,4 +1,4 @@
-import { createServerQueryClient } from "@/lib/queryClient";
+import { createServerQueryClient } from "@/lib/api";
 import { getAllOrders } from "@/services/order.services";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { adminOrderKeys } from "@/hooks/queries/adminQueryKeys";

@@ -8,7 +8,7 @@
 
 import { loginZodSchema, ILoginPayload } from "@/zod/auth.validation";
 import { loginUser, getUserInfo } from "@/services/auth.services";
-import { resolvePostAuthRedirectPath } from "@/lib/authHelpers";
+import { resolvePostAuthRedirectPath } from "@/lib/auth";
 import { ILoginResponse } from "@/types/auth.types";
 import { ApiErrorResponse } from "@/types/api.types";
 import { redirect } from "next/navigation";
@@ -16,7 +16,7 @@ import { redirect } from "next/navigation";
 export const loginAction = async (
     payload: ILoginPayload,
     redirectPath?: string,
-): Promise<ILoginResponse | ApiErrorResponse> => {
+) => {
     const parsedPayload = loginZodSchema.safeParse(payload);
 
     if (!parsedPayload.success) {
@@ -46,6 +46,8 @@ export const loginAction = async (
                 message: "Failed to fetch user information",
             };
         }
+
+        // console.log(userInfo, "user info from login action");
 
         const targetPath = resolvePostAuthRedirectPath(userInfo, redirectPath);
         redirect(targetPath);

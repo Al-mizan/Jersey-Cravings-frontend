@@ -1,5 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import * as Icons from "lucide-react";
+import { LucideIcon } from "lucide-react";
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -17,3 +19,11 @@ export function slugify(value: string): string {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)+/g, "");
 }
+
+export function getIconComponent(iconName: string): LucideIcon {
+    const IconComponent =
+        Icons[iconName as keyof typeof Icons] as unknown as LucideIcon;
+
+    return IconComponent ?? Icons.HelpCircle;
+}
+

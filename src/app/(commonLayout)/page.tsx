@@ -5,6 +5,10 @@ export default function Home() {
         <div>
             Common
             <Button variant="outline">Hello World</Button>
+            {/* <HeroSection />
+            <Features />
+            <Testimonial />
+            <Footer /> */}
         </div>
     );
 }

@@ -1,4 +1,4 @@
-import { AdminCustomersWorkspace } from "@/features/customers/components/admin/AdminCustomersWorkspace";
+import { AdminCustomersWorkspace } from "@/components/modules/Customer/components/admin/AdminCustomersWorkspace";
 
 const AdminCustomersPage = () => {
     return <AdminCustomersWorkspace />;

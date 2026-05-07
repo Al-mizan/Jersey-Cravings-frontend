@@ -1,4 +1,4 @@
-import { createServerQueryClient } from "@/lib/queryClient";
+import { createServerQueryClient } from "@/lib/api";
 import { getAllAdmins } from "@/services/admin.services";
 import type { IAdminListResponse } from "@/types/admin.types";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";

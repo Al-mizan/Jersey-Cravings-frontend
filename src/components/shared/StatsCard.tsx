@@ -1,5 +1,4 @@
-import { getIconComponent } from "@/lib/iconMapper";
-import { cn } from "@/lib/utils";
+import { cn, getIconComponent } from "@/lib/utils";
 import { createElement } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 

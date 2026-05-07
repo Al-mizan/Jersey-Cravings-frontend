@@ -6,8 +6,7 @@
 
 import { registerZodSchema, IRegisterPayload } from "@/zod/auth.validation";
 import { registerUser, getUserInfo } from "@/services/auth.services";
-import { getAccountStateRedirect } from "@/lib/authHelpers";
-import { getDefaultDashboardRoute } from "@/lib/authUtils";
+import { getAccountStateRedirect } from "@/lib/auth";
 import { ILoginResponse } from "@/types/auth.types";
 import { ApiErrorResponse } from "@/types/api.types";
 import { redirect } from "next/navigation";

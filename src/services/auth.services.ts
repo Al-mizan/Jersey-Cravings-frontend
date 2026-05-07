@@ -6,7 +6,8 @@
  */
 
 import { authApiClient } from "@/lib/axios/authApiClient";
-import { setTokenInCookies } from "@/lib/tokenUtils";
+import { setTokenInCookies } from "@/lib/auth";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import {
     ILoginPayload,
     ILoginResponse,
@@ -46,6 +47,26 @@ async function clearAuthTokens(): Promise<void> {
     cookieStore.delete("better-auth.session_token");
 }
 
+const buildUserInfoFromToken = (accessToken: string): IUserInfo | null => {
+    const tokenPayload = jwt.decode(accessToken) as JwtPayload | null;
+
+    if (!tokenPayload?.userId || !tokenPayload?.email || !tokenPayload?.role) {
+        return null;
+    }
+
+    return {
+        id: tokenPayload.userId as string,
+        name: (tokenPayload.name as string) ?? tokenPayload.email,
+        email: tokenPayload.email as string,
+        role: tokenPayload.role as IUserInfo["role"],
+        status: (tokenPayload.status as IUserInfo["status"]) ?? "ACTIVE",
+        isDeleted: Boolean(tokenPayload.isDeleted),
+        emailVerified: Boolean(tokenPayload.emailVerified),
+        needPasswordChange: Boolean(tokenPayload.needPasswordChange),
+        image: (tokenPayload.image as string | null | undefined) ?? null,
+    };
+};
+
 /**
  * Register a new customer account
  */
@@ -74,9 +95,7 @@ export async function registerUser(
 /**
  * Login with email and password
  */
-export async function loginUser(
-    payload: ILoginPayload,
-): Promise<{ success: boolean; message: string; data?: ILoginResponse }> {
+export async function loginUser(payload: ILoginPayload) {
     try {
         const response = await authApiClient.login(payload);
         await setAuthTokens(
@@ -103,8 +122,17 @@ export async function getUserInfo(): Promise<IUserInfo | null> {
             return null;
         }
 
-        const userInfo = await authApiClient.getMe();
-        return userInfo;
+        try {
+            return await authApiClient.getMe();
+        } catch (error) {
+            const fallbackUserInfo = buildUserInfoFromToken(accessToken);
+
+            if (fallbackUserInfo) {
+                return fallbackUserInfo;
+            }
+
+            throw error;
+        }
     } catch (error) {
         console.error("Error fetching user info:", error);
         return null;

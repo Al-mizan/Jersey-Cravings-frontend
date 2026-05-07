@@ -28,7 +28,7 @@ const StatRow = ({ label, value, subtext }: StatRowProps) => (
 
 // Catalog Stats Component
 interface CatalogStatsProps {
-    stats: ICatalogStats | null;
+    stats: ICatalogStats | null | undefined;
     isLoading?: boolean;
 }
 
@@ -93,7 +93,7 @@ export const CatalogStatsCard = ({ stats, isLoading }: CatalogStatsProps) => {
 
 // Order Stats Component
 interface OrderStatsProps {
-    stats: IOrderStats | null;
+    stats: IOrderStats | null | undefined;
     isLoading?: boolean;
 }
 
@@ -161,7 +161,7 @@ export const OrderStatsCard = ({ stats, isLoading }: OrderStatsProps) => {
 
 // Customer Stats Component
 interface CustomerStatsProps {
-    stats: ICustomerStats | null;
+    stats: ICustomerStats | null | undefined;
     isLoading?: boolean;
 }
 

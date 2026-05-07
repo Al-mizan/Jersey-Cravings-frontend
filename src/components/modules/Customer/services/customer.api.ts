@@ -100,6 +100,7 @@ class CustomerApiClient {
         const response = await apiClient.get<ICustomerProfile>(
             `${CUSTOMER_BASE}/profile/me`,
         );
+        console.log(response.data, "response from get my profile");
         return response.data;
     }
 

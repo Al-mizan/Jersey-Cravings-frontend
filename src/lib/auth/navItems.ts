@@ -20,6 +20,11 @@ const adminNavItems: NavSection[] = [
                 href: "/admin/products",
                 icon: "Shirt",
             },
+            {
+                title: "Categories",
+                href: "/admin/categories",
+                icon: "FolderTree",
+            },
         ],
     },
     {
@@ -52,13 +57,8 @@ const adminNavItems: NavSection[] = [
         items: [
             {
                 title: "My Profile",
-                href: "/my-profile",
-                icon: "User",
-            },
-            {
-                title: "Change Password",
-                href: "/change-password",
-                icon: "KeyRound",
+                href: "/admin/my-profile",
+                icon: "UserCircle",
             },
         ],
     },
@@ -69,20 +69,40 @@ const customerNavItems: NavSection[] = [
         title: "My Account",
         items: [
             {
-                title: "Dashboard",
-                href: "/dashboard",
-                icon: "LayoutDashboard",
-            },
-            {
                 title: "My Profile",
-                href: "/my-profile",
-                icon: "User",
+                href: "/my-section/profile",
+                icon: "UserCircle",
             },
             {
-                title: "Change Password",
-                href: "/change-password",
-                icon: "KeyRound",
+                title: "My Orders",
+                href: "/my-section/orders",
+                icon: "ShoppingBag",
             },
+            {
+                title: "My Ratings and Reviews",
+                href: "/my-section/reviews",
+                icon: "MessageSquare",
+            },
+            {
+                title: "My Addresses",
+                href: "/account/addresses",
+                icon: "MapPin",
+            },
+            {
+                title: "My Points",
+                href: "/my-section/points",
+                icon: "Gift",
+            },
+            {
+                title: "Manage Referral Code",
+                href: "/my-section/referral-code",
+                icon: "Share2",
+            },
+            {
+                title: "Logout",
+                href: "/logout",
+                icon: "LogOut",
+            }
         ],
     },
 ];
@@ -94,3 +114,4 @@ export const getNavItemsByRole = (role: UserRole): NavSection[] => {
 
     return customerNavItems;
 };
+

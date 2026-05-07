@@ -9,7 +9,7 @@ import DataTable from "@/components/shared/table/DataTable";
 import type { ICart } from "@/types/commerce.types";
 
 interface CartTableProps {
-    cart: ICart | null;
+    cart: ICart | null | undefined;
     isLoading?: boolean;
     onIncrease: (itemId: string, currentQty: number) => void;
     onDecrease: (itemId: string, currentQty: number) => void;
