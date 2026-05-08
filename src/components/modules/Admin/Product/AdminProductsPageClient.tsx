@@ -156,6 +156,20 @@ export default function AdminProductsPageClient() {
         ],
         [],
     );
+    const tableActions = useMemo(
+        () => ({
+            onView: (product: IProduct) => router.push(`/admin/products/${product.id}`),
+            onEdit: (product: IProduct) => router.push(`/admin/products/${product.id}/edit`),
+            onDelete: async (product: IProduct) => {
+                const confirmed = window.confirm(
+                    `Delete "${product.title}" from catalog?`,
+                );
+                if (!confirmed) return;
+                await deleteMutation.mutateAsync(product.id);
+            },
+        }),
+        [deleteMutation, router],
+    );
 
     return (
         <div className="space-y-6">
@@ -218,17 +232,7 @@ export default function AdminProductsPageClient() {
                     state: paginationState,
                     onPaginationChange: setPaginationState,
                 }}
-                actions={{
-                    onView: (product) => router.push(`/admin/products/${product.id}`),
-                    onEdit: (product) => router.push(`/admin/products/${product.id}/edit`),
-                    onDelete: async (product) => {
-                        const confirmed = window.confirm(
-                            `Delete "${product.title}" from catalog?`,
-                        );
-                        if (!confirmed) return;
-                        await deleteMutation.mutateAsync(product.id);
-                    },
-                }}
+                actions={tableActions}
             />
         </div>
     );

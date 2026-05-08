@@ -28,6 +28,7 @@ import {
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, ArrowUpDown, MoreHorizontal } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import DataTableFilters, {
     DataTableFilterConfig,
     DataTableFilterValue,
@@ -97,54 +98,60 @@ const DataTable = <TData,>({
     const hydratedIsLoading = hasHydrated ? Boolean(isLoading) : false;
     const showLoadingOverlay = hydratedIsLoading;
 
-    const tableColumns: ColumnDef<TData>[] = actions
-        ? [
-            ...columns,
+    const tableColumns: ColumnDef<TData>[] = useMemo(
+        () =>
+            actions
+                ? [
+                    ...columns,
+                    {
+                        id: "actions",
+                        header: "Actions",
+                        enableSorting: false,
+                        cell: ({ row }) => {
+                            const rowData = row.original;
 
-            // Action column
-            {
-                id: "actions", // Unique id for the column
-                header: "Actions",
-                enableSorting: false,
-                cell: ({ row }) => {
-                    const rowData = row.original;
+                            return (
+                                <DropdownMenu modal={false}>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant={"ghost"} className="h-8 w-8 p-0">
+                                            <span className="sr-only">Open Menu</span>
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
 
-                    return (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant={"ghost"} className="h-8 w-8 p-0">
-                                    <span className="sr-only">Open Menu</span>
-                                    <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        {actions.onView && (
+                                            <DropdownMenuItem
+                                                onClick={() => actions.onView?.(rowData)}
+                                            >
+                                                View
+                                            </DropdownMenuItem>
+                                        )}
 
-                            <DropdownMenuContent align="end">
-                                {actions.onView && (
-                                    <DropdownMenuItem onClick={() => actions.onView?.(rowData)}>
-                                        View
-                                    </DropdownMenuItem>
-                                )}
+                                        {actions.onEdit && (
+                                            <DropdownMenuItem
+                                                onClick={() => actions.onEdit?.(rowData)}
+                                            >
+                                                Edit
+                                            </DropdownMenuItem>
+                                        )}
 
-                                {actions.onEdit && (
-                                    <DropdownMenuItem onClick={() => actions.onEdit?.(rowData)}>
-                                        Edit
-                                    </DropdownMenuItem>
-                                )}
-
-                                {actions.onDelete && (
-                                    <DropdownMenuItem
-                                        onClick={() => actions.onDelete?.(rowData)}
-                                    >
-                                        Delete
-                                    </DropdownMenuItem>
-                                )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    );
-                },
-            },
-        ]
-        : columns;
+                                        {actions.onDelete && (
+                                            <DropdownMenuItem
+                                                onClick={() => actions.onDelete?.(rowData)}
+                                            >
+                                                Delete
+                                            </DropdownMenuItem>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            );
+                        },
+                    },
+                ]
+                : columns,
+        [actions, columns],
+    );
 
     // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table is intentionally used here and React Compiler already skips memoization for this hook.
     const table = useReactTable({

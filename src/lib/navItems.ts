@@ -15,21 +15,21 @@ const adminNavItems: NavSection[] = [
     {
         title: "Catalog",
         items: [
-            {
-                title: "Categories",
-                href: "/admin/categories",
-                icon: "FolderTree",
-            },
+            // {
+            //     title: "Categories",
+            //     href: "/admin/categories",
+            //     icon: "FolderTree",
+            // },
             {
                 title: "Products",
                 href: "/admin/products",
                 icon: "Shirt",
             },
-            {
-                title: "Product Variants",
-                href: "/admin/product-variants",
-                icon: "Layers",
-            },
+            // {
+            //     title: "Product Variants",
+            //     href: "/admin/product-variants",
+            //     icon: "Layers",
+            // },
             {
                 title: "Orders",
                 href: "/admin/orders",

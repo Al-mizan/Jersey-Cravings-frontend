@@ -1,29 +1,52 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { getNewTokensWithRefreshToken } from '@/services/auth.service';
 import { ApiResponse } from '@/types/api.types';
 import axios from 'axios';
-import { cookies, headers } from 'next/headers';
-import { isTokenExpiringSoon } from '../tokenUtils';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const CLIENT_PROXY_BASE_URL = "/api/proxy";
 
 if (!API_BASE_URL) {
     throw new Error('NEXT_PUBLIC_API_BASE_URL is not defined in environment variables');
 }
 
-async function tryRefreshToken(
-    accessToken: string,
-    refreshToken: string
-): Promise<void> {
-    if (!(await isTokenExpiringSoon(accessToken))) {
+const getTokenSecondsRemaining = (token: string): number => {
+    if (!token) return 0;
+    try {
+        const [, payloadBase64] = token.split(".");
+        if (!payloadBase64) return 0;
+        const payload = JSON.parse(
+            typeof window === "undefined"
+                ? Buffer.from(payloadBase64, "base64").toString("utf-8")
+                : atob(payloadBase64),
+        ) as { exp?: number };
+        if (!payload.exp) return 0;
+        const remaining = payload.exp - Math.floor(Date.now() / 1000);
+        return remaining > 0 ? remaining : 0;
+    } catch {
+        return 0;
+    }
+};
+
+const isTokenExpiringSoon = (token: string, thresholdInSeconds = 300) => {
+    const remaining = getTokenSecondsRemaining(token);
+    return remaining > 0 && remaining <= thresholdInSeconds;
+};
+
+async function tryRefreshToken(accessToken: string, refreshToken: string): Promise<void> {
+    if (!isTokenExpiringSoon(accessToken)) {
         return;
     }
+    if (typeof window !== "undefined") {
+        return;
+    }
+    const { headers } = await import("next/headers");
     const requestHeader = await headers();
 
     if (requestHeader.get("x-token-refreshed") === "1") {
         return; // avoid multiple refresh attempts in the same request lifecycle
     }
     try {
+        const { getNewTokensWithRefreshToken } = await import("@/services/auth.service");
         await getNewTokensWithRefreshToken(refreshToken);
     } catch (error: any) {
         console.error("Error refreshing token in http client:", error);
@@ -31,26 +54,33 @@ async function tryRefreshToken(
 }
 
 const axiosInstance = async () => {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get("accessToken")?.value;
-    const refreshToken = cookieStore.get("refreshToken")?.value;
+    let cookieHeader = "";
 
-    if (accessToken && refreshToken) {
-        await tryRefreshToken(accessToken, refreshToken);
+    if (typeof window === "undefined") {
+        const { cookies } = await import("next/headers");
+        const cookieStore = await cookies();
+        const accessToken = cookieStore.get("accessToken")?.value;
+        const refreshToken = cookieStore.get("refreshToken")?.value;
+
+        if (accessToken && refreshToken) {
+            await tryRefreshToken(accessToken, refreshToken);
+        }
+
+        cookieHeader = cookieStore
+            .getAll()
+            .map((cookie) => `${cookie.name}=${cookie.value}`)
+            .join("; ");
     }
-    const cookieHeader = cookieStore
-        .getAll()
-        .map((cookie) => `${cookie.name}=${cookie.value}`)
-        .join("; ");
-    // eg Cookie: "accessToken=abc123; refreshToken=def456"
 
     const instance = axios.create({
-        baseURL: API_BASE_URL,
+        baseURL:
+            typeof window === "undefined" ? API_BASE_URL : CLIENT_PROXY_BASE_URL,
         timeout: 30000,
         headers: {
             'Content-Type': 'application/json',
-            Cookie: cookieHeader
-        }
+            ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+        },
+        withCredentials: true,
     })
 
     return instance;

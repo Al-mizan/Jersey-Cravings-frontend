@@ -12,6 +12,7 @@ import {
     createProduct,
     createProductMedia,
     createVariant,
+    deleteVariant,
     getAllCategories,
     getProductMedia,
     getProductVariants,
@@ -105,6 +106,24 @@ export default function CreateProductPage() {
             queryClient.invalidateQueries({
                 queryKey: ["admin", "products", "variants", product?.id],
             }),
+    });
+    const deleteVariantMutation = useMutation({
+        mutationFn: ({
+            productId,
+            variantId,
+        }: {
+            productId: string;
+            variantId: string;
+        }) => deleteVariant(productId, variantId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: ["admin", "products", "variants", product?.id],
+            });
+            toast.success("Variant deleted");
+        },
+        onError: () => {
+            toast.error("Failed to delete variant");
+        },
     });
 
     const uploadMediaMutation = useMutation({
@@ -284,9 +303,14 @@ export default function CreateProductPage() {
                                                 <Label>Category Name</Label>
                                                 <Input
                                                     value={field.state.value}
-                                                    onChange={(event) =>
-                                                        field.handleChange(event.target.value)
-                                                    }
+                                                    onChange={(event) => {
+                                                        const nextName = event.target.value;
+                                                        field.handleChange(nextName);
+                                                        productForm.setFieldValue(
+                                                            "categorySlug",
+                                                            slugify(nextName),
+                                                        );
+                                                    }}
                                                     placeholder="European Club"
                                                 />
                                             </div>
@@ -344,9 +368,14 @@ export default function CreateProductPage() {
                                             <Label>Product Title</Label>
                                             <Input
                                                 value={field.state.value}
-                                                onChange={(event) =>
-                                                    field.handleChange(event.target.value)
-                                                }
+                                                onChange={(event) => {
+                                                    const nextTitle = event.target.value;
+                                                    field.handleChange(nextTitle);
+                                                    productForm.setFieldValue(
+                                                        "slug",
+                                                        slugify(nextTitle),
+                                                    );
+                                                }}
                                                 placeholder="Barcelona Home Jersey 2026"
                                             />
                                         </div>
@@ -355,7 +384,7 @@ export default function CreateProductPage() {
                                 <productForm.Field name="slug">
                                     {(field) => (
                                         <div className="space-y-2">
-                                            <Label>Slug</Label>
+                                            <Label>Product Slug</Label>
                                             <Input
                                                 value={field.state.value}
                                                 onChange={(event) =>
@@ -645,10 +674,30 @@ export default function CreateProductPage() {
                                 <h3 className="text-sm font-semibold">Added Variants</h3>
                                 <div className="flex flex-wrap gap-2">
                                     {(variantsQuery.data?.data ?? []).map((variant) => (
-                                        <Badge key={variant.id} variant="outline">
-                                            {variant.size} • {variant.fit} • {variant.sleeveType} •
-                                            {variant.stockQty}
-                                        </Badge>
+                                        <div
+                                            key={variant.id}
+                                            className="inline-flex items-center gap-1 rounded-md border px-2 py-1"
+                                        >
+                                            <Badge variant="outline">
+                                                {variant.size} • {variant.fit} •{" "}
+                                                {variant.sleeveType} • {variant.stockQty}
+                                            </Badge>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-6 w-6"
+                                                onClick={() =>
+                                                    deleteVariantMutation.mutate({
+                                                        productId: product.id,
+                                                        variantId: variant.id,
+                                                    })
+                                                }
+                                                disabled={deleteVariantMutation.isPending}
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                            </Button>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
