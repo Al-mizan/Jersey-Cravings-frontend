@@ -1,20 +1,30 @@
-import { createServerQueryClient } from "@/lib/api";
+import AdminDashboardClient from "@/components/modules/Dashboard/AdminDashboardClient";
+import { adminDashboardKeys } from "@/hooks/queries/adminQueryKeys";
 import {
     getActivityTimeline,
     getCatalogStats,
     getCustomerStats,
     getDashboardSummary,
     getOrderStats,
-} from "@/services/admin.services";
-import { adminDashboardKeys } from "@/hooks/queries/adminQueryKeys";
-import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import AdminDashboardClient from "./AdminDashboardClient";
+} from "@/services/admin.service";
+import type {
+    IActivityFeedResponse,
+    ICatalogStats,
+    ICustomerStats,
+    IDashboardSummary,
+    IOrderStats,
+} from "@/types/admin.types";
+import {
+    dehydrate,
+    HydrationBoundary,
+    QueryClient,
+} from "@tanstack/react-query";
 
 const ACTIVITY_PAGE = 1;
 const ACTIVITY_LIMIT = 10;
 
 export default async function AdminDashboardPage() {
-    const queryClient = createServerQueryClient();
+    const queryClient = new QueryClient();
 
     await Promise.all([
         queryClient.prefetchQuery({
@@ -42,9 +52,34 @@ export default async function AdminDashboardPage() {
         }),
     ]);
 
+    const summary = queryClient.getQueryData<IDashboardSummary>(
+        adminDashboardKeys.summary(),
+    );
+    const catalogStats = queryClient.getQueryData<ICatalogStats>(
+        adminDashboardKeys.catalogStats(),
+    );
+    const orderStats = queryClient.getQueryData<IOrderStats>(
+        adminDashboardKeys.orderStats(),
+    );
+    const customerStats = queryClient.getQueryData<ICustomerStats>(
+        adminDashboardKeys.customerStats(),
+    );
+    const activityTimeline = queryClient.getQueryData<IActivityFeedResponse>(
+        adminDashboardKeys.activityTimeline({
+            page: ACTIVITY_PAGE,
+            limit: ACTIVITY_LIMIT,
+        }),
+    );
+
     return (
         <HydrationBoundary state={dehydrate(queryClient)}>
-            <AdminDashboardClient />
+            <AdminDashboardClient
+                summary={summary}
+                catalogStats={catalogStats}
+                orderStats={orderStats}
+                customerStats={customerStats}
+                activityTimeline={activityTimeline}
+            />
         </HydrationBoundary>
     );
 }

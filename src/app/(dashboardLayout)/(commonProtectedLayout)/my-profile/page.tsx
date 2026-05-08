@@ -1,7 +1,11 @@
-import { CustomerWorkspace } from "@/components/modules/Customer";
+// // import { CustomerWorkspace } from "@/components/modules/Customer";
 
-const MyProfilePage = () => {
-    return <CustomerWorkspace />;
-};
+// const MyProfilePage = () => {
+//     return <CustomerWorkspace />;
+// };
 
-export default MyProfilePage;
+// export default MyProfilePage;
+
+export default function MyProfilePage() {
+    return <div>My Profile Page</div>;
+}

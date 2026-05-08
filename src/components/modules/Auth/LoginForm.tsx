@@ -1,50 +1,60 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { loginAction } from "@/app/(commonLayout)/(authRouteGroup)/login/_action";
-import AppField from "@/components/shared/form/AppField";
-import AppSubmitButton from "@/components/shared/form/AppSubmitButton";
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { loginAction } from "@/app/(commonLayout)/(authRouteGroup)/login/_action";
 import { ILoginPayload, loginZodSchema } from "@/zod/auth.validation";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
-import { Eye, EyeOff } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, Loader2, LogIn } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 interface LoginFormProps {
     redirectPath?: string;
+    oauthError?: string;
+    message?: string;
 }
 
-const isRedirectError = (error: unknown): boolean => {
-    if (!error || typeof error !== "object") {
-        return false;
+const getErrorMessage = (error: unknown): string => {
+    if (typeof error === "string") return error;
+    if (error && typeof error === "object" && "message" in error) {
+        return (error as { message: string }).message;
     }
-
-    const maybeRedirectError = error as {
-        digest?: string;
-        message?: string;
-    };
-
-    return (
-        maybeRedirectError.digest?.startsWith("NEXT_REDIRECT") === true ||
-        maybeRedirectError.message === "NEXT_REDIRECT"
-    );
+    return "Invalid input";
 };
 
-const LoginForm = ({ redirectPath }: LoginFormProps) => {
-    const router = useRouter();
-    const [serverError, setServerError] = useState<string | null>(null);
+const mapOAuthError = (errorCode?: string): string | null => {
+    if (!errorCode) return null;
+    switch (errorCode) {
+        case "oauth_failed":
+            return "Google sign-in failed. Please try again.";
+        case "session_expired":
+            return "Your session expired. Please log in again.";
+        case "access_denied":
+            return "Access denied. Please use another account.";
+        default:
+            return "Unable to complete Google sign-in.";
+    }
+};
+
+const LoginForm = ({ redirectPath, oauthError, message }: LoginFormProps) => {
     const [showPassword, setShowPassword] = useState(false);
+    const [isGoogleRedirecting, setIsGoogleRedirecting] = useState(false);
+    const oauthErrorMessage = useMemo(
+        () => mapOAuthError(oauthError),
+        [oauthError],
+    );
+
+    // Show oauth/message toasts on mount
+    useEffect(() => {
+        if (oauthErrorMessage) toast.error(oauthErrorMessage);
+        else if (message) toast(message);
+    }, [oauthErrorMessage, message]);
 
     const { mutateAsync, isPending } = useMutation({
         mutationFn: (payload: ILoginPayload) =>
@@ -52,200 +62,261 @@ const LoginForm = ({ redirectPath }: LoginFormProps) => {
     });
 
     const form = useForm({
-        defaultValues: {
-            email: "",
-            password: "",
-        },
-
+        defaultValues: { email: "", password: "" },
         onSubmit: async ({ value }) => {
-            setServerError(null);
             try {
                 const result = (await mutateAsync(value)) as any;
-
-                if (!result.success) {
-                    setServerError(result.message || "Login failed");
-                    return;
+                if (!result?.success) {
+                    toast.error(result?.message || "Login failed");
                 }
-
-                router.replace(result.redirectTo);
-                router.refresh();
             } catch (error: any) {
-                if (isRedirectError(error)) {
-                    throw error; // let Next.js handle redirect
-                }
-                console.log(`Login failed: ${error.message}`);
-                setServerError(`Login failed: ${error.message}`);
+                if (error?.digest?.startsWith("NEXT_REDIRECT")) return;
+                toast.error(error?.message || "Something went wrong");
             }
         },
     });
-    // In your LoginForm component
+
     const handleGoogleLogin = () => {
-        const apiBaseUrl =
-            process.env.NEXT_PUBLIC_AUTH_URL ||
-            process.env.NEXT_PUBLIC_API_BASE_URL?.replace("/api/v1", "");
-
-        window.location.href = `${apiBaseUrl}/api/v1/auth/login/google`;
+        const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+        if (!apiUrl) {
+            toast.error("Authentication service URL is not configured.");
+            return;
+        }
+        setIsGoogleRedirecting(true);
+        window.location.href = `${apiUrl}/auth/login/google?state=${encodeURIComponent(redirectPath || "/")}`;
     };
+
     return (
-        <Card className="w-full max-w-md mx-auto shadow-md">
-            <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold">
-                    Welcome Back!
-                </CardTitle>
-                <CardDescription>
-                    Please enter your credentials to log in.
-                </CardDescription>
-            </CardHeader>
-
-            <CardContent>
-                <form
-                    method="POST"
-                    action="#"
-                    noValidate
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        form.handleSubmit();
-                    }}
-                    className="space-y-4"
-                >
-                    <form.Field
-                        name="email"
-                        validators={{ onChange: loginZodSchema.shape.email }}
-                    >
-                        {(field) => (
-                            <AppField
-                                field={field}
-                                label="Email"
-                                type="email"
-                                placeholder="Enter your email"
-                            />
-                        )}
-                    </form.Field>
-
-                    <form.Field
-                        name="password"
-                        validators={{ onChange: loginZodSchema.shape.password }}
-                    >
-                        {(field) => (
-                            <AppField
-                                field={field}
-                                label="Password"
-                                // type={showPassword ? "text" : "password"}
-                                type="text"
-                                placeholder="Enter your password"
-                                aria-label={
-                                    showPassword
-                                        ? "Hide password"
-                                        : "Show password"
-                                }
-                                className="cursor-pointer"
-                                append={
-                                    <Button
-                                        type="button"
-                                        onClick={() =>
-                                            setShowPassword((value) => !value)
-                                        }
-                                        variant="ghost"
-                                        size="icon"
-                                    >
-                                        {showPassword ? (
-                                            <EyeOff
-                                                className="size-4"
-                                                aria-hidden="true"
-                                            />
-                                        ) : (
-                                            <Eye
-                                                className="size-4"
-                                                aria-hidden="true"
-                                            />
-                                        )}
-                                    </Button>
-                                }
-                            />
-                        )}
-                    </form.Field>
-
-                    <div className="text-right mt-2">
-                        <Link
-                            href="/forgot-password"
-                            className="text-sm text-primary hover:underline underline-offset-4"
-                        >
-                            Forgot password?
-                        </Link>
+        <div className="w-full max-w-md mx-auto ">
+            {/* Header */}
+            <div className="w-full max-w-md mx-auto backdrop-blur-xl bg-white/10 dark:bg-white/5 border border-white/20 rounded-3xl shadow-2xl p-8 sm:p-10">
+                <div className="mb-8 text-center">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold tracking-widest uppercase mb-5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        Sign In
                     </div>
-
-                    {serverError && (
-                        <Alert variant={"destructive"}>
-                            <AlertDescription>{serverError}</AlertDescription>
-                        </Alert>
-                    )}
-
-                    <form.Subscribe
-                        selector={(s) => [s.canSubmit, s.isSubmitting] as const}
-                    >
-                        {([canSubmit, isSubmitting]) => (
-                            <AppSubmitButton
-                                isPending={isSubmitting || isPending}
-                                pendingLabel="Logging In...."
-                                disabled={!canSubmit}
-                            >
-                                Log In
-                            </AppSubmitButton>
-                        )}
-                    </form.Subscribe>
-                </form>
-
-                <div className="relative my-6">
-                    <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-300"></div>
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                        <span className="px-2 bg-white text-gray-500">
-                            Or continue with
-                        </span>
-                    </div>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                        Welcome back
+                    </h1>
+                    <p className="text-muted-foreground text-sm mt-1.5">
+                        Enter your credentials to continue
+                    </p>
                 </div>
 
-                <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => handleGoogleLogin()}
-                >
-                    <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                        <path
-                            fill="currentColor"
-                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        />
-                        <path
-                            fill="currentColor"
-                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        />
-                        <path
-                            fill="currentColor"
-                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                        />
-                        <path
-                            fill="currentColor"
-                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                        />
-                    </svg>
-                    Sign in with Google
-                </Button>
-            </CardContent>
+                {/* Card */}
+                <div className="rounded-2xl border border-border/60 bg-card shadow-xl shadow-black/5 p-8">
+                    <form
+                        noValidate
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            form.handleSubmit();
+                        }}
+                        className="space-y-5"
+                    >
+                        {/* Email */}
+                        <form.Field
+                            name="email"
+                            validators={{
+                                onChange: loginZodSchema.shape.email,
+                            }}
+                        >
+                            {(field) => (
+                                <div className="space-y-1.5">
+                                    <Label
+                                        htmlFor="email"
+                                        className="text-xs font-medium text-muted-foreground tracking-wide"
+                                    >
+                                        Email address
+                                    </Label>
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        placeholder="you@example.com"
+                                        value={field.state.value}
+                                        onChange={(e) =>
+                                            field.handleChange(e.target.value)
+                                        }
+                                        onBlur={field.handleBlur}
+                                        className="h-11 bg-background/50 border-border/60 focus-visible:ring-primary/30"
+                                    />
+                                    {field.state.meta.errors?.[0] && (
+                                        <p className="text-xs text-destructive">
+                                            {getErrorMessage(
+                                                field.state.meta.errors[0],
+                                            )}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </form.Field>
 
-            <CardFooter className="justify-center border-t pt-4">
-                <p className="text-sm text-muted-foreground">
+                        {/* Password */}
+                        <form.Field
+                            name="password"
+                            validators={{
+                                onChange: loginZodSchema.shape.password,
+                            }}
+                        >
+                            {(field) => (
+                                <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                        <Label
+                                            htmlFor="password"
+                                            className="text-xs font-medium text-muted-foreground tracking-wide"
+                                        >
+                                            Password
+                                        </Label>
+                                        <Link
+                                            href="/forgot-password"
+                                            className="text-xs text-primary hover:underline underline-offset-4"
+                                        >
+                                            Forgot password?
+                                        </Link>
+                                    </div>
+                                    <div className="relative">
+                                        <Input
+                                            id="password"
+                                            type={
+                                                showPassword
+                                                    ? "text"
+                                                    : "password"
+                                            }
+                                            placeholder="••••••••"
+                                            value={field.state.value}
+                                            onChange={(e) =>
+                                                field.handleChange(
+                                                    e.target.value,
+                                                )
+                                            }
+                                            onBlur={field.handleBlur}
+                                            className="h-11 bg-background/50 border-border/60 focus-visible:ring-primary/30 pr-11"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setShowPassword((v) => !v)
+                                            }
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                        >
+                                            {showPassword ? (
+                                                <EyeOff className="size-4" />
+                                            ) : (
+                                                <Eye className="size-4" />
+                                            )}
+                                        </button>
+                                    </div>
+                                    {field.state.meta.errors?.[0] && (
+                                        <p className="text-xs text-destructive">
+                                            {getErrorMessage(
+                                                field.state.meta.errors[0],
+                                            )}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </form.Field>
+
+                        {/* Alerts
+                        {(serverError || oauthErrorMessage || message) && (
+                            <Alert
+                                variant={message ? "default" : "destructive"}
+                                className="py-2.5"
+                            >
+                                <AlertCircle className="size-3.5" />
+                                <AlertDescription className="text-xs">
+                                    {serverError ||
+                                        oauthErrorMessage ||
+                                        message}
+                                </AlertDescription>
+                            </Alert>
+                        )} */}
+
+                        {/* Submit */}
+                        <form.Subscribe
+                            selector={(s) =>
+                                [s.canSubmit, s.isSubmitting] as const
+                            }
+                        >
+                            {([canSubmit, isSubmitting]) => (
+                                <Button
+                                    type="submit"
+                                    disabled={
+                                        !canSubmit || isSubmitting || isPending
+                                    }
+                                    className="w-full h-11 font-semibold gap-2"
+                                >
+                                    {isSubmitting || isPending ? (
+                                        <>
+                                            <Loader2 className="size-4 animate-spin" />{" "}
+                                            Signing in...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <LogIn className="size-4" /> Sign In
+                                        </>
+                                    )}
+                                </Button>
+                            )}
+                        </form.Subscribe>
+                    </form>
+
+                    {/* Divider */}
+                    <div className="flex items-center gap-3 my-6">
+                        <Separator className="flex-1" />
+                        <span className="text-xs text-muted-foreground">
+                            or continue with
+                        </span>
+                        <Separator className="flex-1" />
+                    </div>
+
+                    {/* Google */}
+                    <Button
+                        variant="outline"
+                        className="w-full h-11 border-border/60 hover:bg-accent/50 gap-2.5"
+                        onClick={handleGoogleLogin}
+                        disabled={isGoogleRedirecting}
+                    >
+                        {isGoogleRedirecting ? (
+                            <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                            <svg className="size-4" viewBox="0 0 24 24">
+                                <path
+                                    fill="#4285F4"
+                                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                />
+                                <path
+                                    fill="#34A853"
+                                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                />
+                                <path
+                                    fill="#FBBC05"
+                                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                                />
+                                <path
+                                    fill="#EA4335"
+                                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                                />
+                            </svg>
+                        )}
+                        {isGoogleRedirecting
+                            ? "Redirecting..."
+                            : "Sign in with Google"}
+                    </Button>
+                </div>
+
+                {/* Footer */}
+                <p className="text-center text-sm text-muted-foreground mt-6">
                     Don&apos;t have an account?{" "}
                     <Link
                         href="/register"
                         className="text-primary font-medium hover:underline underline-offset-4"
                     >
-                        Sign Up for an account
+                        Create one
                     </Link>
                 </p>
-            </CardFooter>
-        </Card>
+            </div>
+        </div>
     );
 };
 

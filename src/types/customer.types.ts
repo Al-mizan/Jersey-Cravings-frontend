@@ -199,7 +199,6 @@ export interface ICustomerStatusChangeResult {
         deletedAt: string | null;
         createdAt: string;
         updatedAt: string;
-        needPasswordChange: boolean;
         name: string;
         emailVerified: boolean;
         image: string | null;

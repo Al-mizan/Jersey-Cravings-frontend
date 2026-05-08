@@ -1,6 +1,6 @@
 "use server";
 
-import { logoutUser } from "@/services/auth.services";
+import { logoutUser } from "@/services/auth.service";
 import { ApiErrorResponse } from "@/types/api.types";
 
 export interface LogoutActionResponse {

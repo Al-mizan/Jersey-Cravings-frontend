@@ -1,4 +1,4 @@
-import { customerApiClient, CustomerWorkspace } from "@/components/modules/Customer";
+// import { customerApiClient, CustomerWorkspace } from "@/components/modules/Customer";
 
 const CustomerDashboardPage = async () => {
     // return <CustomerWorkspace />;

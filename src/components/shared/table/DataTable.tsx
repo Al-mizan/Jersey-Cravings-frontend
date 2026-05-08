@@ -99,65 +99,51 @@ const DataTable = <TData,>({
 
     const tableColumns: ColumnDef<TData>[] = actions
         ? [
-              ...columns,
+            ...columns,
 
-              // Action column
-              {
-                  id: "actions", // Unique id for the column
-                  // ekhane accessorKey or cell value nai, karon amra custom cell renderer use korbo jeita action buttons show korbe and aita database a nai
-                  header: "Actions",
-                  enableSorting: false,
-                  cell: ({ row }) => {
-                      const rowData = row.original;
+            // Action column
+            {
+                id: "actions", // Unique id for the column
+                header: "Actions",
+                enableSorting: false,
+                cell: ({ row }) => {
+                    const rowData = row.original;
 
-                      return (
-                          <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                  <Button
-                                      variant={"ghost"}
-                                      className="h-8 w-8 p-0"
-                                  >
-                                      <span className="sr-only">Open Menu</span>
-                                      <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                              </DropdownMenuTrigger>
+                    return (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant={"ghost"} className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open Menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
 
-                              <DropdownMenuContent align="end">
-                                  {actions.onView && (
-                                      <DropdownMenuItem
-                                          onClick={() =>
-                                              actions.onView?.(rowData)
-                                          }
-                                      >
-                                          View
-                                      </DropdownMenuItem>
-                                  )}
+                            <DropdownMenuContent align="end">
+                                {actions.onView && (
+                                    <DropdownMenuItem onClick={() => actions.onView?.(rowData)}>
+                                        View
+                                    </DropdownMenuItem>
+                                )}
 
-                                  {actions.onEdit && (
-                                      <DropdownMenuItem
-                                          onClick={() =>
-                                              actions.onEdit?.(rowData)
-                                          }
-                                      >
-                                          Edit
-                                      </DropdownMenuItem>
-                                  )}
+                                {actions.onEdit && (
+                                    <DropdownMenuItem onClick={() => actions.onEdit?.(rowData)}>
+                                        Edit
+                                    </DropdownMenuItem>
+                                )}
 
-                                  {actions.onDelete && (
-                                      <DropdownMenuItem
-                                          onClick={() =>
-                                              actions.onDelete?.(rowData)
-                                          }
-                                      >
-                                          Delete
-                                      </DropdownMenuItem>
-                                  )}
-                              </DropdownMenuContent>
-                          </DropdownMenu>
-                      );
-                  },
-              },
-          ]
+                                {actions.onDelete && (
+                                    <DropdownMenuItem
+                                        onClick={() => actions.onDelete?.(rowData)}
+                                    >
+                                        Delete
+                                    </DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    );
+                },
+            },
+        ]
         : columns;
 
     // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table is intentionally used here and React Compiler already skips memoization for this hook.
@@ -176,26 +162,26 @@ const DataTable = <TData,>({
         },
         onSortingChange: sorting
             ? (updater) => {
-                  const currentSortingState = sorting.state;
+                const currentSortingState = sorting.state;
 
-                  const nextSortingState =
-                      typeof updater === "function"
-                          ? updater(currentSortingState)
-                          : updater;
+                const nextSortingState =
+                    typeof updater === "function"
+                        ? updater(currentSortingState)
+                        : updater;
 
-                  sorting.onSortingChange(nextSortingState);
-              }
+                sorting.onSortingChange(nextSortingState);
+            }
             : undefined,
         onPaginationChange: pagination
             ? (updater) => {
-                  const currentPaginationState = pagination.state;
-                  const nextPaginationState =
-                      typeof updater === "function"
-                          ? updater(currentPaginationState)
-                          : updater;
+                const currentPaginationState = pagination.state;
+                const nextPaginationState =
+                    typeof updater === "function"
+                        ? updater(currentPaginationState)
+                        : updater;
 
-                  pagination.onPaginationChange(nextPaginationState);
-              }
+                pagination.onPaginationChange(nextPaginationState);
+            }
             : undefined,
     });
     return (
@@ -204,9 +190,7 @@ const DataTable = <TData,>({
                 <div className="absolute inset-0 bg-background/50 backdrop-blur-sm z-10 flex items-center justify-center">
                     <div className="flex items-center gap-2">
                         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                        <span className="text-sm text-muted-foreground">
-                            Loading...
-                        </span>
+                        <span className="text-sm text-muted-foreground">Loading...</span>
                     </div>
                 </div>
             )}
@@ -255,16 +239,13 @@ const DataTable = <TData,>({
                                                 onClick={header.column.getToggleSortingHandler()}
                                             >
                                                 {flexRender(
-                                                    header.column.columnDef
-                                                        .header,
+                                                    header.column.columnDef.header,
                                                     header.getContext(),
                                                 )}
 
-                                                {header.column.getIsSorted() ===
-                                                "asc" ? (
+                                                {header.column.getIsSorted() === "asc" ? (
                                                     <ArrowUp className="ml-1 h-4 w-4" />
-                                                ) : header.column.getIsSorted() ===
-                                                  "desc" ? (
+                                                ) : header.column.getIsSorted() === "desc" ? (
                                                     <ArrowDown className="ml-1 h-4 w-4" />
                                                 ) : (
                                                     <ArrowUpDown className="ml-1 h-4 w-4 opacity-50" />

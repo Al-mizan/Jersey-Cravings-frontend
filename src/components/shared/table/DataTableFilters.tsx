@@ -146,9 +146,7 @@ const MultiSelectFilterControl = ({
                                 onCheckedChange={(checkedState) => {
                                     const nextValues = checkedState
                                         ? [...selectedValues, option.value]
-                                        : selectedValues.filter(
-                                              (item) => item !== option.value,
-                                          );
+                                        : selectedValues.filter((item) => item !== option.value);
 
                                     setSelectedValues(nextValues);
                                 }}
@@ -171,12 +169,7 @@ const MultiSelectFilterControl = ({
                     Clear
                 </Button>
 
-                <Button
-                    type="button"
-                    size="sm"
-                    onClick={applyNow}
-                    disabled={isLoading}
-                >
+                <Button type="button" size="sm" onClick={applyNow} disabled={isLoading}>
                     Apply
                 </Button>
             </div>
@@ -291,12 +284,7 @@ const RangeFilterControl = ({
                     Clear
                 </Button>
 
-                <Button
-                    type="button"
-                    size="sm"
-                    onClick={applyNow}
-                    disabled={isLoading}
-                >
+                <Button type="button" size="sm" onClick={applyNow} disabled={isLoading}>
                     Apply
                 </Button>
             </div>
@@ -330,9 +318,7 @@ const DataTableFilters = ({
 
             if (filter.type === "single-select") {
                 if (typeof filterValue === "string" && filterValue.length > 0) {
-                    const option = filter.options.find(
-                        (o) => o.value === filterValue,
-                    );
+                    const option = filter.options.find((o) => o.value === filterValue);
                     badges.push({
                         key: `${filter.id}:${filterValue}`,
                         label: `${filter.label}: ${option?.label ?? filterValue}`,
@@ -348,13 +334,8 @@ const DataTableFilters = ({
                         key: `${filter.id}:${val}`,
                         label: `${filter.label}: ${option?.label ?? val}`,
                         onRemove: () => {
-                            const next = (filterValue as string[]).filter(
-                                (v) => v !== val,
-                            );
-                            onFilterChange(
-                                filter.id,
-                                next.length > 0 ? next : undefined,
-                            );
+                            const next = (filterValue as string[]).filter((v) => v !== val);
+                            onFilterChange(filter.id, next.length > 0 ? next : undefined);
                         },
                     });
                 }
@@ -368,17 +349,9 @@ const DataTableFilters = ({
                             key: `${filter.id}:${op}`,
                             label: `${filter.label}: ${RANGE_OPERATOR_LABEL[op]} ${val}`,
                             onRemove: () => {
-                                const next: DataTableRangeValue = {
-                                    ...filterValue,
-                                    [op]: "",
-                                };
-                                const hasAny = RANGE_OPERATORS.some((o) =>
-                                    next[o]?.trim(),
-                                );
-                                onFilterChange(
-                                    filter.id,
-                                    hasAny ? next : undefined,
-                                );
+                                const next: DataTableRangeValue = { ...filterValue, [op]: "" };
+                                const hasAny = RANGE_OPERATORS.some((o) => next[o]?.trim());
+                                onFilterChange(filter.id, hasAny ? next : undefined);
                             },
                         });
                     }
@@ -397,10 +370,7 @@ const DataTableFilters = ({
             <div className="flex flex-wrap items-center gap-2">
                 {filters.map((filter) => {
                     const filterValue = values[filter.id];
-                    const activeCount = getFilterActiveCount(
-                        filter,
-                        filterValue,
-                    );
+                    const activeCount = getFilterActiveCount(filter, filterValue);
                     const triggerClass = cn(
                         "h-9",
                         activeCount > 0 && "border-primary text-primary",
@@ -418,10 +388,7 @@ const DataTableFilters = ({
                                 >
                                     {filter.label}
                                     {activeCount > 0 && (
-                                        <Badge
-                                            className="h-5 min-w-5 px-1.5"
-                                            variant="secondary"
-                                        >
+                                        <Badge className="h-5 min-w-5 px-1.5" variant="secondary">
                                             {activeCount}
                                         </Badge>
                                     )}
@@ -430,19 +397,13 @@ const DataTableFilters = ({
 
                             <PopoverContent align="start" className="w-80">
                                 <div className="mb-3 flex items-center justify-between">
-                                    <h3 className="text-sm font-semibold">
-                                        {filter.label}
-                                    </h3>
+                                    <h3 className="text-sm font-semibold">{filter.label}</h3>
                                 </div>
 
                                 {filter.type === "single-select" && (
                                     <SingleSelectFilterControl
                                         filter={filter}
-                                        value={
-                                            typeof filterValue === "string"
-                                                ? filterValue
-                                                : ""
-                                        }
+                                        value={typeof filterValue === "string" ? filterValue : ""}
                                         isLoading={isLoading}
                                         onFilterChange={onFilterChange}
                                     />
@@ -451,11 +412,7 @@ const DataTableFilters = ({
                                 {filter.type === "multi-select" && (
                                     <MultiSelectFilterControl
                                         filter={filter}
-                                        value={
-                                            Array.isArray(filterValue)
-                                                ? filterValue
-                                                : []
-                                        }
+                                        value={Array.isArray(filterValue) ? filterValue : []}
                                         isLoading={isLoading}
                                         onFilterChange={onFilterChange}
                                     />
@@ -464,11 +421,7 @@ const DataTableFilters = ({
                                 {filter.type === "range" && (
                                     <RangeFilterControl
                                         filter={filter}
-                                        value={
-                                            isRangeValue(filterValue)
-                                                ? filterValue
-                                                : {}
-                                        }
+                                        value={isRangeValue(filterValue) ? filterValue : {}}
                                         isLoading={isLoading}
                                         onFilterChange={onFilterChange}
                                     />

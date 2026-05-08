@@ -1,57 +1,54 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
-/**
- * Login server action - validates credentials and sets auth tokens
- * Handles account state redirects (email verification, password change)
- */
-
-import { loginZodSchema, ILoginPayload } from "@/zod/auth.validation";
-import { loginUser, getUserInfo } from "@/services/auth.services";
-import { resolvePostAuthRedirectPath } from "@/lib/auth";
-import { ILoginResponse } from "@/types/auth.types";
+import {
+    getDefaultDashboardRoute,
+    isValidRedirectForRole,
+    UserRole,
+} from "@/lib/authUtils";
+import { httpClient } from "@/lib/axios/httpClient";
+import { setTokenInCookies } from "@/lib/tokenUtils";
 import { ApiErrorResponse } from "@/types/api.types";
+import { ILoginResponse } from "@/types/auth.types";
+import { ILoginPayload, loginZodSchema } from "@/zod/auth.validation";
 import { redirect } from "next/navigation";
 
 export const loginAction = async (
     payload: ILoginPayload,
     redirectPath?: string,
-) => {
+): Promise<ILoginResponse | ApiErrorResponse> => {
     const parsedPayload = loginZodSchema.safeParse(payload);
 
     if (!parsedPayload.success) {
         const firstError =
-            parsedPayload.error.issues[0]?.message || "Invalid input";
+            parsedPayload.error.issues[0].message || "Invalid input";
         return {
             success: false,
             message: firstError,
         };
     }
-
+    let targetPath: string | null = null;
     try {
-        // Call auth service to login and set tokens
-        const result = await loginUser(parsedPayload.data);
-        if (!result.success) {
-            return {
-                success: false,
-                message: result.message,
-            };
-        }
+        const response = await httpClient.post<ILoginResponse>(
+            "/auth/login",
+            parsedPayload.data,
+        );
 
-        // Get current user info to check account state
-        const userInfo = await getUserInfo();
-        if (!userInfo) {
-            return {
-                success: false,
-                message: "Failed to fetch user information",
-            };
-        }
+        const { accessToken, refreshToken, user } = response.data;
+        const { role, emailVerified, email } = user;
+        await setTokenInCookies("accessToken", accessToken);
+        await setTokenInCookies("refreshToken", refreshToken);
 
-        // console.log(userInfo, "user info from login action");
+        targetPath =
+            redirectPath &&
+            isValidRedirectForRole(redirectPath, role as UserRole)
+                ? redirectPath
+                : getDefaultDashboardRoute(role as UserRole);
 
-        const targetPath = resolvePostAuthRedirectPath(userInfo, redirectPath);
-        redirect(targetPath);
+        console.log("Redirecting to:", targetPath);
+
     } catch (error: any) {
+        console.log(error, "error");
         if (
             error &&
             typeof error === "object" &&
@@ -74,4 +71,9 @@ export const loginAction = async (
             message: `Login failed: ${error.response?.status === 404 ? `API endpoint not found at ${process.env.NEXT_PUBLIC_API_BASE_URL}` : error.message}`,
         };
     }
+    if (targetPath) {
+        redirect(targetPath);
+    }
+
+    return { success: false, message: "Unexpected error" };
 };

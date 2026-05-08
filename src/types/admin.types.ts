@@ -1,42 +1,82 @@
 // Admin & Governance Types
 
+export interface IDashboardStatusCount {
+    status: string;
+    count: number;
+}
+
+export interface IRecentSignup {
+    id: string;
+    name: string;
+    email: string;
+    createdAt: string;
+}
+
+export interface IRecentAction {
+    action: string;
+    count: number;
+}
+
 // Dashboard KPIs
 export interface IDashboardSummary {
-    totalRevenue: number;
-    totalOrders: number;
-    totalCustomers: number;
-    activeProducts: number;
-    revenueGrowth: number;
-    orderGrowth: number;
-    customerGrowth: number;
+    catalogStats?: {
+        totalCategories: number;
+        activeCategories: number;
+        totalProducts: number;
+        activeProducts: number;
+        draftProducts: number;
+        archivedProducts: number;
+    };
+    orderStats?: {
+        totalOrders: number;
+        pendingPayment: number;
+        paid: number;
+        processing: number;
+        shipped: number;
+        delivered: number;
+    };
+    customerStats?: {
+        totalCustomers: number;
+        activeCustomers: number;
+        blockedCustomers: number;
+        deletedCustomers: number;
+    };
+    auditStats?: {
+        totalActions: number;
+        recentActions: IRecentAction[];
+    };
 }
 
 export interface ICatalogStats {
-    totalProducts: number;
-    totalCategories: number;
-    publishedProducts: number;
-    draftProducts: number;
-    archivedProducts: number;
-    lowStockProducts: number;
+    totalCategories?: number;
+    activeCategories?: number;
+    totalProducts?: number;
+    activeProducts?: number;
+    draftProducts?: number;
+    archivedProducts?: number;
+    categories?: number;
+    products?: number;
+    variants?: number;
+    productsByStatus?: IDashboardStatusCount[];
 }
 
 export interface IOrderStats {
-    totalOrders: number;
-    pendingOrders: number;
-    completedOrders: number;
-    cancelledOrders: number;
-    totalRevenue: number;
-    averageOrderValue: number;
-    todayOrders: number;
+    totalOrders?: number;
+    pendingPayment?: number;
+    paid?: number;
+    processing?: number;
+    shipped?: number;
+    delivered?: number;
+    totalRevenue?: number;
+    ordersByStatus?: IDashboardStatusCount[];
 }
 
 export interface ICustomerStats {
     totalCustomers: number;
     activeCustomers: number;
     blockedCustomers: number;
-    newCustomersThisMonth: number;
-    loyaltyMembers: number;
-    averageLifetimeValue: number;
+    deletedCustomers?: number;
+    recentSignups?: IRecentSignup[];
 }
 
 // Admin Model

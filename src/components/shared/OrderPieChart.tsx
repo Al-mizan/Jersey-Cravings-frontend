@@ -29,7 +29,7 @@ const CHART_COLORS = [
     "oklch(0.769 0.188 70.08)", // chart-5 - orange variant
 ];
 
-const AppointmentPieChart = ({
+const OrderPieChart = ({
     data,
     title,
     description,
@@ -71,14 +71,14 @@ const AppointmentPieChart = ({
 
                 <CardContent className="flex items-center justify-center h-75">
                     <p className="text-sm text-muted-foreground">
-                        No appointment data available to display the chart.
+                        No order data available to display the chart.
                     </p>
                 </CardContent>
             </Card>
         );
     }
     return (
-        <Card className="col-span-2">
+        <Card className="col-span-2 border-border/70 bg-card/90 shadow-sm">
             <CardHeader>
                 <CardTitle>{title}</CardTitle>
                 <CardDescription>{description}</CardDescription>
@@ -105,7 +105,13 @@ const AppointmentPieChart = ({
                                 />
                             ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip
+                            contentStyle={{
+                                borderRadius: "0.75rem",
+                                border: "1px solid oklch(0.92 0.01 286.3)",
+                                background: "oklch(1 0 0 / 0.95)",
+                            }}
+                        />
                         <Legend />
                     </PieChart>
                 </ResponsiveContainer>
@@ -114,4 +120,4 @@ const AppointmentPieChart = ({
     );
 };
 
-export default AppointmentPieChart;
+export default OrderPieChart;

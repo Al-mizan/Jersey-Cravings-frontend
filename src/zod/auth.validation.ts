@@ -8,9 +8,21 @@ export const registerZodSchema = z.object({
     name: z.string().min(1, "Name is required"),
     email: z.email("Email must be valid"),
     password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z
+        .string()
+        .min(1, "Confirm password is required")
+        // .min(6, "Confirm password must be at least 6 characters"),
 });
 
-export type IRegisterPayload = z.infer<typeof registerZodSchema>;
+export const registerZodSchemaWithConfirm = registerZodSchema.refine(
+    (data) => data.password === data.confirmPassword,
+    {
+        message: "Passwords do not match",
+        path: ["confirmPassword"],
+    },
+);
+
+export type IRegisterPayload = z.infer<typeof registerZodSchemaWithConfirm>;
 
 /**
  * Login validation schema
@@ -78,7 +90,7 @@ export type IResetPasswordPayload = z.infer<typeof resetPasswordZodSchema>;
  * Consolidated auth validation schemas export
  */
 export const authValidationSchemas = {
-    register: registerZodSchema,
+    register: registerZodSchemaWithConfirm,
     login: loginZodSchema,
     changePassword: changePasswordZodSchema,
     verifyEmail: verifyEmailZodSchema,

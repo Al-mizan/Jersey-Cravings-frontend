@@ -19,9 +19,7 @@ type PaginationToken = number | "start-ellipsis" | "end-ellipsis";
 const DEFAULT_PAGE_SIZES = [1, 10, 20, 50, 100] as const;
 
 const isDefaultPageSize = (value: number) => {
-    return DEFAULT_PAGE_SIZES.includes(
-        value as (typeof DEFAULT_PAGE_SIZES)[number],
-    );
+    return DEFAULT_PAGE_SIZES.includes(value as (typeof DEFAULT_PAGE_SIZES)[number]);
 };
 
 const getPaginationItems = (
@@ -83,12 +81,8 @@ const DataTablePagination = <TData,>({
     const currentPage = pagination.pageIndex + 1;
     const computedTotalPages = totalPages ?? table.getPageCount();
 
-    const [isCustomMode, setIsCustomMode] = useState<boolean>(
-        !isDefaultPageSize(pageSize),
-    );
-    const [customPageSize, setCustomPageSize] = useState<string>(
-        String(pageSize),
-    );
+    const [isCustomMode, setIsCustomMode] = useState<boolean>(!isDefaultPageSize(pageSize));
+    const [customPageSize, setCustomPageSize] = useState<string>(String(pageSize));
 
     const isCurrentPageSizeCustom = !isDefaultPageSize(pageSize);
     const showCustomInput = isCustomMode || isCurrentPageSizeCustom;
@@ -162,9 +156,7 @@ const DataTablePagination = <TData,>({
                                 variant="ghost"
                                 size="sm"
                                 className="min-w-9 px-2"
-                                onClick={() =>
-                                    table.setPageIndex(jumpBackwardTarget - 1)
-                                }
+                                onClick={() => table.setPageIndex(jumpBackwardTarget - 1)}
                                 disabled={isLoading}
                             >
                                 ...
@@ -179,9 +171,7 @@ const DataTablePagination = <TData,>({
                                 variant="ghost"
                                 size="sm"
                                 className="min-w-9 px-2"
-                                onClick={() =>
-                                    table.setPageIndex(jumpForwardTarget - 1)
-                                }
+                                onClick={() => table.setPageIndex(jumpForwardTarget - 1)}
                                 disabled={isLoading}
                             >
                                 ...
@@ -195,10 +185,7 @@ const DataTablePagination = <TData,>({
                             key={item}
                             variant={isActive ? "default" : "outline"}
                             size="sm"
-                            className={cn(
-                                "min-w-9",
-                                isActive && "pointer-events-none",
-                            )}
+                            className={cn("min-w-9", isActive && "pointer-events-none")}
                             onClick={() => table.setPageIndex(item - 1)}
                             disabled={isLoading}
                         >
@@ -219,10 +206,7 @@ const DataTablePagination = <TData,>({
             </div>
 
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                <Select
-                    value={pageSizeSelectValue}
-                    onValueChange={onPageSizeSelect}
-                >
+                <Select value={pageSizeSelectValue} onValueChange={onPageSizeSelect}>
                     <SelectTrigger className="w-24" aria-label="Rows per page">
                         <SelectValue placeholder="Limit" />
                     </SelectTrigger>
@@ -245,9 +229,7 @@ const DataTablePagination = <TData,>({
                             min={1}
                             className="h-9 w-24"
                             value={customPageSize}
-                            onChange={(event) =>
-                                setCustomPageSize(event.target.value)
-                            }
+                            onChange={(event) => setCustomPageSize(event.target.value)}
                             onKeyDown={(event) => {
                                 if (event.key === "Enter") {
                                     event.preventDefault();

@@ -8,7 +8,7 @@ import {
     forgetPasswordZodSchema,
     IForgetPasswordPayload,
 } from "@/zod/auth.validation";
-import { forgetPassword } from "@/services/auth.services";
+import { forgetPassword } from "@/services/auth.service";
 import { ApiErrorResponse } from "@/types/api.types";
 
 export const forgetPasswordAction = async (

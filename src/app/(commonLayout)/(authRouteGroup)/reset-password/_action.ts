@@ -9,7 +9,7 @@ import {
     resetPasswordZodSchema,
     IResetPasswordPayload,
 } from "@/zod/auth.validation";
-import { resetPassword } from "@/services/auth.services";
+import { resetPassword } from "@/services/auth.service";
 import { ApiErrorResponse } from "@/types/api.types";
 import { redirect } from "next/navigation";
 

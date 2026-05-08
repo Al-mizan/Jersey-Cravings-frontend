@@ -4,11 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { NavSection } from "@/types/dashboard.types";
-import { UserInfo } from "@/types/user.types";
 import { Menu, Search } from "lucide-react";
 import { useEffect, useState } from "react";
+import { UserInfo } from "@/types/user.types";
 import DashboardMobileSidebar from "./DashboardMobileSidebar";
-import NotificationDropdown from "./NotificationDropdown";
 import UserDropdown from "./UserDropdown";
 
 interface DashboardNavbarProps {
@@ -72,7 +71,7 @@ const DashboardNavbarContent = ({
             {/* Right Side Actions */}
             <div className="flex items-center gap-2">
                 {/* Notification */}
-                <NotificationDropdown />
+                {/* <NotificationDropdown /> */}
 
                 {/* User Dropdown  */}
                 <UserDropdown userInfo={userInfo} />

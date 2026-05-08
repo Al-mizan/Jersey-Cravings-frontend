@@ -1,19 +1,20 @@
 "use server";
 
-/**
- * Register server action - creates new customer account
- */
-
 import { registerZodSchema, IRegisterPayload } from "@/zod/auth.validation";
-import { registerUser, getUserInfo } from "@/services/auth.services";
-import { getAccountStateRedirect } from "@/lib/auth";
 import { ILoginResponse } from "@/types/auth.types";
-import { ApiErrorResponse } from "@/types/api.types";
 import { redirect } from "next/navigation";
+import { httpClient } from "@/lib/axios/httpClient";
+import { setTokenInCookies } from "@/lib/tokenUtils";
+import {
+    getDefaultDashboardRoute,
+    isValidRedirectForRole,
+    UserRole,
+} from "@/lib/authUtils";
 
 export const registerAction = async (
     payload: IRegisterPayload,
-): Promise<ILoginResponse | ApiErrorResponse> => {
+    redirectPath?: string,
+) => {
     const parsedPayload = registerZodSchema.safeParse(payload);
 
     if (!parsedPayload.success) {
@@ -24,36 +25,26 @@ export const registerAction = async (
             message: firstError,
         };
     }
-
+    let targetPath: string | null = null;
     try {
-        // Call auth service to register
-        const result = await registerUser(parsedPayload.data);
-        if (!result.success) {
-            return {
-                success: false,
-                message: result.message,
-            };
-        }
+        const response = await httpClient.post<ILoginResponse>(
+            "/auth/register",
+            parsedPayload.data,
+        );
 
-        // Get current user info
-        const userInfo = await getUserInfo();
-        if (!userInfo) {
-            return {
-                success: false,
-                message: "Failed to fetch user information",
-            };
-        }
+        const { accessToken, refreshToken, user } = response.data;
+        const { role, emailVerified, email } = user;
+        await setTokenInCookies("accessToken", accessToken);
+        await setTokenInCookies("refreshToken", refreshToken);
 
-        // Check for account state redirects (typically email verification for new accounts)
-        const accountStateRedirect = getAccountStateRedirect(userInfo, "/");
-        if (accountStateRedirect) {
-            redirect(accountStateRedirect);
-        }
+        targetPath =
+            redirectPath &&
+            isValidRedirectForRole(redirectPath, role as UserRole)
+                ? redirectPath
+                : getDefaultDashboardRoute(role as UserRole);
 
-        // Redirect to default dashboard
-        // redirect(getDefaultDashboardRoute(userInfo.role));
-        redirect("/admin/dashboard");
     } catch (error: any) {
+        console.log(error, "error");
         if (
             error &&
             typeof error === "object" &&
@@ -64,10 +55,23 @@ export const registerAction = async (
             throw error;
         }
 
+        if (
+            error &&
+            error.response &&
+            error.response.data.message === "Email not verified"
+        ) {
+            redirect(`/verify-email?email=${payload.email}`);
+        }
         return {
             success: false,
             message:
-                error instanceof Error ? error.message : "Registration failed",
+                error.response?.data?.message ||
+                error.message ||
+                "Registration failed",
         };
     }
+    if (targetPath) {
+        redirect(targetPath);
+    }
+    return { success: false, message: "Unexpected error" };
 };

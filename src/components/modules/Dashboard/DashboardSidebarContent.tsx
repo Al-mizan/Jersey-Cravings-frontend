@@ -2,9 +2,11 @@
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { cn, getIconComponent } from "@/lib/utils";
+import { getIconComponent } from "@/lib/iconMapper";
+import { cn } from "@/lib/utils";
 import { NavSection } from "@/types/dashboard.types";
 import { UserInfo } from "@/types/user.types";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -24,10 +26,16 @@ const DashboardSidebarContent = ({
         <div className="hidden md:flex h-full w-64 flex-col border-r bg-card overflow-y-auto">
             {/* Logo / Brand */}
             <div className="flex h-16 items-center border-b px-6">
-                <Link href={dashboardHome}>
-                    <span className="text-xl font-bold text-primary">
+                <Link href={dashboardHome} className="flex items-center gap-3">
+                    <Image
+                        src="/jersey_cravings.png"
+                        alt="Jersey Cravings"
+                        width={32}
+                        height={32}
+                    />
+                    <div className="text-lg font-bold tracking-tight text-foreground">
                         Jersey Cravings
-                    </span>
+                    </div>
                 </Link>
             </div>
 
