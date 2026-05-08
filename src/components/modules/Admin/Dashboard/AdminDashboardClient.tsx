@@ -2,7 +2,6 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import KPICard from "@/components/modules/Dashboard/KPICard";
 import OrderBarChart from "@/components/shared/OrderBarChart";
 import OrderPieChart from "@/components/shared/OrderPieChart";
 import StatsCard from "@/components/shared/StatsCard";
@@ -36,6 +35,7 @@ import {
     Users,
     WandSparkles,
 } from "lucide-react";
+import KPICard from "./KPICard";
 
 interface AdminDashboardClientProps {
     summary?: IDashboardSummary | null;

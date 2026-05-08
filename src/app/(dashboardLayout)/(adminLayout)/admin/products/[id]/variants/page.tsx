@@ -84,6 +84,15 @@
 // }
 
 
-export default function ProductVariantsPage() {
-    return <div>Product Variants Page</div>;
+import { redirect } from "next/navigation";
+
+interface ProductVariantsPageProps {
+    params: Promise<{ id: string }>;
+}
+
+export default async function ProductVariantsPage({
+    params,
+}: ProductVariantsPageProps) {
+    const { id } = await params;
+    redirect(`/admin/products/${id}`);
 }

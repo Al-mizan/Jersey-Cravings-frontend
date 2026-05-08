@@ -1,306 +1,266 @@
-// import { productApiClient } from "@/lib/axios/productApiClient";
-// import { safeServiceCall, safeServiceMutation } from "@/services/service-utils";
-// import type {
-//     ICategory,
-//     ICategoryListResponse,
-//     IProduct,
-//     IProductListResponse,
-//     IProductMediaListResponse,
-//     IVariantListResponse,
-//     ICreateProductPayload,
-//     IUpdateProductPayload,
-//     IUpdateProductStatusPayload,
-//     ICreateCategoryPayload,
-//     IUpdateCategoryPayload,
-//     IBulkCategoryTogglePayload,
-//     ICreateVariantPayload,
-//     IUpdateVariantPayload,
-//     ICreateProductMediaPayload,
-//     IUpdateProductMediaPayload,
-//     IReorderProductMediaPayload,
-//     IBulkProductActionPayload,
-// } from "@/types/product.types";
+import { httpClient } from "@/lib/axios/httpClient";
+import { safeServiceCall, safeServiceMutation } from "@/services/service-utils";
+import { ApiResponse } from "@/types/api.types";
+import type {
+    ICategory,
+    ICategoryListResponse,
+    ICreateCategoryPayload,
+    ICreateProductPayload,
+    ICreateVariantPayload,
+    IProduct,
+    IProductListResponse,
+    IProductMediaListResponse,
+    IProductVariant,
+    IUpdateProductStatusPayload,
+    IVariantListResponse,
+} from "@/types/product.types";
 
-// // Categories
-// export async function getAllCategories(
-//     searchTerm?: string,
-//     page: number = 1,
-//     limit: number = 50,
-//     isActive?: boolean,
-//     isDeleted?: boolean,
-//     sortBy?: string,
-//     sortOrder?: "asc" | "desc",
-// ): Promise<ICategoryListResponse | null> {
-//     return safeServiceCall(
-//         () =>
-//             productApiClient.getAllCategories(
-//                 searchTerm,
-//                 page,
-//                 limit,
-//                 isActive,
-//                 isDeleted,
-//                 sortBy,
-//                 sortOrder,
-//             ),
-//         null,
-//         "Failed to fetch categories:",
-//     );
-// }
+const PRODUCT_ENDPOINTS = {
+    categories: "/categories",
+    products: "/products",
+};
 
-// export async function getCategoryById(id: string): Promise<ICategory | null> {
-//     return safeServiceCall(
-//         () => productApiClient.getCategoryById(id),
-//         null,
-//         "Failed to fetch category:",
-//     );
-// }
+const unwrapData = async <TData>(
+    request: Promise<ApiResponse<TData>>,
+): Promise<TData> => {
+    const response = await request;
+    return response.data;
+};
 
-// // Products
-// export async function getAllProducts(
-//     searchTerm?: string,
-//     status?: string,
-//     categoryId?: string,
-//     page: number = 1,
-//     limit: number = 10,
-//     isDeleted?: boolean,
-//     sortBy?: string,
-//     sortOrder?: "asc" | "desc",
-// ): Promise<IProductListResponse | null> {
-//     return safeServiceCall(
-//         () =>
-//             productApiClient.getAllProducts(
-//                 searchTerm,
-//                 status,
-//                 categoryId,
-//                 page,
-//                 limit,
-//                 isDeleted,
-//                 sortBy,
-//                 sortOrder,
-//             ),
-//         null,
-//         "Failed to fetch products:",
-//     );
-// }
+type ListParams = {
+    searchTerm?: string;
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+};
 
-// export async function getProductById(id: string): Promise<IProduct | null> {
-//     return safeServiceCall(
-//         () => productApiClient.getProductById(id),
-//         null,
-//         "Failed to fetch product:",
-//     );
-// }
+export async function getAllCategories(
+    searchTerm?: string,
+    page: number = 1,
+    limit: number = 50,
+    isActive?: boolean,
+    isDeleted?: boolean,
+    sortBy?: string,
+    sortOrder?: "asc" | "desc",
+): Promise<ICategoryListResponse | null> {
+    return safeServiceCall(
+        async () => {
+            const response = await httpClient.get<ICategory[]>(
+                PRODUCT_ENDPOINTS.categories,
+                {
+                    params: {
+                        searchTerm,
+                        page,
+                        limit,
+                        isActive,
+                        isDeleted,
+                        sortBy,
+                        sortOrder,
+                    },
+                },
+            );
+            return {
+                data: response.data,
+                page: response.meta?.page ?? page,
+                limit: response.meta?.limit ?? limit,
+                total: response.meta?.total ?? response.data.length,
+                totalPages: response.meta?.totalPages ?? 1,
+            };
+        },
+        null,
+        "Failed to fetch categories:",
+    );
+}
 
-// // Variants
-// export async function getProductVariants(
-//     productId: string,
-//     isActive?: boolean,
-//     page: number = 1,
-//     limit: number = 20,
-//     sortBy?: string,
-//     sortOrder?: "asc" | "desc",
-// ): Promise<IVariantListResponse | null> {
-//     return safeServiceCall(
-//         () =>
-//             productApiClient.getProductVariants(
-//                 productId,
-//                 isActive,
-//                 page,
-//                 limit,
-//                 sortBy,
-//                 sortOrder,
-//             ),
-//         null,
-//         "Failed to fetch variants:",
-//     );
-// }
+export async function createCategory(
+    payload: ICreateCategoryPayload,
+): Promise<ICategory> {
+    return safeServiceMutation(
+        () =>
+            unwrapData<ICategory>(
+                httpClient.post(PRODUCT_ENDPOINTS.categories, payload),
+            ),
+        "Failed to create category:",
+    );
+}
 
-// // Media
-// export async function getProductMedia(
-//     productId: string,
-// ): Promise<IProductMediaListResponse | null> {
-//     return safeServiceCall(
-//         () => productApiClient.getProductMedia(productId),
-//         null,
-//         "Failed to fetch product media:",
-//     );
-// }
+export async function getAllProducts(
+    searchTerm?: string,
+    status?: string,
+    categoryId?: string,
+    page: number = 1,
+    limit: number = 10,
+    isDeleted?: boolean,
+    sortBy?: string,
+    sortOrder?: "asc" | "desc",
+): Promise<IProductListResponse | null> {
+    return safeServiceCall(
+        async () => {
+            const response = await httpClient.get<IProduct[]>(
+                PRODUCT_ENDPOINTS.products,
+                {
+                    params: {
+                        searchTerm,
+                        status,
+                        categoryId,
+                        page,
+                        limit,
+                        isDeleted,
+                        sortBy,
+                        sortOrder,
+                    },
+                },
+            );
+            return {
+                data: response.data,
+                page: response.meta?.page ?? page,
+                limit: response.meta?.limit ?? limit,
+                total: response.meta?.total ?? response.data.length,
+                totalPages: response.meta?.totalPages ?? 1,
+            };
+        },
+        null,
+        "Failed to fetch products:",
+    );
+}
 
-// // Product mutations
-// export async function createProduct(
-//     payload: ICreateProductPayload,
-// ): Promise<IProduct> {
-//     return safeServiceMutation(
-//         () => productApiClient.createProduct(payload),
-//         "Failed to create product:",
-//     );
-// }
+export async function getProductById(id: string): Promise<IProduct | null> {
+    return safeServiceCall(
+        () => unwrapData<IProduct>(httpClient.get(`${PRODUCT_ENDPOINTS.products}/${id}`)),
+        null,
+        "Failed to fetch product:",
+    );
+}
 
-// export async function updateProduct(
-//     productId: string,
-//     payload: IUpdateProductPayload,
-// ): Promise<IProduct> {
-//     return safeServiceMutation(
-//         () => productApiClient.updateProduct(productId, payload),
-//         "Failed to update product:",
-//     );
-// }
+export async function createProduct(payload: ICreateProductPayload): Promise<IProduct> {
+    return safeServiceMutation(
+        () => unwrapData<IProduct>(httpClient.post(PRODUCT_ENDPOINTS.products, payload)),
+        "Failed to create product:",
+    );
+}
 
-// export async function deleteProduct(productId: string): Promise<void> {
-//     return safeServiceMutation(
-//         () => productApiClient.deleteProduct(productId),
-//         "Failed to delete product:",
-//     );
-// }
+export async function deleteProduct(productId: string): Promise<void> {
+    return safeServiceMutation(
+        async () => {
+            await httpClient.delete(`${PRODUCT_ENDPOINTS.products}/${productId}`);
+        },
+        "Failed to delete product:",
+    );
+}
 
-// export async function updateProductStatus(
-//     productId: string,
-//     payload: IUpdateProductStatusPayload,
-// ): Promise<IProduct> {
-//     return safeServiceMutation(
-//         () => productApiClient.updateProductStatus(productId, payload),
-//         "Failed to update product status:",
-//     );
-// }
+export async function updateProductStatus(
+    productId: string,
+    payload: IUpdateProductStatusPayload,
+): Promise<IProduct> {
+    return safeServiceMutation(
+        () =>
+            unwrapData<IProduct>(
+                httpClient.patch(`${PRODUCT_ENDPOINTS.products}/${productId}/status`, payload),
+            ),
+        "Failed to update product status:",
+    );
+}
 
-// export async function restoreProduct(productId: string): Promise<IProduct> {
-//     return safeServiceMutation(
-//         () => productApiClient.restoreProduct(productId),
-//         "Failed to restore product:",
-//     );
-// }
+export async function getProductVariants(
+    productId: string,
+    isActive?: boolean,
+    page: number = 1,
+    limit: number = 20,
+    sortBy?: string,
+    sortOrder?: "asc" | "desc",
+): Promise<IVariantListResponse | null> {
+    return safeServiceCall(
+        async () => {
+            const response = await httpClient.get<IProductVariant[]>(
+                `${PRODUCT_ENDPOINTS.products}/${productId}/variants`,
+                {
+                    params: {
+                        isActive,
+                        page,
+                        limit,
+                        sortBy,
+                        sortOrder,
+                    } satisfies ListParams & { isActive?: boolean },
+                },
+            );
+            return {
+                data: response.data,
+                page: response.meta?.page ?? page,
+                limit: response.meta?.limit ?? limit,
+                total: response.meta?.total ?? response.data.length,
+                totalPages: response.meta?.totalPages ?? 1,
+            };
+        },
+        null,
+        "Failed to fetch product variants:",
+    );
+}
 
-// export async function bulkPublishProducts(
-//     payload: IBulkProductActionPayload,
-// ): Promise<void> {
-//     return safeServiceMutation(
-//         () => productApiClient.bulkPublishProducts(payload),
-//         "Failed to bulk publish products:",
-//     );
-// }
+export async function createVariant(
+    productId: string,
+    payload: ICreateVariantPayload,
+): Promise<IProductVariant> {
+    return safeServiceMutation(
+        () =>
+            unwrapData<IProductVariant>(
+                httpClient.post(`${PRODUCT_ENDPOINTS.products}/${productId}/variants`, payload),
+            ),
+        "Failed to create product variant:",
+    );
+}
 
-// export async function bulkArchiveProducts(
-//     payload: IBulkProductActionPayload,
-// ): Promise<void> {
-//     return safeServiceMutation(
-//         () => productApiClient.bulkArchiveProducts(payload),
-//         "Failed to bulk archive products:",
-//     );
-// }
+export async function deleteVariant(
+    productId: string,
+    variantId: string,
+): Promise<void> {
+    return safeServiceMutation(
+        async () => {
+            await httpClient.delete(
+                `${PRODUCT_ENDPOINTS.products}/${productId}/variants/${variantId}`,
+            );
+        },
+        "Failed to delete product variant:",
+    );
+}
 
-// // Category mutations
-// export async function createCategory(
-//     payload: ICreateCategoryPayload,
-// ): Promise<ICategory> {
-//     return safeServiceMutation(
-//         () => productApiClient.createCategory(payload),
-//         "Failed to create category:",
-//     );
-// }
+export async function getProductMedia(
+    productId: string,
+    page: number = 1,
+    limit: number = 20,
+): Promise<IProductMediaListResponse | null> {
+    return safeServiceCall(
+        async () => {
+            const response = await httpClient.get<IProduct["media"]>(
+                `${PRODUCT_ENDPOINTS.products}/${productId}/media`,
+                {
+                    params: { page, limit },
+                },
+            );
+            return {
+                data: response.data ?? [],
+                page: response.meta?.page ?? page,
+                limit: response.meta?.limit ?? limit,
+                total: response.meta?.total ?? response.data?.length ?? 0,
+                totalPages: response.meta?.totalPages ?? 1,
+            };
+        },
+        null,
+        "Failed to fetch product media:",
+    );
+}
 
-// export async function updateCategory(
-//     categoryId: string,
-//     payload: IUpdateCategoryPayload,
-// ): Promise<ICategory> {
-//     return safeServiceMutation(
-//         () => productApiClient.updateCategory(categoryId, payload),
-//         "Failed to update category:",
-//     );
-// }
-
-// export async function deleteCategory(categoryId: string): Promise<void> {
-//     return safeServiceMutation(
-//         () => productApiClient.deleteCategory(categoryId),
-//         "Failed to delete category:",
-//     );
-// }
-
-// export async function restoreCategory(categoryId: string): Promise<ICategory> {
-//     return safeServiceMutation(
-//         () => productApiClient.restoreCategory(categoryId),
-//         "Failed to restore category:",
-//     );
-// }
-
-// export async function bulkToggleCategories(
-//     payload: IBulkCategoryTogglePayload,
-// ): Promise<void> {
-//     return safeServiceMutation(
-//         () => productApiClient.bulkToggleCategories(payload),
-//         "Failed to bulk toggle categories:",
-//     );
-// }
-
-// // Variant mutations
-// export async function createVariant(
-//     productId: string,
-//     payload: ICreateVariantPayload,
-// ): Promise<any> {
-//     return safeServiceMutation(
-//         () => productApiClient.createVariant(productId, payload),
-//         "Failed to create variant:",
-//     );
-// }
-
-// export async function updateVariant(
-//     productId: string,
-//     variantId: string,
-//     payload: IUpdateVariantPayload,
-// ): Promise<any> {
-//     return safeServiceMutation(
-//         () => productApiClient.updateVariant(productId, variantId, payload),
-//         "Failed to update variant:",
-//     );
-// }
-
-// export async function deleteVariant(
-//     productId: string,
-//     variantId: string,
-// ): Promise<void> {
-//     return safeServiceMutation(
-//         () => productApiClient.deleteVariant(productId, variantId),
-//         "Failed to delete variant:",
-//     );
-// }
-
-// // Media mutations
-// export async function createProductMedia(
-//     productId: string,
-//     payload: FormData,
-// ): Promise<any> {
-//     return safeServiceMutation(
-//         () => productApiClient.createProductMedia(productId, payload),
-//         "Failed to create product media:",
-//     );
-// }
-
-// export async function updateProductMedia(
-//     productId: string,
-//     mediaId: string,
-//     payload: FormData,
-// ): Promise<any> {
-//     return safeServiceMutation(
-//         () => productApiClient.updateProductMedia(productId, mediaId, payload),
-//         "Failed to update product media:",
-//     );
-// }
-
-// export async function deleteProductMedia(
-//     productId: string,
-//     mediaId: string,
-// ): Promise<void> {
-//     return safeServiceMutation(
-//         () => productApiClient.deleteProductMedia(productId, mediaId),
-//         "Failed to delete product media:",
-//     );
-// }
-
-// export async function reorderProductMedia(
-//     productId: string,
-//     payload: IReorderProductMediaPayload,
-// ): Promise<IProductMediaListResponse> {
-//     return safeServiceMutation(
-//         () => productApiClient.reorderProductMedia(productId, payload),
-//         "Failed to reorder product media:",
-//     );
-// }
+export async function createProductMedia(
+    productId: string,
+    payload: FormData,
+): Promise<IProductMediaListResponse["data"]> {
+    return safeServiceMutation(
+        () =>
+            unwrapData<IProductMediaListResponse["data"]>(
+                httpClient.post(`${PRODUCT_ENDPOINTS.products}/${productId}/media`, payload, {
+                    headers: { "Content-Type": "multipart/form-data" },
+                }),
+            ),
+        "Failed to create product media:",
+    );
+}

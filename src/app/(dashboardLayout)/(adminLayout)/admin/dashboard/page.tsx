@@ -1,4 +1,4 @@
-import AdminDashboardClient from "@/components/modules/Dashboard/AdminDashboardClient";
+import AdminDashboardClient from "@/components/modules/Admin/Dashboard/AdminDashboardClient";
 import { adminDashboardKeys } from "@/hooks/queries/adminQueryKeys";
 import {
     getActivityTimeline,

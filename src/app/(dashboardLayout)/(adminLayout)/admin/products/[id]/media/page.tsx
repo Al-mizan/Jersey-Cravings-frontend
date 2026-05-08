@@ -36,6 +36,13 @@
 //     );
 // }
 
-export default function ProductMediaPage() {
-    return <div>Product Media Page</div>;
+import { redirect } from "next/navigation";
+
+interface ProductMediaPageProps {
+    params: Promise<{ id: string }>;
+}
+
+export default async function ProductMediaPage({ params }: ProductMediaPageProps) {
+    const { id } = await params;
+    redirect(`/admin/products/${id}`);
 }
