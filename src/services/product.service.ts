@@ -13,7 +13,9 @@ import type {
     IProductListResponse,
     IProductMediaListResponse,
     IProductVariant,
+    IUpdateProductPayload,
     IUpdateProductStatusPayload,
+    IUpdateVariantPayload,
     IVariantListResponse,
 } from "@/types/product.types";
 
@@ -142,6 +144,19 @@ export async function createProduct(payload: ICreateProductPayload): Promise<IPr
     );
 }
 
+export async function updateProduct(
+    productId: string,
+    payload: IUpdateProductPayload,
+): Promise<IProduct> {
+    return safeServiceMutation(
+        () =>
+            unwrapData<IProduct>(
+                httpClient.patch(`${PRODUCT_ENDPOINTS.products}/${productId}`, payload),
+            ),
+        "Failed to update product:",
+    );
+}
+
 export async function deleteProduct(productId: string): Promise<void> {
     return safeServiceMutation(
         async () => {
@@ -226,6 +241,23 @@ export async function deleteVariant(
     );
 }
 
+export async function updateVariant(
+    productId: string,
+    variantId: string,
+    payload: IUpdateVariantPayload,
+): Promise<IProductVariant> {
+    return safeServiceMutation(
+        () =>
+            unwrapData<IProductVariant>(
+                httpClient.patch(
+                    `${PRODUCT_ENDPOINTS.products}/${productId}/variants/${variantId}`,
+                    payload,
+                ),
+            ),
+        "Failed to update product variant:",
+    );
+}
+
 export async function getProductMedia(
     productId: string,
     page: number = 1,
@@ -264,5 +296,17 @@ export async function createProductMedia(
                 }),
             ),
         "Failed to create product media:",
+    );
+}
+
+export async function deleteProductMedia(
+    productId: string,
+    mediaId: string,
+): Promise<void> {
+    return safeServiceMutation(
+        async () => {
+            await httpClient.delete(`${PRODUCT_ENDPOINTS.products}/${productId}/media/${mediaId}`);
+        },
+        "Failed to delete product media:",
     );
 }

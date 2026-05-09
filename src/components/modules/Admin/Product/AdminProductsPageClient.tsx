@@ -17,11 +17,16 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useMemo, useState, useRef, useEffect } from "react";
 
 const DEFAULT_LIMIT = 10;
+const STATUS_CLASS: Record<string, string> = {
+    ACTIVE: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600",
+    DRAFT: "border-amber-500/20 bg-amber-500/10 text-amber-600",
+    ARCHIVED: "border-zinc-500/20 bg-zinc-500/10 text-zinc-500",
+};
 
 export default function AdminProductsPageClient() {
     const router = useRouter();
@@ -86,6 +91,11 @@ export default function AdminProductsPageClient() {
         onError: () => toast.error("Failed to delete product"),
     });
 
+    const deleteMutationRef = useRef(deleteMutation);
+    useEffect(() => {
+        deleteMutationRef.current = deleteMutation;
+    }, [deleteMutation]);
+
     const categoryOptions = (categoriesQuery.data?.data ?? []).map((category) => ({
         label: category.name,
         value: category.id,
@@ -116,27 +126,106 @@ export default function AdminProductsPageClient() {
     const columns = useMemo<ColumnDef<IProduct>[]>(
         () => [
             {
+                id: "sl",
+                header: "SL",
+                enableSorting: false,
+                cell: ({ row, table }) => {
+                    const { pageIndex, pageSize } = table.getState().pagination;
+                    return (
+                        <span className="text-sm text-muted-foreground tabular-nums">
+                            {pageIndex * pageSize + row.index + 1}
+                        </span>
+                    );
+                },
+            },
+            {
                 accessorKey: "title",
                 header: "Product",
+                enableSorting: false,
                 cell: ({ row }) => (
                     <ProductInfoCell
                         title={row.original.title}
                         slug={row.original.slug}
                         teamName={row.original.teamName}
-                        status={row.original.status}
                     />
                 ),
             },
             {
                 accessorKey: "category",
                 header: "Category",
+                enableSorting: false,
                 cell: ({ row }) => (
                     <span className="text-sm">{row.original.category?.name ?? "N/A"}</span>
                 ),
             },
             {
+                accessorKey: "status",
+                header: "Status",
+                enableSorting: false,
+                cell: ({ row }) => (
+                    <span
+                        className={cn(
+                            "inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold",
+                            STATUS_CLASS[row.original.status] ??
+                            "border-border bg-muted text-muted-foreground",
+                        )}
+                    >
+                        {row.original.status}
+                    </span>
+                ),
+            },
+            {
+                id: "sku",
+                header: "SKU",
+                enableSorting: false,
+                cell: ({ row }) => {
+                    const sku = row.original.variants?.[0]?.sku;
+                    return <span className="text-sm font-mono">{sku ?? "—"}</span>;
+                },
+            },
+            {
+                id: "stock",
+                header: "Stock",
+                enableSorting: false,
+                cell: ({ row }) => {
+                    const totalStock =
+                        row.original.variants?.reduce(
+                            (sum, variant) => sum + (variant.stockQty ?? 0),
+                            0,
+                        ) ?? 0;
+                    return (
+                        <span
+                            className={cn(
+                                "text-sm font-medium",
+                                totalStock > 0 ? "text-emerald-600" : "text-destructive",
+                            )}
+                        >
+                            {totalStock}
+                        </span>
+                    );
+                },
+            },
+            {
+                id: "price",
+                header: "Price",
+                enableSorting: false,
+                cell: ({ row }) => {
+                    const prices = (row.original.variants ?? [])
+                        .map((variant) => variant.priceAmount)
+                        .filter((price): price is number => typeof price === "number");
+
+                    if (prices.length === 0) {
+                        return <span className="text-sm text-muted-foreground">—</span>;
+                    }
+
+                    const minPrice = Math.min(...prices);
+                    return <span className="text-sm font-semibold">${minPrice.toFixed(2)}</span>;
+                },
+            },
+            {
                 accessorKey: "jerseyType",
                 header: "Jersey Type",
+                enableSorting: false,
                 cell: ({ row }) => (
                     <span
                         className={cn(
@@ -151,24 +240,59 @@ export default function AdminProductsPageClient() {
             {
                 accessorKey: "createdAt",
                 header: "Created",
+                enableSorting: true,
                 cell: ({ row }) => <DateCell date={row.original.createdAt} />,
             },
         ],
         [],
     );
+
     const tableActions = useMemo(
         () => ({
-            onView: (product: IProduct) => router.push(`/admin/products/${product.id}`),
-            onEdit: (product: IProduct) => router.push(`/admin/products/${product.id}/edit`),
+            // Single "View / Edit" → opens the product detail page
+            onViewEdit: (product: IProduct) =>
+                router.push(`/admin/products/${product.id}`),
             onDelete: async (product: IProduct) => {
-                const confirmed = window.confirm(
-                    `Delete "${product.title}" from catalog?`,
+                toast.custom((t) => (
+                    <div className="w-[360px] rounded-xl border bg-card p-4 shadow-lg">
+                        <div className="space-y-1">
+                            <p className="text-sm font-semibold">Delete product?</p>
+                            <p className="text-xs text-muted-foreground">
+                                This will permanently remove{" "}
+                                <span className="font-medium text-foreground">{product.title}</span>.
+                            </p>
+                        </div>
+                        <div className="mt-4 flex justify-end gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => toast.dismiss(t)}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="destructive"
+                                onClick={async () => {
+                                    toast.dismiss(t);
+                                    await deleteMutationRef.current.mutateAsync(product.id);
+                                }}
+                            >
+                                Delete
+                            </Button>
+                        </div>
+                    </div>
+                ),
+                    {
+                        position: "top-center",
+                        duration: Infinity,
+                    }
                 );
-                if (!confirmed) return;
-                await deleteMutation.mutateAsync(product.id);
             },
         }),
-        [deleteMutation, router],
+        [router],
     );
 
     return (
@@ -196,16 +320,16 @@ export default function AdminProductsPageClient() {
                 meta={
                     productsQuery.data
                         ? {
-                              page: productsQuery.data.page,
-                              limit: productsQuery.data.limit,
-                              total: productsQuery.data.total,
-                              totalPages: productsQuery.data.totalPages,
-                          }
+                            page: productsQuery.data.page,
+                            limit: productsQuery.data.limit,
+                            total: productsQuery.data.total,
+                            totalPages: productsQuery.data.totalPages,
+                        }
                         : undefined
                 }
                 search={{
                     initialValue: searchTerm,
-                    placeholder: "Search product by title, team, or slug...",
+                    placeholder: "Search by title, team, or slug…",
                     debounceMs: 500,
                     onDebouncedChange: (value) => {
                         setSearchTerm(value);

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -14,11 +15,14 @@ import {
     createVariant,
     deleteVariant,
     getAllCategories,
-    getProductMedia,
-    getProductVariants,
 } from "@/services/product.service";
 import { adminCategoryKeys, adminProductKeys } from "@/hooks/queries/adminQueryKeys";
-import type { ICreateVariantPayload, IProduct } from "@/types/product.types";
+import type {
+    ICreateVariantPayload,
+    IProduct,
+    IProductMedia,
+    IProductVariant,
+} from "@/types/product.types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,22 +75,12 @@ export default function CreateProductPage() {
     const [product, setProduct] = useState<IProduct | null>(null);
     const [newCategoryMode, setNewCategoryMode] = useState(false);
     const [files, setFiles] = useState<File[]>([]);
+    const [createdVariants, setCreatedVariants] = useState<IProductVariant[]>([]);
+    const [createdMedia, setCreatedMedia] = useState<IProductMedia[]>([]);
 
     const categoriesQuery = useQuery({
         queryKey: adminCategoryKeys.options(),
         queryFn: () => getAllCategories(undefined, 1, 100, true, false),
-    });
-
-    const variantsQuery = useQuery({
-        queryKey: ["admin", "products", "variants", product?.id],
-        queryFn: () => getProductVariants(product!.id, undefined, 1, 100),
-        enabled: !!product?.id,
-    });
-
-    const mediaQuery = useQuery({
-        queryKey: ["admin", "products", "media", product?.id],
-        queryFn: () => getProductMedia(product!.id, 1, 100),
-        enabled: !!product?.id,
     });
 
     const createCategoryMutation = useMutation({
@@ -102,10 +96,10 @@ export default function CreateProductPage() {
     const createVariantMutation = useMutation({
         mutationFn: ({ productId, payload }: { productId: string; payload: ICreateVariantPayload }) =>
             createVariant(productId, payload),
-        onSuccess: () =>
-            queryClient.invalidateQueries({
-                queryKey: ["admin", "products", "variants", product?.id],
-            }),
+        onSuccess: (variant) => {
+            setCreatedVariants((prev) => [variant, ...prev]);
+            toast.success("Variant added");
+        },
     });
     const deleteVariantMutation = useMutation({
         mutationFn: ({
@@ -115,10 +109,10 @@ export default function CreateProductPage() {
             productId: string;
             variantId: string;
         }) => deleteVariant(productId, variantId),
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ["admin", "products", "variants", product?.id],
-            });
+        onSuccess: (_, variables) => {
+            setCreatedVariants((prev) =>
+                prev.filter((variant) => variant.id !== variables.variantId),
+            );
             toast.success("Variant deleted");
         },
         onError: () => {
@@ -131,13 +125,13 @@ export default function CreateProductPage() {
             if (files.length === 0) return;
             const formData = new FormData();
             files.forEach((file) => formData.append("productPhotos", file));
-            await createProductMedia(productId, formData);
+            return createProductMedia(productId, formData);
         },
-        onSuccess: () => {
+        onSuccess: (uploadedMedia) => {
             setFiles([]);
-            queryClient.invalidateQueries({
-                queryKey: ["admin", "products", "media", product?.id],
-            });
+            if (uploadedMedia?.length) {
+                setCreatedMedia((prev) => [...uploadedMedia, ...prev]);
+            }
         },
     });
 
@@ -177,6 +171,8 @@ export default function CreateProductPage() {
 
                 const created = await createProductMutation.mutateAsync(payload);
                 setProduct(created);
+                setCreatedVariants([]);
+                setCreatedMedia([]);
                 queryClient.invalidateQueries({ queryKey: adminProductKeys.all });
                 toast.success("Product created in DRAFT");
                 setStep(2);
@@ -218,7 +214,6 @@ export default function CreateProductPage() {
                 });
                 await createVariantMutation.mutateAsync({ productId: product.id, payload });
                 formApi.reset();
-                toast.success("Variant added");
             } catch (error) {
                 if (error instanceof z.ZodError) {
                     toast.error(error.issues[0]?.message ?? "Invalid variant data");
@@ -229,8 +224,8 @@ export default function CreateProductPage() {
         },
     });
 
-    const totalVariants = variantsQuery.data?.data?.length ?? 0;
-    const totalMedia = mediaQuery.data?.data?.length ?? 0;
+    const totalVariants = createdVariants.length;
+    const totalMedia = createdMedia.length;
 
     const stepIndicator = useMemo(
         () => [
@@ -671,16 +666,16 @@ export default function CreateProductPage() {
                             <Separator />
 
                             <div className="space-y-2">
-                                <h3 className="text-sm font-semibold">Added Variants</h3>
+                                <h3 className="text-sm font-semibold">Newly Added Variants</h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {(variantsQuery.data?.data ?? []).map((variant) => (
+                                    {createdVariants.map((variant) => (
                                         <div
                                             key={variant.id}
                                             className="inline-flex items-center gap-1 rounded-md border px-2 py-1"
                                         >
                                             <Badge variant="outline">
-                                                {variant.size} • {variant.fit} •{" "}
-                                                {variant.sleeveType} • {variant.stockQty}
+                                                {variant.sku} • {variant.size} • {variant.fit} •{" "}
+                                                {variant.sleeveType} • Stock {variant.stockQty}
                                             </Badge>
                                             <Button
                                                 type="button"
@@ -716,7 +711,7 @@ export default function CreateProductPage() {
                                 <UploadCloud className="mb-3 h-8 w-8 text-primary" />
                                 <span className="text-sm font-medium">Drop images or choose files</span>
                                 <span className="text-xs text-muted-foreground">
-                                    PNG, JPG, WEBP up to 5MB
+                                    Upload multiple images (PNG, JPG, WEBP)
                                 </span>
                                 <input
                                     type="file"
@@ -757,6 +752,47 @@ export default function CreateProductPage() {
                             >
                                 Upload Images
                             </Button>
+
+                            {createdMedia.length > 0 && (
+                                <>
+                                    <Separator />
+                                    <div className="space-y-2">
+                                        <h3 className="text-sm font-semibold">Uploaded Media</h3>
+                                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                                            {createdMedia.map((media) => {
+                                                const isVideo =
+                                                    media.resourceType?.startsWith("video") ??
+                                                    /\.(mp4|webm|ogg|mov)$/i.test(media.secureUrl);
+
+                                                return (
+                                                    <div
+                                                        key={media.id}
+                                                        className="relative aspect-square overflow-hidden rounded-lg border bg-muted"
+                                                    >
+                                                        {isVideo ? (
+                                                            <video
+                                                                src={media.secureUrl}
+                                                                className="h-full w-full object-cover"
+                                                                muted
+                                                                playsInline
+                                                                preload="metadata"
+                                                            />
+                                                        ) : (
+                                                            <Image
+                                                                src={media.secureUrl}
+                                                                alt={media.altText ?? "Uploaded product media"}
+                                                                fill
+                                                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                                                                className="object-cover"
+                                                            />
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </CardContent>
                     </Card>
 

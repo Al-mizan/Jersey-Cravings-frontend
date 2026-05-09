@@ -5,6 +5,7 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -15,6 +16,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { PaginationMeta } from "@/types/api.types";
 import {
     ColumnDef,
@@ -26,9 +28,8 @@ import {
     SortingState,
     useReactTable,
 } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ArrowUpDown, MoreHorizontal } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useMemo } from "react";
+import { ArrowDown, ArrowUp, ArrowUpDown, MoreHorizontal, PencilLine, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import DataTableFilters, {
     DataTableFilterConfig,
     DataTableFilterValue,
@@ -38,8 +39,8 @@ import DataTablePagination from "./DataTablePagination";
 import DataTableSearch from "./DataTableSearch";
 
 interface DataTableActions<TData> {
-    onView?: (data: TData) => void;
-    onEdit?: (data: TData) => void;
+    /** Navigates to the view/edit detail page */
+    onViewEdit?: (data: TData) => void;
     onDelete?: (data: TData) => void;
 }
 
@@ -76,6 +77,116 @@ interface DataTableProps<TData> {
     meta?: PaginationMeta;
 }
 
+// ─── Shimmer skeleton row ──────────────────────────────────────────────────
+function SkeletonRow({ colCount }: { colCount: number }) {
+    return (
+        <TableRow className="pointer-events-none">
+            {Array.from({ length: colCount }).map((_, i) => (
+                <TableCell key={i}>
+                    <div
+                        className="h-4 rounded-sm bg-muted animate-pulse"
+                        style={{ width: `${55 + ((i * 37) % 35)}%`, opacity: 0.6 }}
+                    />
+                </TableCell>
+            ))}
+        </TableRow>
+    );
+}
+
+const SKELETON_ROWS = 6;
+
+// ─── Row Actions Cell ──────────────────────────────────────────────────────
+function RowActionsCell<TData>({
+    rowData,
+    actions,
+}: {
+    rowData: TData;
+    actions: DataTableActions<TData>;
+}) {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
+            <DropdownMenuTrigger asChild>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                        "h-8 w-8 p-0 rounded-md transition-colors",
+                        "text-muted-foreground hover:text-foreground",
+                        "hover:bg-accent data-[state=open]:bg-accent data-[state=open]:text-foreground",
+                    )}
+                >
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent
+                align="end"
+                sideOffset={4}
+                className="w-44 rounded-xl border border-border/60 shadow-lg p-1"
+            >
+                {/* View / Edit */}
+                {actions.onViewEdit && (
+                    <DropdownMenuItem
+                        className={cn(
+                            "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm",
+                            "cursor-pointer transition-colors",
+                            "focus:bg-accent focus:text-accent-foreground",
+                        )}
+                        onClick={() => {
+                            setOpen(false);
+                            actions.onViewEdit?.(rowData);
+                        }}
+                    >
+                        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
+                            <PencilLine className="h-3.5 w-3.5" />
+                        </span>
+                        <div className="flex flex-col leading-none">
+                            <span className="font-medium">View / Edit</span>
+                            <span className="text-[11px] text-muted-foreground mt-0.5">
+                                Open detail page
+                            </span>
+                        </div>
+                    </DropdownMenuItem>
+                )}
+
+                {/* Separator */}
+                {actions.onViewEdit && actions.onDelete && (
+                    <DropdownMenuSeparator className="my-1" />
+                )}
+
+                {/* Delete */}
+                {actions.onDelete && (
+                    <DropdownMenuItem
+                        className={cn(
+                            "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm",
+                            "cursor-pointer transition-colors",
+                            "text-destructive focus:bg-destructive/10 focus:text-destructive",
+                        )}
+                        onClick={() => {
+                            setOpen(false);
+                            actions.onDelete?.(rowData);
+                        }}
+                    >
+                        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-destructive/10 text-destructive">
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </span>
+                        <div className="flex flex-col leading-none">
+                            <span className="font-medium">Delete</span>
+                            <span className="text-[11px] text-destructive/70 mt-0.5">
+                                Remove permanently
+                            </span>
+                        </div>
+                    </DropdownMenuItem>
+                )}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
+// ─── Main DataTable ────────────────────────────────────────────────────────
 const DataTable = <TData,>({
     data = [] as TData[],
     columns,
@@ -96,7 +207,6 @@ const DataTable = <TData,>({
     }, []);
 
     const hydratedIsLoading = hasHydrated ? Boolean(isLoading) : false;
-    const showLoadingOverlay = hydratedIsLoading;
 
     const tableColumns: ColumnDef<TData>[] = useMemo(
         () =>
@@ -107,53 +217,17 @@ const DataTable = <TData,>({
                         id: "actions",
                         header: "Actions",
                         enableSorting: false,
-                        cell: ({ row }) => {
-                            const rowData = row.original;
-
-                            return (
-                                <DropdownMenu modal={false}>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant={"ghost"} className="h-8 w-8 p-0">
-                                            <span className="sr-only">Open Menu</span>
-                                            <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-
-                                    <DropdownMenuContent align="end">
-                                        {actions.onView && (
-                                            <DropdownMenuItem
-                                                onClick={() => actions.onView?.(rowData)}
-                                            >
-                                                View
-                                            </DropdownMenuItem>
-                                        )}
-
-                                        {actions.onEdit && (
-                                            <DropdownMenuItem
-                                                onClick={() => actions.onEdit?.(rowData)}
-                                            >
-                                                Edit
-                                            </DropdownMenuItem>
-                                        )}
-
-                                        {actions.onDelete && (
-                                            <DropdownMenuItem
-                                                onClick={() => actions.onDelete?.(rowData)}
-                                            >
-                                                Delete
-                                            </DropdownMenuItem>
-                                        )}
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            );
-                        },
+                        meta: { align: "right" },
+                        cell: ({ row }) => (
+                            <RowActionsCell rowData={row.original} actions={actions} />
+                        ),
                     },
                 ]
                 : columns,
         [actions, columns],
     );
 
-    // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table is intentionally used here and React Compiler already skips memoization for this hook.
+    // eslint-disable-next-line react-hooks/incompatible-library
     const table = useReactTable({
         data,
         columns: tableColumns,
@@ -169,41 +243,31 @@ const DataTable = <TData,>({
         },
         onSortingChange: sorting
             ? (updater) => {
-                const currentSortingState = sorting.state;
-
-                const nextSortingState =
+                const next =
                     typeof updater === "function"
-                        ? updater(currentSortingState)
+                        ? updater(sorting.state)
                         : updater;
-
-                sorting.onSortingChange(nextSortingState);
+                sorting.onSortingChange(next);
             }
             : undefined,
         onPaginationChange: pagination
             ? (updater) => {
-                const currentPaginationState = pagination.state;
-                const nextPaginationState =
+                const next =
                     typeof updater === "function"
-                        ? updater(currentPaginationState)
+                        ? updater(pagination.state)
                         : updater;
-
-                pagination.onPaginationChange(nextPaginationState);
+                pagination.onPaginationChange(next);
             }
             : undefined,
     });
-    return (
-        <div className="relative">
-            {showLoadingOverlay && (
-                <div className="absolute inset-0 bg-background/50 backdrop-blur-sm z-10 flex items-center justify-center">
-                    <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                        <span className="text-sm text-muted-foreground">Loading...</span>
-                    </div>
-                </div>
-            )}
 
+    const colCount = tableColumns.length;
+
+    return (
+        <div className="space-y-4">
+            {/* Toolbar */}
             {(search || filters || toolbarAction) && (
-                <div className="mb-4 flex flex-wrap items-start gap-3">
+                <div className="flex flex-wrap items-center gap-2">
                     {search && (
                         <DataTableSearch
                             key={search.initialValue ?? ""}
@@ -214,7 +278,6 @@ const DataTable = <TData,>({
                             isLoading={hydratedIsLoading}
                         />
                     )}
-
                     {filters && (
                         <DataTableFilters
                             filters={filters.configs}
@@ -224,38 +287,39 @@ const DataTable = <TData,>({
                             isLoading={hydratedIsLoading}
                         />
                     )}
-
                     {toolbarAction && (
                         <div className="ml-auto shrink-0">{toolbarAction}</div>
                     )}
                 </div>
             )}
 
-            {/* // Table */}
-            <div className="rounded-lg border">
+            {/* Table */}
+            <div className="rounded-xl border bg-card">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((hg) => (
-                            <TableRow key={hg.id}>
+                            <TableRow key={hg.id} className="border-b hover:bg-transparent">
                                 {hg.headers.map((header) => (
-                                    <TableHead key={header.id}>
+                                    <TableHead
+                                        key={header.id}
+                                        className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/80 h-11"
+                                    >
                                         {header.isPlaceholder ? null : header.column.getCanSort() ? (
                                             <Button
-                                                variant={"ghost"}
-                                                className="h-auto cursor-pointer p-0 font-semibold hover:bg-transparent hover:text-inherit focus-visible:ring-0"
+                                                variant="ghost"
+                                                className="h-auto cursor-pointer p-0 font-semibold uppercase tracking-wide text-xs text-muted-foreground/80 hover:bg-transparent hover:text-foreground focus-visible:ring-0"
                                                 onClick={header.column.getToggleSortingHandler()}
                                             >
                                                 {flexRender(
                                                     header.column.columnDef.header,
                                                     header.getContext(),
                                                 )}
-
                                                 {header.column.getIsSorted() === "asc" ? (
-                                                    <ArrowUp className="ml-1 h-4 w-4" />
+                                                    <ArrowUp className="ml-1 h-3 w-3" />
                                                 ) : header.column.getIsSorted() === "desc" ? (
-                                                    <ArrowDown className="ml-1 h-4 w-4" />
+                                                    <ArrowDown className="ml-1 h-3 w-3" />
                                                 ) : (
-                                                    <ArrowUpDown className="ml-1 h-4 w-4 opacity-50" />
+                                                    <ArrowUpDown className="ml-1 h-3 w-3 opacity-40" />
                                                 )}
                                             </Button>
                                         ) : (
@@ -269,12 +333,20 @@ const DataTable = <TData,>({
                             </TableRow>
                         ))}
                     </TableHeader>
+
                     <TableBody>
-                        {table.getRowModel()?.rows?.length ? (
+                        {hydratedIsLoading ? (
+                            Array.from({ length: SKELETON_ROWS }).map((_, i) => (
+                                <SkeletonRow key={i} colCount={colCount} />
+                            ))
+                        ) : table.getRowModel().rows.length ? (
                             table.getRowModel().rows.map((row) => (
-                                <TableRow key={row.id}>
+                                <TableRow
+                                    key={row.id}
+                                    className="border-b border-border/50 transition-colors hover:bg-muted/40 data-[state=selected]:bg-muted"
+                                >
                                     {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
+                                        <TableCell key={cell.id} className="py-3">
                                             {flexRender(
                                                 cell.column.columnDef.cell,
                                                 cell.getContext(),
@@ -286,17 +358,17 @@ const DataTable = <TData,>({
                         ) : (
                             <TableRow>
                                 <TableCell
-                                    colSpan={tableColumns.length}
-                                    className="h-24 text-center"
+                                    colSpan={colCount}
+                                    className="h-32 text-center text-sm text-muted-foreground"
                                 >
-                                    {emptyMessage || "No data available."}
+                                    {emptyMessage ?? "No data available."}
                                 </TableCell>
                             </TableRow>
                         )}
                     </TableBody>
                 </Table>
 
-                {pagination && (
+                {pagination && !hydratedIsLoading && (
                     <DataTablePagination
                         table={table}
                         totalPages={meta?.totalPages}
