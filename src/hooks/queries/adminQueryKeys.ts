@@ -73,3 +73,9 @@ export const adminUserKeys = {
             [...adminUserKeys.admins.all, "list", params] as const,
     },
 };
+
+export const adminProfileKeys = {
+    all: ["admin", "profile"] as const,
+    detail: (adminId: string) =>
+        [...adminProfileKeys.all, adminId] as const,
+};

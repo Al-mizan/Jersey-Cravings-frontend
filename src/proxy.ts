@@ -32,8 +32,6 @@ export async function proxy(request: NextRequest) {
         const accessToken = request.cookies.get("accessToken")?.value;
         const refreshToken = request.cookies.get("refreshToken")?.value;
 
-        console.log("access token:", accessToken);
-
         const decodedAccessToken =
             accessToken &&
             jwtUtils.verifyToken(
@@ -65,8 +63,6 @@ export async function proxy(request: NextRequest) {
 
         console.log("Is valid access token:", isValidAccessToken);
         console.log("User role:", userRole);
-        console.log("Route owner:", routerOwner);
-        console.log("Is auth route:", isAuth);
 
         //proactively refresh token if refresh token exists and access token is expired or about to expire
         if (

@@ -112,6 +112,17 @@ export async function getAdminById(
     );
 }
 
+export async function updateAdminById(
+    id: string,
+    data: FormData,
+): Promise<IAdmin> {
+    return unwrapData<IAdmin>(
+        httpClient.patch(`${ADMIN_ENDPOINTS.admins}/${id}`, data, {
+            headers: { "Content-Type": "multipart/form-data" },
+        }),
+    );
+}
+
 // Audit Log Services
 export async function getAuditLogs(
     searchTerm?: string,
