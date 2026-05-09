@@ -1,3 +1,5 @@
+"use server"
+
 // import { orderApiClient } from "@/lib/axios/orderApiClient";
 // import { safeServiceCall, safeServiceMutation } from "@/services/service-utils";
 // import type {

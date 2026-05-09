@@ -1,3 +1,5 @@
+"use server"
+
 // import { commerceApiClient } from "@/lib/axios/commerceApiClient";
 // import { safeServiceCall, safeServiceMutation } from "@/services/service-utils";
 // import type { IUpdateCartItemPayload } from "@/types/commerce.types";

@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ApiResponse } from '@/types/api.types';
 import axios from 'axios';
+import { getNewTokensWithRefreshToken } from '@/services/auth.service';
+import { cookies, headers } from 'next/headers';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const CLIENT_PROXY_BASE_URL = "/api/proxy";
@@ -37,16 +39,13 @@ async function tryRefreshToken(accessToken: string, refreshToken: string): Promi
         return;
     }
     if (typeof window !== "undefined") {
-        return;
+        return; // Client-side should not attempt server-only refresh
     }
-    const { headers } = await import("next/headers");
-    const requestHeader = await headers();
-
-    if (requestHeader.get("x-token-refreshed") === "1") {
+    const reqHeaders = await headers();
+    if (reqHeaders.get("x-token-refreshed") === "1") {
         return; // avoid multiple refresh attempts in the same request lifecycle
     }
     try {
-        const { getNewTokensWithRefreshToken } = await import("@/services/auth.service");
         await getNewTokensWithRefreshToken(refreshToken);
     } catch (error: any) {
         console.error("Error refreshing token in http client:", error);
@@ -57,7 +56,6 @@ const axiosInstance = async () => {
     let cookieHeader = "";
 
     if (typeof window === "undefined") {
-        const { cookies } = await import("next/headers");
         const cookieStore = await cookies();
         const accessToken = cookieStore.get("accessToken")?.value;
         const refreshToken = cookieStore.get("refreshToken")?.value;

@@ -155,6 +155,7 @@ export async function proxy(request: NextRequest) {
         if (!accessToken || !isValidAccessToken) {
             const loginUrl = new URL("/login", request.url);
             loginUrl.searchParams.set("redirect", pathWithQuery);
+            loginUrl.searchParams.set("reason", "token_expired");
             return NextResponse.redirect(loginUrl);
         }
 

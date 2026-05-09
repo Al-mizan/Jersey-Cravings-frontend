@@ -1,3 +1,5 @@
+"use server";
+
 import { httpClient } from "@/lib/axios/httpClient";
 import { safeServiceCall } from "@/services/service-utils";
 import {

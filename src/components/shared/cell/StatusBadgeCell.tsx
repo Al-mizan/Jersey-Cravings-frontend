@@ -1,22 +1,21 @@
 import { Badge } from "@/components/ui/badge";
-import { UserStatus } from "@/types/doctor.types";
+import { ProductStatus } from "@/types/product.types";
+
+const STATUS_VARIANT_MAP: Record<ProductStatus, { variant: "default" | "destructive" | "secondary" | "outline"; label: string }> = {
+    DRAFT: { variant: "outline", label: "Draft" },
+    ACTIVE: { variant: "default", label: "Active" },
+    ARCHIVED: { variant: "destructive", label: "Archived" },
+};
 
 interface IStatusBadgeCellProps {
-    status: UserStatus;
+    status: ProductStatus;
 }
 
 const StatusBadgeCell = ({ status }: IStatusBadgeCellProps) => {
+    const config = STATUS_VARIANT_MAP[status];
     return (
-        <Badge
-            variant={
-                status === UserStatus.ACTIVE
-                    ? "default"
-                    : status === UserStatus.BLOCKED
-                      ? "destructive"
-                      : "secondary"
-            }
-        >
-            <span className="text-sm capitalize">{status.toLowerCase()}</span>
+        <Badge variant={config.variant}>
+            <span className="text-sm">{config.label}</span>
         </Badge>
     );
 };

@@ -1,6 +1,5 @@
 "use client";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,10 +8,12 @@ import { loginAction } from "@/app/(commonLayout)/(authRouteGroup)/login/_action
 import { ILoginPayload, loginZodSchema } from "@/zod/auth.validation";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
-import { AlertCircle, Eye, EyeOff, Loader2, LogIn } from "lucide-react";
+import { Eye, EyeOff, Loader2, LogIn } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface LoginFormProps {
     redirectPath?: string;
@@ -55,6 +56,17 @@ const LoginForm = ({ redirectPath, oauthError, message }: LoginFormProps) => {
         if (oauthErrorMessage) toast.error(oauthErrorMessage);
         else if (message) toast(message);
     }, [oauthErrorMessage, message]);
+
+    const searchParams = useSearchParams();
+    const queryClient = useQueryClient();
+
+    useEffect(() => {
+        const reason = searchParams.get("reason");
+        if (reason === "token_expired") {
+            // Clear all cached queries to prevent stale data flash
+            queryClient.clear();
+        }
+    }, [searchParams, queryClient]);
 
     const { mutateAsync, isPending } = useMutation({
         mutationFn: (payload: ILoginPayload) =>

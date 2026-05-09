@@ -32,7 +32,7 @@ export const commonProtectedRoutes: RouteConfig = {
 
 
 export const adminProtectedRoutes: RouteConfig = {
-    pattern: [/^\/admin\/dashboard/], // Matches any path that starts with /admin/dashboard
+    pattern: [/^\/admin/], // Matches any path that starts with /admin/
     exact: []
 }
 
