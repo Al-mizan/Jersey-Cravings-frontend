@@ -214,6 +214,15 @@ export interface IPaginatedData<T> {
     meta: PaginationMeta;
 }
 
+/** Admin list response shape from `getAllCustomers` (mirrors catalog list services). */
+export interface ICustomerAdminListResponse {
+    data: ICustomerProfile[];
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+}
+
 export interface ICustomerQueryParams {
     searchTerm?: string;
     isDeleted?: boolean;

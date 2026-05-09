@@ -1,106 +1,54 @@
-"use server"
+"use server";
 
-// import { orderApiClient } from "@/lib/axios/orderApiClient";
-// import { safeServiceCall, safeServiceMutation } from "@/services/service-utils";
-// import type {
-//     ICreateOrderPayload,
-//     IOrder,
-//     IOrderListResponse,
-//     IPaymentListResponse,
-//     IPayment,
-// } from "@/types/order.types";
+import { httpClient } from "@/lib/axios/httpClient";
+import { safeServiceCall } from "@/services/service-utils";
+import type { IAdminOrder, IAdminOrderListResponse } from "@/types/order.types";
 
-// export async function createMyOrder(
-//     payload: ICreateOrderPayload,
-// ): Promise<IOrder> {
-//     return safeServiceMutation(
-//         () => orderApiClient.createMyOrder(payload),
-//         "Failed to create order:",
-//     );
-// }
+const ORDER_ENDPOINTS = {
+    orders: "/orders",
+};
 
-// // Orders
-// export async function getMyOrders(
-//     status?: string,
-//     page: number = 1,
-//     limit: number = 10,
-// ): Promise<IOrderListResponse | null> {
-//     return safeServiceCall(
-//         () => orderApiClient.getMyOrders(status, page, limit),
-//         null,
-//         "Failed to fetch my orders:",
-//     );
-// }
+export async function getAllOrdersForAdmin(
+    searchTerm?: string,
+    status?: string,
+    paymentStatus?: string,
+    needsManualReview?: boolean,
+    userId?: string,
+    page: number = 1,
+    limit: number = 10,
+    sortBy?: string,
+    sortOrder?: "asc" | "desc",
+): Promise<IAdminOrderListResponse | null> {
+    return safeServiceCall(
+        async () => {
+            const response = await httpClient.get<IAdminOrder[]>(
+                ORDER_ENDPOINTS.orders,
+                {
+                    params: {
+                        searchTerm,
+                        status,
+                        paymentStatus,
+                        needsManualReview,
+                        userId,
+                        page,
+                        limit,
+                        sortBy,
+                        sortOrder,
+                    },
+                },
+            );
 
-// export async function getMyOrderById(orderId: string): Promise<IOrder | null> {
-//     return safeServiceCall(
-//         () => orderApiClient.getMyOrderById(orderId),
-//         null,
-//         "Failed to fetch order:",
-//     );
-// }
+            const data = response.data;
 
-// export async function getAllOrders(
-//     searchTerm?: string,
-//     status?: string,
-//     paymentStatus?: string,
-//     needsManualReview?: boolean,
-//     page: number = 1,
-//     limit: number = 10,
-// ): Promise<IOrderListResponse | null> {
-//     return safeServiceCall(
-//         () =>
-//             orderApiClient.getAllOrders(
-//                 searchTerm,
-//                 status,
-//                 paymentStatus,
-//                 needsManualReview,
-//                 page,
-//                 limit,
-//             ),
-//         null,
-//         "Failed to fetch orders:",
-//     );
-// }
-
-// export async function getOrderById(orderId: string): Promise<IOrder | null> {
-//     return safeServiceCall(
-//         () => orderApiClient.getOrderById(orderId),
-//         null,
-//         "Failed to fetch order:",
-//     );
-// }
-
-// // Payments
-// export async function getMyPayments(
-//     page: number = 1,
-//     limit: number = 10,
-// ): Promise<IPaymentListResponse | null> {
-//     return safeServiceCall(
-//         () => orderApiClient.getMyPayments(page, limit),
-//         null,
-//         "Failed to fetch payments:",
-//     );
-// }
-
-// export async function getPaymentByOrder(
-//     orderId: string,
-// ): Promise<IPayment | null> {
-//     return safeServiceCall(
-//         () => orderApiClient.getPaymentByOrder(orderId),
-//         null,
-//         "Failed to fetch payment:",
-//     );
-// }
-
-// export async function getAllPayments(
-//     status?: string,
-//     page: number = 1,
-//     limit: number = 10,
-// ): Promise<IPaymentListResponse | null> {
-//     return safeServiceCall(
-//         () => orderApiClient.getAllPayments(status, page, limit),
-//         null,
-//         "Failed to fetch payments:",
-//     );
-// }
+            return {
+                data,
+                page: response.meta?.page ?? page,
+                limit: response.meta?.limit ?? limit,
+                total: response.meta?.total ?? data.length,
+                totalPages: response.meta?.totalPages ?? 1,
+            };
+        },
+        null,
+        "Failed to fetch orders:",
+    );
+}

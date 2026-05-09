@@ -54,29 +54,6 @@ export default function AdminProductsPageClient() {
             ? filters.categoryId
             : undefined;
 
-    const productsQuery = useQuery({
-        queryKey: adminProductKeys.list({
-            searchTerm,
-            status,
-            categoryId,
-            page,
-            limit,
-            sortBy,
-            sortOrder,
-        }),
-        queryFn: () =>
-            getAllProducts(
-                searchTerm || undefined,
-                status,
-                categoryId,
-                page,
-                limit,
-                false,
-                sortBy,
-                sortOrder,
-            ),
-    });
-
     const categoriesQuery = useQuery({
         queryKey: adminCategoryKeys.options(),
         queryFn: () => getAllCategories(undefined, 1, 100, true, false),
@@ -186,7 +163,9 @@ export default function AdminProductsPageClient() {
             {
                 id: "stock",
                 header: "Stock",
-                enableSorting: false,
+                enableSorting: true,
+                accessorFn: (row) =>
+                    row.variants?.reduce((sum, v) => sum + (v.stockQty ?? 0), 0) ?? 0,
                 cell: ({ row }) => {
                     const totalStock =
                         row.original.variants?.reduce(
@@ -194,12 +173,7 @@ export default function AdminProductsPageClient() {
                             0,
                         ) ?? 0;
                     return (
-                        <span
-                            className={cn(
-                                "text-sm font-medium",
-                                totalStock > 0 ? "text-emerald-600" : "text-destructive",
-                            )}
-                        >
+                        <span className={cn("text-sm font-medium", totalStock > 0 ? "text-emerald-600" : "text-destructive")}>
                             {totalStock}
                         </span>
                     );
@@ -208,18 +182,20 @@ export default function AdminProductsPageClient() {
             {
                 id: "price",
                 header: "Price",
-                enableSorting: false,
+                enableSorting: true,
+                accessorFn: (row) => {
+                    const prices = (row.variants ?? [])
+                        .map((v) => v.priceAmount)
+                        .filter((p): p is number => typeof p === "number");
+                    return prices.length > 0 ? Math.min(...prices) : 0;
+                },
                 cell: ({ row }) => {
                     const prices = (row.original.variants ?? [])
-                        .map((variant) => variant.priceAmount)
-                        .filter((price): price is number => typeof price === "number");
-
-                    if (prices.length === 0) {
+                        .map((v) => v.priceAmount)
+                        .filter((p): p is number => typeof p === "number");
+                    if (prices.length === 0)
                         return <span className="text-sm text-muted-foreground">—</span>;
-                    }
-
-                    const minPrice = Math.min(...prices);
-                    return <span className="text-sm font-semibold">${minPrice.toFixed(2)}</span>;
+                    return <span className="text-sm font-semibold">${Math.min(...prices).toFixed(2)}</span>;
                 },
             },
             {
@@ -295,6 +271,54 @@ export default function AdminProductsPageClient() {
         [router],
     );
 
+    const SERVER_SORT_COLUMNS = ["createdAt"];
+
+    const isServerSort = SERVER_SORT_COLUMNS.includes(sortBy);
+
+    // API call-এ শুধু valid server columns পাঠাও
+    const productsQuery = useQuery({
+        queryKey: adminProductKeys.list({
+            searchTerm, status, categoryId, page, limit,
+            sortBy: isServerSort ? sortBy : "createdAt",
+            sortOrder: isServerSort ? sortOrder : "desc",
+        }),
+        queryFn: () =>
+            getAllProducts(
+                searchTerm || undefined,
+                status, categoryId, page, limit, false,
+                isServerSort ? sortBy : "createdAt",
+                isServerSort ? sortOrder : "desc",
+            ),
+    });
+
+    const sortedData = useMemo(() => {
+        const raw = productsQuery.data?.data ?? [];
+        if (isServerSort || !sortingState[0]) return raw;
+
+        const { id, desc } = sortingState[0];
+
+        return [...raw].sort((a, b) => {
+            let aVal = 0;
+            let bVal = 0;
+
+            if (id === "stock") {
+                aVal = a.variants?.reduce((s, v) => s + (v.stockQty ?? 0), 0) ?? 0;
+                bVal = b.variants?.reduce((s, v) => s + (v.stockQty ?? 0), 0) ?? 0;
+            } else if (id === "price") {
+                const aPrices = (a.variants ?? [])
+                    .map((v) => v.priceAmount)
+                    .filter((p): p is number => typeof p === "number");
+                const bPrices = (b.variants ?? [])
+                    .map((v) => v.priceAmount)
+                    .filter((p): p is number => typeof p === "number");
+                aVal = aPrices.length ? Math.min(...aPrices) : 0;
+                bVal = bPrices.length ? Math.min(...bPrices) : 0;
+            }
+
+            return desc ? bVal - aVal : aVal - bVal;
+        });
+    }, [productsQuery.data?.data, sortingState, isServerSort]);
+
     return (
         <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -313,7 +337,7 @@ export default function AdminProductsPageClient() {
             </div>
 
             <DataTable<IProduct>
-                data={productsQuery.data?.data ?? []}
+                data={sortedData}
                 columns={columns}
                 isLoading={productsQuery.isLoading || deleteMutation.isPending}
                 emptyMessage="No products found."

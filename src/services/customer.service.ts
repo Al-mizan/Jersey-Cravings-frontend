@@ -1,69 +1,119 @@
-"use server"
+"use server";
 
-// import { customerApiClient } from "@/components/modules/Customer";
-// import {
-//     IAddressQueryParams,
-//     IChangeCustomerStatusPayload,
-//     ICreateAddressPayload,
-//     ICreateReviewPayload,
-//     ICustomerQueryParams,
-//     IModerateReviewPayload,
-//     IPointTransactionQueryParams,
-//     IReferralEventQueryParams,
-//     IReviewQueryParams,
-//     IUpdateAddressPayload,
-//     IUpdateLoyaltySettingPayload,
-//     IUpdateMyProfilePayload,
-//     IUpdateReviewPayload,
-//     IOverrideReferralStatusPayload,
-// } from "@/types/customer.types";
+import { httpClient } from "@/lib/axios/httpClient";
+import { safeServiceCall, safeServiceMutation } from "@/services/service-utils";
+import { ApiResponse } from "@/types/api.types";
+import type {
+    IChangeCustomerStatusPayload,
+    ICustomerAdminListResponse,
+    ICustomerProfile,
+    ICustomerQueryParams,
+    IUpdateMyProfilePayload,
+} from "@/types/customer.types";
 
-// export const customerServices = {
-//     getMyProfile: () => customerApiClient.getMyProfile(),
-//     updateMyProfile: (payload: IUpdateMyProfilePayload) =>
-//         customerApiClient.updateMyProfile(payload),
+const CUSTOMER_PROFILE_ENDPOINTS = {
+    base: "/customers/profile",
+};
 
-//     getAllCustomers: (params?: ICustomerQueryParams) =>
-//         customerApiClient.getAllCustomers(params),
-//     getCustomerById: (customerId: string) =>
-//         customerApiClient.getCustomerById(customerId),
-//     changeCustomerStatus: (payload: IChangeCustomerStatusPayload) =>
-//         customerApiClient.changeCustomerStatus(payload),
-//     restoreCustomer: (customerId: string) =>
-//         customerApiClient.restoreCustomer(customerId),
+const unwrapData = async <TData>(
+    request: Promise<ApiResponse<TData>>,
+): Promise<TData> => {
+    const response = await request;
+    return response.data;
+};
 
-//     getMyAddresses: (params?: IAddressQueryParams) =>
-//         customerApiClient.getMyAddresses(params),
-//     createAddress: (payload: ICreateAddressPayload) =>
-//         customerApiClient.createAddress(payload),
-//     updateAddress: (addressId: string, payload: IUpdateAddressPayload) =>
-//         customerApiClient.updateAddress(addressId, payload),
-//     deleteAddress: (addressId: string) => customerApiClient.deleteAddress(addressId),
+export async function getMyProfile(): Promise<ICustomerProfile | null> {
+    return safeServiceCall(
+        () =>
+            unwrapData<ICustomerProfile>(
+                httpClient.get(`${CUSTOMER_PROFILE_ENDPOINTS.base}/me`),
+            ),
+        null,
+        "Failed to fetch customer profile:",
+    );
+}
 
-//     getMyLoyaltySummary: () => customerApiClient.getMyLoyaltySummary(),
-//     getMyPointTransactions: (params?: IPointTransactionQueryParams) =>
-//         customerApiClient.getMyPointTransactions(params),
-//     getActiveLoyaltySetting: () => customerApiClient.getActiveLoyaltySetting(),
-//     updateLoyaltySetting: (payload: IUpdateLoyaltySettingPayload) =>
-//         customerApiClient.updateLoyaltySetting(payload),
+export async function updateMyProfile(
+    payload: IUpdateMyProfilePayload | FormData,
+): Promise<ICustomerProfile> {
+    return safeServiceMutation(
+        () =>
+            unwrapData<ICustomerProfile>(
+                httpClient.patch(`${CUSTOMER_PROFILE_ENDPOINTS.base}/me`, payload),
+            ),
+        "Failed to update profile:",
+    );
+}
 
-//     getOrCreateMyReferralCode: () => customerApiClient.getOrCreateMyReferralCode(),
-//     getMyReferralEvents: (params?: IReferralEventQueryParams) =>
-//         customerApiClient.getMyReferralEvents(params),
-//     getAllReferralEventsForAdmin: (params?: IReferralEventQueryParams) =>
-//         customerApiClient.getAllReferralEventsForAdmin(params),
-//     overrideReferralStatus: (payload: IOverrideReferralStatusPayload) =>
-//         customerApiClient.overrideReferralStatus(payload),
+export async function getAllCustomers(
+    searchTerm?: string,
+    page: number = 1,
+    limit: number = 10,
+    isDeleted?: boolean,
+    sortBy?: string,
+    sortOrder?: "asc" | "desc",
+): Promise<ICustomerAdminListResponse | null> {
+    const params: ICustomerQueryParams & Record<string, unknown> = {
+        searchTerm,
+        page,
+        limit,
+        sortBy,
+        sortOrder,
+    };
 
-//     getAllReviews: (params?: IReviewQueryParams) =>
-//         customerApiClient.getAllReviews(params),
-//     createReview: (payload: ICreateReviewPayload) =>
-//         customerApiClient.createReview(payload),
-//     getMyReviews: (params?: IReviewQueryParams) =>
-//         customerApiClient.getMyReviews(params),
-//     updateReview: (reviewId: string, payload: IUpdateReviewPayload) =>
-//         customerApiClient.updateReview(reviewId, payload),
-//     deleteReview: (reviewId: string) => customerApiClient.deleteReview(reviewId),
-//     moderateReview: (reviewId: string, payload: IModerateReviewPayload) =>
-//         customerApiClient.moderateReview(reviewId, payload),
-// };
+    if (typeof isDeleted === "boolean") {
+        params.isDeleted = isDeleted;
+    }
+
+    return safeServiceCall(
+        async () => {
+            const response = await httpClient.get<ICustomerProfile[]>(
+                CUSTOMER_PROFILE_ENDPOINTS.base,
+                { params },
+            );
+
+            return {
+                data: response.data,
+                page: response.meta?.page ?? page,
+                limit: response.meta?.limit ?? limit,
+                total: response.meta?.total ?? response.data.length,
+                totalPages: response.meta?.totalPages ?? 1,
+            };
+        },
+        null,
+        "Failed to fetch customers:",
+    );
+}
+
+export async function getCustomerById(
+    customerId: string,
+): Promise<ICustomerProfile | null> {
+    return safeServiceCall(
+        () =>
+            unwrapData<ICustomerProfile>(
+                httpClient.get(`${CUSTOMER_PROFILE_ENDPOINTS.base}/${customerId}`),
+            ),
+        null,
+        "Failed to fetch customer:",
+    );
+}
+
+export async function changeCustomerStatus(payload: IChangeCustomerStatusPayload): Promise<unknown> {
+    return safeServiceMutation(
+        () =>
+            unwrapData(
+                httpClient.patch(`${CUSTOMER_PROFILE_ENDPOINTS.base}/status`, payload),
+            ),
+        "Failed to change customer status:",
+    );
+}
+
+export async function restoreCustomer(customerId: string): Promise<unknown> {
+    return safeServiceMutation(
+        () =>
+            unwrapData(
+                httpClient.patch(`${CUSTOMER_PROFILE_ENDPOINTS.base}/${customerId}/restore`, {}),
+            ),
+        "Failed to restore customer:",
+    );
+}

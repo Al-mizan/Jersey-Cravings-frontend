@@ -116,6 +116,18 @@ export interface IPaginatedResponse<T> {
 export interface IOrderListResponse extends IPaginatedResponse<IOrder> {}
 export interface IPaymentListResponse extends IPaginatedResponse<IPayment> {}
 
+/** Admin order list item (includes relations returned by `GET /orders`). */
+export interface IAdminOrder extends IOrder {
+    payment?: IPayment | null;
+    user?: {
+        id: string;
+        email: string;
+        role: string;
+    };
+}
+
+export interface IAdminOrderListResponse extends IPaginatedResponse<IAdminOrder> {}
+
 // Request Payloads
 export interface ICreateOrderPayload {
     addressId?: string;
