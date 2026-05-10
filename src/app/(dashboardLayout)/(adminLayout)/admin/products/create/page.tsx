@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { z } from "zod";
+import imageCompression from "browser-image-compression";
 import { createCategoryZodSchema, createProductZodSchema, createVariantZodSchema } from "@/zod/product.validation";
 import {
     createCategory,
@@ -31,7 +32,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Check, Plus, Trash2, UploadCloud } from "lucide-react";
+import { Check, Plus, Trash2, UploadCloud, ImageIcon, Loader2 } from "lucide-react";
 
 const jerseyTypeOptions = ["HOME", "AWAY", "THIRD", "GK", "SPECIAL"] as const;
 const sizeOptions = ["S", "M", "L", "XL", "XXL"] as const;
@@ -77,6 +78,11 @@ export default function CreateProductPage() {
     const [files, setFiles] = useState<File[]>([]);
     const [createdVariants, setCreatedVariants] = useState<IProductVariant[]>([]);
     const [createdMedia, setCreatedMedia] = useState<IProductMedia[]>([]);
+    
+    // Thumbnail state
+    const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+    const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+    const [isCompressing, setIsCompressing] = useState(false);
 
     const categoriesQuery = useQuery({
         queryKey: adminCategoryKeys.options(),
@@ -159,7 +165,7 @@ export default function CreateProductPage() {
                     categoryId = category.id;
                 }
 
-                const payload = createProductZodSchema.parse({
+                const parsed = createProductZodSchema.parse({
                     title: value.title,
                     slug: value.slug || slugify(value.title),
                     description: value.description || undefined,
@@ -169,7 +175,13 @@ export default function CreateProductPage() {
                     categoryId,
                 });
 
-                const created = await createProductMutation.mutateAsync(payload);
+                const formData = new FormData();
+                formData.append("data", JSON.stringify(parsed));
+                if (thumbnailFile) {
+                    formData.append("productThumbnail", thumbnailFile);
+                }
+
+                const created = await createProductMutation.mutateAsync(formData as any);
                 setProduct(created);
                 setCreatedVariants([]);
                 setCreatedMedia([]);
@@ -356,40 +368,107 @@ export default function CreateProductPage() {
                                 </productForm.Field>
                             )}
 
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <productForm.Field name="title">
-                                    {(field) => (
-                                        <div className="space-y-2">
-                                            <Label>Product Title</Label>
-                                            <Input
-                                                value={field.state.value}
-                                                onChange={(event) => {
-                                                    const nextTitle = event.target.value;
-                                                    field.handleChange(nextTitle);
-                                                    productForm.setFieldValue(
-                                                        "slug",
-                                                        slugify(nextTitle),
-                                                    );
-                                                }}
-                                                placeholder="Barcelona Home Jersey 2026"
-                                            />
-                                        </div>
-                                    )}
-                                </productForm.Field>
-                                <productForm.Field name="slug">
-                                    {(field) => (
-                                        <div className="space-y-2">
-                                            <Label>Product Slug</Label>
-                                            <Input
-                                                value={field.state.value}
-                                                onChange={(event) =>
-                                                    field.handleChange(event.target.value)
+                            <div className="flex flex-col sm:flex-row gap-6">
+                                <div className="flex-shrink-0">
+                                    <Label className="block mb-2">Thumbnail</Label>
+                                    <label className="relative flex h-32 w-32 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors overflow-hidden group">
+                                        {thumbnailPreview ? (
+                                            <>
+                                                <Image
+                                                    src={thumbnailPreview}
+                                                    alt="Thumbnail preview"
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
+                                                    {isCompressing ? (
+                                                        <Loader2 className="h-5 w-5 text-white animate-spin" />
+                                                    ) : (
+                                                        <span className="text-white text-xs font-medium">Replace</span>
+                                                    )}
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="text-center text-primary/60">
+                                                {isCompressing ? (
+                                                    <Loader2 className="mx-auto h-6 w-6 mb-1 animate-spin" />
+                                                ) : (
+                                                    <ImageIcon className="mx-auto h-6 w-6 mb-1" />
+                                                )}
+                                                <span className="text-[10px] uppercase font-semibold tracking-wider">
+                                                    {isCompressing ? "Processing" : "Upload"}
+                                                </span>
+                                            </div>
+                                        )}
+                                        <input
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp"
+                                            className="hidden"
+                                            disabled={isCompressing}
+                                            onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+                                                if (file.size > 2 * 1024 * 1024) {
+                                                    toast.error("File must be under 2MB");
+                                                    return;
                                                 }
-                                                placeholder="barcelona-home-jersey-2026"
-                                            />
-                                        </div>
-                                    )}
-                                </productForm.Field>
+                                                setIsCompressing(true);
+                                                try {
+                                                    const compressed = await imageCompression(file, {
+                                                        maxSizeMB: 0.5,
+                                                        maxWidthOrHeight: 800,
+                                                        useWebWorker: true,
+                                                    });
+                                                    setThumbnailFile(compressed);
+                                                    setThumbnailPreview(URL.createObjectURL(compressed));
+                                                } catch (error) {
+                                                    toast.error("Failed to compress image");
+                                                } finally {
+                                                    setIsCompressing(false);
+                                                }
+                                            }}
+                                        />
+                                    </label>
+                                    <p className="text-[10px] text-muted-foreground mt-2 text-center max-w-[8rem]">
+                                        Square, max 2MB (JPG, PNG, WEBP)
+                                    </p>
+                                </div>
+
+                                <div className="flex-grow grid gap-4 md:grid-cols-2">
+                                    <productForm.Field name="title">
+                                        {(field) => (
+                                            <div className="space-y-2">
+                                                <Label>Product Title</Label>
+                                                <Input
+                                                    value={field.state.value}
+                                                    onChange={(event) => {
+                                                        const nextTitle = event.target.value;
+                                                        field.handleChange(nextTitle);
+                                                        productForm.setFieldValue(
+                                                            "slug",
+                                                            slugify(nextTitle),
+                                                        );
+                                                    }}
+                                                    placeholder="Barcelona Home Jersey 2026"
+                                                />
+                                            </div>
+                                        )}
+                                    </productForm.Field>
+                                    <productForm.Field name="slug">
+                                        {(field) => (
+                                            <div className="space-y-2">
+                                                <Label>Product Slug</Label>
+                                                <Input
+                                                    value={field.state.value}
+                                                    onChange={(event) =>
+                                                        field.handleChange(event.target.value)
+                                                    }
+                                                    placeholder="barcelona-home-jersey-2026"
+                                                />
+                                            </div>
+                                        )}
+                                    </productForm.Field>
+                                </div>
                             </div>
 
                             <productForm.Field name="description">

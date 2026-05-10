@@ -25,6 +25,7 @@ export const createProductZodSchema = z.object({
         message: "Invalid jersey type",
     }),
     categoryId: z.string().uuid({ message: "Invalid category ID" }),
+    thumbNail: z.string().url().optional(),
 });
 
 export type ICreateProductPayload = z.infer<typeof createProductZodSchema>;
@@ -59,6 +60,7 @@ export const updateProductZodSchema = z.object({
         })
         .optional(),
     categoryId: z.string().uuid({ message: "Invalid category ID" }).optional(),
+    thumbNail: z.string().url().optional(),
 });
 
 export type IUpdateProductPayload = z.infer<typeof updateProductZodSchema>;

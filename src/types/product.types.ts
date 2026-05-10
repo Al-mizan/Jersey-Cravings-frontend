@@ -52,6 +52,8 @@ export interface IProduct {
     tournamentTag?: string;
     jerseyType: JerseyType;
     status: ProductStatus;
+    totalRating?: number;
+    reviewCount?: number;
     isDeleted: boolean;
     deletedAt?: string | null;
     createdAt: string;
@@ -60,6 +62,14 @@ export interface IProduct {
     category?: ICategory;
     media?: IProductMedia[];
     variants?: IProductVariant[];
+    thumbNail?: string | null;
+}
+
+export interface ITeamSummary {
+    teamName: string;
+    thumbNail: string | null;
+    productCount: number;
+    singleProductId?: string;
 }
 
 // Request Payloads
@@ -71,6 +81,7 @@ export interface ICreateProductPayload {
     tournamentTag?: string;
     jerseyType: JerseyType;
     categoryId: string;
+    thumbNail?: string;
 }
 
 export interface IUpdateProductPayload {
@@ -81,6 +92,7 @@ export interface IUpdateProductPayload {
     tournamentTag?: string;
     jerseyType?: JerseyType;
     categoryId?: string;
+    thumbNail?: string;
 }
 
 export interface IUpdateProductStatusPayload {

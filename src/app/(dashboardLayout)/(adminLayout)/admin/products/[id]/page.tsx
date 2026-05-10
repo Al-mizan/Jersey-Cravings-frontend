@@ -7,6 +7,7 @@ import { useParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { toast } from "sonner";
+import imageCompression from "browser-image-compression";
 import {
     ArrowLeft,
     Calendar,
@@ -15,6 +16,8 @@ import {
     Trash2,
     Trophy,
     UploadCloud,
+    ImageIcon,
+    Loader2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -90,6 +93,10 @@ export default function ProductDetailsPage() {
             { stockQty: string; priceAmount: string; compareAtAmount: string; costAmount: string }
         >
     >({});
+    const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+    const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+    const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+    const [isCompressing, setIsCompressing] = useState(false);
     const [form, setForm] = useState<EditFormState>({
         title: "",
         slug: "",
@@ -146,14 +153,17 @@ export default function ProductDetailsPage() {
     }, [productQuery.data]);
 
     const updateMutation = useMutation({
-        mutationFn: ({ id, payload }: { id: string; payload: IUpdateProductPayload }) =>
+        mutationFn: ({ id, payload }: { id: string; payload: FormData }) =>
             updateProduct(id, payload),
         onSuccess: () => {
             toast.success("Product updated");
             queryClient.invalidateQueries({ queryKey: ["admin", "products", "details", productId] });
             queryClient.invalidateQueries({ queryKey: adminProductKeys.all });
         },
-        onError: () => toast.error("Failed to update product"),
+        onError: (error: any) => {
+            const message = error?.response?.data?.message || error?.message || "Failed to update product";
+            toast.error(message);
+        },
     });
 
     const uploadMediaMutation = useMutation({
@@ -237,25 +247,39 @@ export default function ProductDetailsPage() {
         );
     }
 
-    const onSubmitUpdate = async () => {
+    const onSubmitUpdate = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        console.log("submit fired");
         try {
-            const payload = updateProductZodSchema.parse({
-                title: form.title,
-                slug: form.slug,
+            const payload = {
+                title: form.title || undefined,
+                slug: form.slug || undefined,
                 description: form.description || undefined,
-                teamName: form.teamName,
+                teamName: form.teamName || undefined,
                 tournamentTag: form.tournamentTag || undefined,
                 jerseyType: form.jerseyType,
-                categoryId: form.categoryId,
-            });
+                categoryId: form.categoryId || undefined,
+                thumbNail: (!thumbnailFile && product.thumbNail) ? product.thumbNail : undefined,
+            };
+            
+            const parsed = updateProductZodSchema.parse(payload);
 
-            await updateMutation.mutateAsync({ id: productId, payload });
+            const formData = new FormData();
+            formData.append("data", JSON.stringify(parsed));
+            if (thumbnailFile) {
+                formData.append("productThumbnail", thumbnailFile);
+            }
+
+            console.log("Sending payload to mutation:", parsed);
+            await updateMutation.mutateAsync({ id: productId, payload: formData });
         } catch (error) {
             if (error instanceof z.ZodError) {
+                console.log("Zod validation errors:", error.issues);
                 toast.error(error.issues[0]?.message ?? "Invalid product data");
                 return;
             }
-            toast.error("Failed to update product");
+            console.error("Mutation error:", error);
+            // Error is already toasted by the mutation's onError callback
         }
     };
 
@@ -322,20 +346,88 @@ export default function ProductDetailsPage() {
                             <CardDescription>Update core product fields and category.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label>Title</Label>
-                                    <Input
-                                        value={form.title}
-                                        onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-                                    />
+                            <form onSubmit={onSubmitUpdate} className="space-y-4">
+                                <div className="flex flex-col sm:flex-row gap-6 mb-6">
+                                <div className="flex-shrink-0">
+                                    <Label className="block mb-2">Thumbnail</Label>
+                                    <label className="relative flex h-32 w-32 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors overflow-hidden group">
+                                        {thumbnailPreview || product.thumbNail ? (
+                                            <>
+                                                <Image
+                                                    src={thumbnailPreview || product.thumbNail || ""}
+                                                    alt="Thumbnail preview"
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
+                                                    {isCompressing ? (
+                                                        <Loader2 className="h-5 w-5 text-white animate-spin" />
+                                                    ) : (
+                                                        <span className="text-white text-xs font-medium">Replace</span>
+                                                    )}
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="text-center text-primary/60">
+                                                {isCompressing ? (
+                                                    <Loader2 className="mx-auto h-6 w-6 mb-1 animate-spin" />
+                                                ) : (
+                                                    <ImageIcon className="mx-auto h-6 w-6 mb-1" />
+                                                )}
+                                                <span className="text-[10px] uppercase font-semibold tracking-wider">
+                                                    {isCompressing ? "Processing" : "Upload"}
+                                                </span>
+                                            </div>
+                                        )}
+                                        <input
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp"
+                                            className="hidden"
+                                            disabled={isCompressing}
+                                            onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+                                                if (file.size > 2 * 1024 * 1024) {
+                                                    toast.error("File must be under 2MB");
+                                                    return;
+                                                }
+                                                setIsCompressing(true);
+                                                try {
+                                                    const compressed = await imageCompression(file, {
+                                                        maxSizeMB: 0.5,
+                                                        maxWidthOrHeight: 800,
+                                                        useWebWorker: true,
+                                                    });
+                                                    setThumbnailFile(compressed);
+                                                    setThumbnailPreview(URL.createObjectURL(compressed));
+                                                } catch (error) {
+                                                    toast.error("Failed to compress image");
+                                                } finally {
+                                                    setIsCompressing(false);
+                                                }
+                                            }}
+                                        />
+                                    </label>
+                                    <p className="text-[10px] text-muted-foreground mt-2 text-center max-w-[8rem]">
+                                        Square, max 2MB (JPG, PNG, WEBP)
+                                    </p>
                                 </div>
-                                <div className="space-y-2">
-                                    <Label>Slug</Label>
-                                    <Input
-                                        value={form.slug}
-                                        onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value }))}
-                                    />
+
+                                <div className="flex-grow grid gap-4 md:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label>Title</Label>
+                                        <Input
+                                            value={form.title}
+                                            onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Slug</Label>
+                                        <Input
+                                            value={form.slug}
+                                            onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value }))}
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
@@ -453,15 +545,15 @@ export default function ProductDetailsPage() {
                                 />
                             </div>
 
-                            <div className="flex justify-end">
-                                <Button
-                                    type="button"
-                                    onClick={onSubmitUpdate}
-                                    disabled={updateMutation.isPending}
-                                >
-                                    Save Changes
-                                </Button>
-                            </div>
+                                <div className="flex justify-end">
+                                    <Button
+                                        type="submit"
+                                        disabled={updateMutation.isPending}
+                                    >
+                                        Save Changes
+                                    </Button>
+                                </div>
+                            </form>
                         </CardContent>
                     </Card>
 
@@ -591,124 +683,148 @@ export default function ProductDetailsPage() {
                                 Product Variants
                             </CardTitle>
                             <CardDescription>
-                                SKU, size, fit, sleeve, stock, price, compare at, and cost.
+                                Select a size to edit its details.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-3">
+                        <CardContent className="space-y-4">
                             {variants.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">No variants found.</p>
                             ) : (
-                                <div className="space-y-3">
-                                    {variants.map((variant) => {
-                                        const draft = variantDrafts[variant.id];
-                                        if (!draft) return null;
+                                <>
+                                    <div className="space-y-2">
+                                        <Label>Select Size</Label>
+                                        <Select value={selectedVariantId || ""} onValueChange={setSelectedVariantId}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Choose a size to edit..." />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {variants.map((v) => (
+                                                    <SelectItem key={v.id} value={v.id}>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-medium">{v.size}</span>
+                                                            <Badge variant={v.isActive ? "outline" : "secondary"} className="text-[10px] py-0 h-4">
+                                                                {v.isActive ? "Active" : "Inactive"}
+                                                            </Badge>
+                                                        </div>
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
 
-                                        return (
-                                            <div key={variant.id} className="rounded-lg border p-3 space-y-3">
-                                                <div className="grid gap-3 md:grid-cols-4">
-                                                    <div>
-                                                        <p className="text-[11px] uppercase text-muted-foreground">SKU</p>
-                                                        <p className="text-sm font-medium">{variant.sku}</p>
+                                    {selectedVariantId ? (
+                                        (() => {
+                                            const variant = variants.find((v) => v.id === selectedVariantId);
+                                            const draft = variantDrafts[selectedVariantId];
+                                            if (!variant || !draft) return null;
+
+                                            return (
+                                                <div className="rounded-lg border p-4 space-y-4 bg-muted/10">
+                                                    <div className="grid gap-4 md:grid-cols-3 pb-4 border-b">
+                                                        <div>
+                                                            <p className="text-[11px] uppercase text-muted-foreground">SKU</p>
+                                                            <p className="text-sm font-medium">{variant.sku}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[11px] uppercase text-muted-foreground">Fit</p>
+                                                            <p className="text-sm font-medium">{variant.fit}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[11px] uppercase text-muted-foreground">Sleeve</p>
+                                                            <p className="text-sm font-medium">{variant.sleeveType}</p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className="text-[11px] uppercase text-muted-foreground">Size</p>
-                                                        <p className="text-sm font-medium">{variant.size}</p>
+
+                                                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                                                        <div className="space-y-1.5">
+                                                            <Label>Stock</Label>
+                                                            <Input
+                                                                type="number"
+                                                                min={0}
+                                                                value={draft.stockQty}
+                                                                onChange={(e) =>
+                                                                    setVariantDrafts((prev) => ({
+                                                                        ...prev,
+                                                                        [variant.id]: {
+                                                                            ...prev[variant.id],
+                                                                            stockQty: e.target.value,
+                                                                        },
+                                                                    }))
+                                                                }
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1.5">
+                                                            <Label>Price</Label>
+                                                            <Input
+                                                                type="number"
+                                                                min={0}
+                                                                value={draft.priceAmount}
+                                                                onChange={(e) =>
+                                                                    setVariantDrafts((prev) => ({
+                                                                        ...prev,
+                                                                        [variant.id]: {
+                                                                            ...prev[variant.id],
+                                                                            priceAmount: e.target.value,
+                                                                        },
+                                                                    }))
+                                                                }
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1.5">
+                                                            <Label>Compare At</Label>
+                                                            <Input
+                                                                type="number"
+                                                                min={0}
+                                                                value={draft.compareAtAmount}
+                                                                onChange={(e) =>
+                                                                    setVariantDrafts((prev) => ({
+                                                                        ...prev,
+                                                                        [variant.id]: {
+                                                                            ...prev[variant.id],
+                                                                            compareAtAmount: e.target.value,
+                                                                        },
+                                                                    }))
+                                                                }
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1.5">
+                                                            <Label>Cost</Label>
+                                                            <Input
+                                                                type="number"
+                                                                min={0}
+                                                                value={draft.costAmount}
+                                                                onChange={(e) =>
+                                                                    setVariantDrafts((prev) => ({
+                                                                        ...prev,
+                                                                        [variant.id]: {
+                                                                            ...prev[variant.id],
+                                                                            costAmount: e.target.value,
+                                                                        },
+                                                                    }))
+                                                                }
+                                                            />
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className="text-[11px] uppercase text-muted-foreground">Fit</p>
-                                                        <p className="text-sm font-medium">{variant.fit}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[11px] uppercase text-muted-foreground">Sleeve</p>
-                                                        <p className="text-sm font-medium">{variant.sleeveType}</p>
+
+                                                    <div className="flex justify-end pt-2">
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            onClick={() => onSubmitVariantUpdate(variant.id)}
+                                                            disabled={updateVariantMutation.isPending}
+                                                        >
+                                                            Save Variant
+                                                        </Button>
                                                     </div>
                                                 </div>
-
-                                                <div className="grid gap-3 md:grid-cols-4">
-                                                    <div className="space-y-1">
-                                                        <Label>Stock</Label>
-                                                        <Input
-                                                            type="number"
-                                                            min={0}
-                                                            value={draft.stockQty}
-                                                            onChange={(e) =>
-                                                                setVariantDrafts((prev) => ({
-                                                                    ...prev,
-                                                                    [variant.id]: {
-                                                                        ...prev[variant.id],
-                                                                        stockQty: e.target.value,
-                                                                    },
-                                                                }))
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <Label>Price</Label>
-                                                        <Input
-                                                            type="number"
-                                                            min={0}
-                                                            value={draft.priceAmount}
-                                                            onChange={(e) =>
-                                                                setVariantDrafts((prev) => ({
-                                                                    ...prev,
-                                                                    [variant.id]: {
-                                                                        ...prev[variant.id],
-                                                                        priceAmount: e.target.value,
-                                                                    },
-                                                                }))
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <Label>Compare At</Label>
-                                                        <Input
-                                                            type="number"
-                                                            min={0}
-                                                            value={draft.compareAtAmount}
-                                                            onChange={(e) =>
-                                                                setVariantDrafts((prev) => ({
-                                                                    ...prev,
-                                                                    [variant.id]: {
-                                                                        ...prev[variant.id],
-                                                                        compareAtAmount: e.target.value,
-                                                                    },
-                                                                }))
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <Label>Cost</Label>
-                                                        <Input
-                                                            type="number"
-                                                            min={0}
-                                                            value={draft.costAmount}
-                                                            onChange={(e) =>
-                                                                setVariantDrafts((prev) => ({
-                                                                    ...prev,
-                                                                    [variant.id]: {
-                                                                        ...prev[variant.id],
-                                                                        costAmount: e.target.value,
-                                                                    },
-                                                                }))
-                                                            }
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex justify-end">
-                                                    <Button
-                                                        type="button"
-                                                        size="sm"
-                                                        onClick={() => onSubmitVariantUpdate(variant.id)}
-                                                        disabled={updateVariantMutation.isPending}
-                                                    >
-                                                        Save Variant
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                                            );
+                                        })()
+                                    ) : (
+                                        <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+                                            Select a size above to edit its details
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </CardContent>
                     </Card>

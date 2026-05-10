@@ -13,6 +13,7 @@ import type {
     IProductListResponse,
     IProductMediaListResponse,
     IProductVariant,
+    ITeamSummary,
     IUpdateProductPayload,
     IUpdateProductStatusPayload,
     IUpdateVariantPayload,
@@ -137,21 +138,80 @@ export async function getProductById(id: string): Promise<IProduct | null> {
     );
 }
 
-export async function createProduct(payload: ICreateProductPayload): Promise<IProduct> {
+export async function getTeamsByCategory(
+    categoryId: string,
+): Promise<ITeamSummary[]> {
+    return safeServiceCall(
+        () =>
+            unwrapData<ITeamSummary[]>(
+                httpClient.get(`${PRODUCT_ENDPOINTS.products}/teams`, {
+                    params: { categoryId },
+                }),
+            ),
+        [],
+        "Failed to fetch teams:",
+    );
+}
+
+export async function getProductsByTeam(
+    categoryId: string,
+    teamName: string,
+    page: number = 1,
+    limit: number = 20,
+    jerseyType?: string,
+    sortBy?: string,
+    sortOrder?: "asc" | "desc",
+): Promise<IProductListResponse | null> {
+    return safeServiceCall(
+        async () => {
+            const response = await httpClient.get<IProduct[]>(
+                PRODUCT_ENDPOINTS.products,
+                {
+                    params: {
+                        categoryId,
+                        teamName,
+                        status: "ACTIVE",
+                        isDeleted: false,
+                        page,
+                        limit,
+                        jerseyType,
+                        sortBy,
+                        sortOrder,
+                    },
+                },
+            );
+            return {
+                data: response.data,
+                page: response.meta?.page ?? page,
+                limit: response.meta?.limit ?? limit,
+                total: response.meta?.total ?? response.data.length,
+                totalPages: response.meta?.totalPages ?? 1,
+            };
+        },
+        null,
+        "Failed to fetch team products:",
+    );
+}
+
+export async function createProduct(payload: FormData): Promise<IProduct> {
     return safeServiceMutation(
-        () => unwrapData<IProduct>(httpClient.post(PRODUCT_ENDPOINTS.products, payload)),
+        () => unwrapData<IProduct>(httpClient.post(PRODUCT_ENDPOINTS.products, payload, {
+            headers: { "Content-Type": "multipart/form-data" },
+        })),
         "Failed to create product:",
     );
 }
 
 export async function updateProduct(
     productId: string,
-    payload: IUpdateProductPayload,
+    payload: FormData,
 ): Promise<IProduct> {
     return safeServiceMutation(
         () =>
             unwrapData<IProduct>(
-                httpClient.patch(`${PRODUCT_ENDPOINTS.products}/${productId}`, payload),
+                httpClient.patch(`${PRODUCT_ENDPOINTS.products}/${productId}`, payload, {
+                    headers: { "Content-Type": "multipart/form-data" },
+                }),
             ),
         "Failed to update product:",
     );

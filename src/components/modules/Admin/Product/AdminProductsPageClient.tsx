@@ -195,7 +195,7 @@ export default function AdminProductsPageClient() {
                         .filter((p): p is number => typeof p === "number");
                     if (prices.length === 0)
                         return <span className="text-sm text-muted-foreground">—</span>;
-                    return <span className="text-sm font-semibold">${Math.min(...prices).toFixed(2)}</span>;
+                    return <span className="text-sm font-semibold">৳{Math.min(...prices).toFixed(2)}</span>;
                 },
             },
             {

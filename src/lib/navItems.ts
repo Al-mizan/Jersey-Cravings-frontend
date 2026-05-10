@@ -10,6 +10,11 @@ const adminNavItems: NavSection[] = [
                 href: "/admin/dashboard",
                 icon: "LayoutDashboard",
             },
+            {
+                title: "Settings",
+                href: "/admin/settings",
+                icon: "Settings",
+            },
         ],
     },
     {
@@ -24,6 +29,11 @@ const adminNavItems: NavSection[] = [
                 title: "Products",
                 href: "/admin/products",
                 icon: "Shirt",
+            },
+            {
+                title: "Banners",
+                href: "/admin/banners",
+                icon: "Image",
             },
             // {
             //     title: "Product Variants",

@@ -74,7 +74,7 @@ const HomeNavbar = () => {
                                         <Button
                                             key={link.href}
                                             variant="ghost"
-                                            className="justify-start"
+                                            className="justify-start text-md font-semibold"
                                             asChild
                                         >
                                             <Link href={link.href}>
@@ -97,8 +97,8 @@ const HomeNavbar = () => {
                         <Image
                             src="/jersey_cravings.png"
                             alt="JerseyCravings Logo"
-                            width={32} // todo: width and height increase with the device pixel ratio
-                            height={32}
+                            width={38} // todo: width and height increase with the device pixel ratio
+                            height={38}
                             className="rounded-full"
                         />
                     </Link>
@@ -109,6 +109,7 @@ const HomeNavbar = () => {
                                 key={link.href}
                                 variant="ghost"
                                 size="sm"
+                                className="text-md font-semibold"
                                 asChild
                             >
                                 <Link href={link.href}>{link.label}</Link>

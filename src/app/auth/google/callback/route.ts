@@ -29,7 +29,7 @@ export const GET = async (req: NextRequest) => {
 
         const { accessToken, refreshToken, redirectPath } = response.data;
 
-        // ✅ Route Handler এ cookie set করা যায়
+        // Route Handler এ cookie set করা যায়
         await setTokenInCookies("accessToken", accessToken);
         await setTokenInCookies("refreshToken", refreshToken);
 
