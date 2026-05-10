@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, Search, ShoppingCart, User } from "lucide-react";
+import { Menu, Search, ShoppingCart } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/sheet";
 import Image from "next/image";
 import { GlowEffect } from "../ui/glow-effect";
+import { useAuth } from "@/hooks/useAuth";
+import { NavbarUserMenu } from "./NavbarUserMenu";
 
 const primaryLinks = [
     { label: "Home", href: "/" },
@@ -26,6 +28,8 @@ const primaryLinks = [
 
 const HomeNavbar = () => {
     const cartCount = 0;
+    const { isAuthenticated, user } = useAuth();
+    const isCustomer = isAuthenticated && user?.role === "CUSTOMER";
 
     return (
         <header className="sticky top-0 z-40 w-full border-b bg-background/90 backdrop-blur">
@@ -141,33 +145,38 @@ const HomeNavbar = () => {
                         </Link>
                     </Button>
 
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="inline-flex"
-                        asChild
-                    >
-                        <Link href="/login">
-                            {/* <User className="size-4" /> */}
-                            <div className="relative">
-                                <GlowEffect
-                                    colors={[
-                                        "#FF5733",
-                                        "#33FF57",
-                                        "#3357FF",
-                                        "#F1C40F",
-                                    ]}
-                                    mode="colorShift"
-                                    blur="soft"
-                                    duration={3}
-                                    scale={1.0}
-                                />
-                                <button className="relative inline-flex items-center gap-1 rounded-md bg-zinc-950 px-2.5 py-1.5 text-sm text-zinc-50 outline outline-1 outline-[#fff2f21f]">
-                                    Sign In
-                                </button>
-                            </div>
-                        </Link>
-                    </Button>
+                    {/* Auth-aware: avatar dropdown or sign-in button */}
+                    {isCustomer ? (
+                        <NavbarUserMenu />
+                    ) : (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="inline-flex"
+                            asChild
+                        >
+                            <Link href="/login">
+                                {/* <User className="size-4" /> */}
+                                <div className="relative">
+                                    <GlowEffect
+                                        colors={[
+                                            "#FF5733",
+                                            "#33FF57",
+                                            "#3357FF",
+                                            "#F1C40F",
+                                        ]}
+                                        mode="colorShift"
+                                        blur="soft"
+                                        duration={3}
+                                        scale={1.0}
+                                    />
+                                    <button className="relative inline-flex items-center gap-1 rounded-md bg-zinc-950 px-2.5 py-1.5 text-sm text-zinc-50 outline outline-1 outline-[#fff2f21f]">
+                                        Sign In
+                                    </button>
+                                </div>
+                            </Link>
+                        </Button>
+                    )}
 
                     <Button
                         variant="outline"
@@ -184,3 +193,4 @@ const HomeNavbar = () => {
 };
 
 export default HomeNavbar;
+

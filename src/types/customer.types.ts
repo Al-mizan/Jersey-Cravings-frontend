@@ -269,6 +269,7 @@ export interface IUpdateMyProfilePayload {
     name?: string;
     profilePhoto?: string;
     contactNumber?: string;
+    address?: string;
 }
 
 export interface IChangeCustomerStatusPayload {

@@ -96,3 +96,44 @@ export async function logout() {
         console.error("Error during logout:", error);
     }
 }
+
+export async function verifyEmail(email: string, otp: string) {
+    try {
+        const res = await fetch(`${BASE_API_URL}/auth/verify-email`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email, otp })
+        });
+        if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body?.message || "Failed to verify email");
+        }
+        const { data } = await res.json();
+        return data;
+    } catch (error) {
+        if (error instanceof Error) throw error;
+        throw new Error("Failed to verify email");
+    }
+}
+
+export async function sendVerificationOtp(email: string) {
+    try {
+        const res = await fetch(`${BASE_API_URL}/auth/send-verification-otp`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email })
+        });
+        if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body?.message || "Failed to send verification OTP");
+        }
+        return await res.json();
+    } catch (error) {
+        if (error instanceof Error) throw error;
+        throw new Error("Failed to send verification OTP");
+    }
+}

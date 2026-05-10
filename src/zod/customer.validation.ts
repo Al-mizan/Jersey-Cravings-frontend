@@ -8,8 +8,8 @@ const reviewMediaSchema = z.object({
 
 export const updateMyCustomerProfileZodSchema = z.object({
     name: z.string().min(1, "Name is required").optional(),
-    profilePhoto: z.url("Profile photo must be a valid URL").optional(),
     contactNumber: z.string().min(6, "Contact number is invalid").optional(),
+    address: z.string().min(1, "Address is required").optional(),
 });
 
 export const changeCustomerStatusZodSchema = z.object({

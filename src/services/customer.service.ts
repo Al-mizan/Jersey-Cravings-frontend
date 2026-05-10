@@ -39,7 +39,11 @@ export async function updateMyProfile(
     return safeServiceMutation(
         () =>
             unwrapData<ICustomerProfile>(
-                httpClient.patch(`${CUSTOMER_PROFILE_ENDPOINTS.base}/me`, payload),
+                httpClient.patch(
+                    `${CUSTOMER_PROFILE_ENDPOINTS.base}/me`,
+                    payload,
+                    { headers: { "Content-Type": "multipart/form-data" } },
+                ),
             ),
         "Failed to update profile:",
     );

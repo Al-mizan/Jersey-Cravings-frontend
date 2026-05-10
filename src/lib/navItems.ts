@@ -94,7 +94,7 @@ const adminNavItems: NavSection[] = [
     },
 ];
 
-const customerNavItems: NavSection[] = [
+export const customerNavItems: NavSection[] = [
     {
         title: "My Account",
         items: [

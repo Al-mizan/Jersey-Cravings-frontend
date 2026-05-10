@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { registerAction } from "@/app/(commonLayout)/(authRouteGroup)/register/_action";
 import { IRegisterPayload, registerZodSchema } from "@/zod/auth.validation";
 import { useForm } from "@tanstack/react-form";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Eye, EyeOff, Loader2, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -53,6 +53,7 @@ const RegisterForm = ({
         () => mapOAuthError(oauthError),
         [oauthError],
     );
+    const queryClient = useQueryClient();
 
     // Show oauth/message toasts on mount
     useEffect(() => {
@@ -82,7 +83,10 @@ const RegisterForm = ({
                 if (!result?.success)
                     toast.error(result?.message || "Registration failed");
             } catch (error: any) {
-                if (error?.digest?.startsWith("NEXT_REDIRECT")) return;
+                if (error?.digest?.startsWith("NEXT_REDIRECT")) {
+                    queryClient.clear();
+                    return;
+                }
                 toast.error(
                     error instanceof Error
                         ? error.message

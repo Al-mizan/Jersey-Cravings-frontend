@@ -5,7 +5,7 @@
  * Allows user to enter OTP to verify their email address
  */
 
-import { verifyEmailAction } from "@/app/(commonLayout)/(authRouteGroup)/verify-email/_action";
+import { verifyEmail } from "@/services/auth.service";
 import AppField from "@/components/shared/form/AppField";
 import AppSubmitButton from "@/components/shared/form/AppSubmitButton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -23,6 +23,7 @@ import {
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface VerifyEmailFormProps {
     email: string;
@@ -33,7 +34,7 @@ const VerifyEmailForm = ({ email }: VerifyEmailFormProps) => {
 
     const { mutateAsync, isPending } = useMutation({
         mutationFn: (payload: IVerifyEmailPayload) =>
-            verifyEmailAction(payload),
+            verifyEmail(payload.email, payload.otp),
     });
 
     const form = useForm({
@@ -45,17 +46,21 @@ const VerifyEmailForm = ({ email }: VerifyEmailFormProps) => {
         onSubmit: async ({ value }) => {
             setServerError(null);
             try {
-                const result = (await mutateAsync(value)) as any;
+                const result = await mutateAsync(value);
 
-                if (!result.success) {
-                    setServerError(
-                        result.message || "Email verification failed",
-                    );
+                if (!result) {
+                    setServerError("Email verification failed");
                     return;
                 }
+
+                toast.success("Email verified successfully!");
             } catch (error: any) {
-                console.log(`Email verification failed: ${error.message}`);
-                setServerError(`Email verification failed: ${error.message}`);
+                const message =
+                    error instanceof Error
+                        ? error.message
+                        : "Email verification failed";
+                setServerError(message);
+                toast.error(message);
             }
         },
     });

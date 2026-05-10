@@ -82,7 +82,10 @@ const LoginForm = ({ redirectPath, oauthError, message }: LoginFormProps) => {
                     toast.error(result?.message || "Login failed");
                 }
             } catch (error: any) {
-                if (error?.digest?.startsWith("NEXT_REDIRECT")) return;
+                if (error?.digest?.startsWith("NEXT_REDIRECT")) {
+                    queryClient.clear();
+                    return;
+                }
                 toast.error(error?.message || "Something went wrong");
             }
         },
