@@ -35,6 +35,18 @@ export interface IOrderItem {
     updatedAt: string;
     productId: string;
     variantId: string;
+    product?: {
+        id: string;
+        title: string;
+        slug?: string;
+        thumbNail?: string | null;
+    };
+    variant?: {
+        id: string;
+        size?: string | null;
+        fit?: string | null;
+        sleeveType?: string | null;
+    };
 }
 
 export interface IOrderCoupon {
@@ -83,6 +95,7 @@ export interface IOrder {
     isActive: boolean;
     needsManualReview: boolean;
     items?: IOrderItem[];
+    payment?: IPayment | null;
     coupons?: IOrderCoupon[];
     giftAddon?: IOrderGiftAddon | null;
     userId: string;

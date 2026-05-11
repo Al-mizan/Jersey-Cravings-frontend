@@ -3,7 +3,7 @@
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { getCategoryBySlug } from "@/services/category.service";
 import { getProductsByTeam, getAllProducts } from "@/services/product.service";
-import { slugToTeamName, teamNameToSlug } from "@/lib/slug-utils";
+import { slugToTeamName } from "@/lib/slug-utils";
 import Link from "next/link";
 import { use, useState, useMemo } from "react";
 import { ChevronRight, Shirt, PackageOpen, Loader2 } from "lucide-react";
@@ -39,8 +39,10 @@ export default function TeamProductsPage({ params }: Props) {
 
     // Parse sort options
     const { sortBy, sortOrder } = useMemo(() => {
-        if (sortOption === "price_asc") return { sortBy: "priceAmount", sortOrder: "asc" as const };
-        if (sortOption === "price_desc") return { sortBy: "priceAmount", sortOrder: "desc" as const };
+        if (sortOption === "price_asc")
+            return { sortBy: "priceAmount", sortOrder: "asc" as const };
+        if (sortOption === "price_desc")
+            return { sortBy: "priceAmount", sortOrder: "desc" as const };
         return { sortBy: "createdAt", sortOrder: "desc" as const }; // newest
     }, [sortOption]);
 
@@ -64,7 +66,7 @@ export default function TeamProductsPage({ params }: Props) {
                 20,
                 resolvedJerseyType,
                 sortBy,
-                sortOrder
+                sortOrder,
             ),
         getNextPageParam: (lastPage) => {
             if (lastPage && lastPage.page < lastPage.totalPages) {
@@ -84,7 +86,10 @@ export default function TeamProductsPage({ params }: Props) {
     const totalProducts = productsQuery.data?.pages?.[0]?.total ?? 0;
 
     // --- Loading ---
-    if (categoryQuery.isLoading || (productsQuery.isLoading && !products.length)) {
+    if (
+        categoryQuery.isLoading ||
+        (productsQuery.isLoading && !products.length)
+    ) {
         return (
             <div className="min-h-screen bg-background">
                 <div className="container mx-auto px-4 py-8">
@@ -126,7 +131,8 @@ export default function TeamProductsPage({ params }: Props) {
                     <Shirt className="size-16 mx-auto text-muted-foreground/40" />
                     <h2 className="text-2xl font-bold">Collection Not Found</h2>
                     <p className="text-muted-foreground">
-                        The collection &ldquo;{categorySlug}&rdquo; doesn&apos;t exist.
+                        The collection &ldquo;{categorySlug}&rdquo; doesn&apos;t
+                        exist.
                     </p>
                     <Link
                         href="/"
@@ -155,12 +161,13 @@ export default function TeamProductsPage({ params }: Props) {
                         {teamName}
                     </h1>
                     <p className="text-muted-foreground">
-                        {totalProducts} jersey{totalProducts !== 1 ? "s" : ""} found
+                        {totalProducts} jersey{totalProducts !== 1 ? "s" : ""}{" "}
+                        found
                     </p>
                 </div>
 
                 {/* Filter Bar */}
-                <div className="flex flex-wrap items-center gap-3 mb-8 bg-muted/20 p-3 rounded-lg border border-border/50">
+                {/* <div className="flex flex-wrap items-center gap-3 mb-8 bg-muted/20 p-3 rounded-lg border border-border/50">
                     <Select value={jerseyType} onValueChange={setJerseyType}>
                         <SelectTrigger className="w-[160px] bg-background">
                             <SelectValue placeholder="Jersey Type" />
@@ -181,22 +188,29 @@ export default function TeamProductsPage({ params }: Props) {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="newest">Newest First</SelectItem>
-                            <SelectItem value="price_asc">Price: Low to High</SelectItem>
-                            <SelectItem value="price_desc">Price: High to Low</SelectItem>
+                            <SelectItem value="price_asc">
+                                Price: Low to High
+                            </SelectItem>
+                            <SelectItem value="price_desc">
+                                Price: High to Low
+                            </SelectItem>
                         </SelectContent>
                     </Select>
-                </div>
+                </div> */}
 
                 {/* --- Empty State --- */}
                 {products.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-24 text-center bg-muted/5 rounded-2xl border border-dashed border-border">
                         <PackageOpen className="size-16 text-muted-foreground/30 mb-4" />
-                        <h3 className="text-xl font-semibold mb-2">No Jerseys Found</h3>
+                        <h3 className="text-xl font-semibold mb-2">
+                            No Jerseys Found
+                        </h3>
                         <p className="text-muted-foreground max-w-md">
-                            There are no jerseys matching your current filters for {teamName}.
+                            There are no jerseys matching your current filters
+                            for {teamName}.
                         </p>
-                        <Button 
-                            variant="link" 
+                        <Button
+                            variant="link"
                             onClick={() => {
                                 setJerseyType("ALL");
                                 setSortOption("newest");
@@ -211,7 +225,10 @@ export default function TeamProductsPage({ params }: Props) {
                         {/* Product Grid */}
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                             {products.map((product) => (
-                                <ProductCard key={product.id} product={product} />
+                                <ProductCard
+                                    key={product.id}
+                                    product={product}
+                                />
                             ))}
                         </div>
 
@@ -222,7 +239,9 @@ export default function TeamProductsPage({ params }: Props) {
                                     variant="outline"
                                     size="lg"
                                     className="px-8 font-semibold"
-                                    onClick={() => productsQuery.fetchNextPage()}
+                                    onClick={() =>
+                                        productsQuery.fetchNextPage()
+                                    }
                                     disabled={productsQuery.isFetchingNextPage}
                                 >
                                     {productsQuery.isFetchingNextPage ? (
@@ -238,13 +257,12 @@ export default function TeamProductsPage({ params }: Props) {
                         )}
                     </>
                 )}
-                
+
                 {/* You May Also Like */}
                 {category && (
-                    <YouMayAlsoLike 
-                        categoryId={category.id} 
-                        categorySlug={categorySlug} 
-                        currentTeamName={teamName} 
+                    <YouMayAlsoLike
+                        categoryId={category.id}
+                        currentTeamName={teamName}
                     />
                 )}
             </div>
@@ -298,11 +316,9 @@ function Breadcrumb({
 
 function YouMayAlsoLike({
     categoryId,
-    categorySlug,
     currentTeamName,
 }: {
     categoryId: string;
-    categorySlug: string;
     currentTeamName: string;
 }) {
     const { data, isLoading } = useQuery({
@@ -316,7 +332,7 @@ function YouMayAlsoLike({
                 20,
                 false,
                 "createdAt",
-                "desc"
+                "desc",
             ),
         staleTime: 120_000,
     });
@@ -325,18 +341,21 @@ function YouMayAlsoLike({
         if (!data?.data) return [];
         return data.data
             .filter(
-                (p) => p.teamName.toLowerCase() !== currentTeamName.toLowerCase()
+                (p) =>
+                    p.teamName.toLowerCase() !== currentTeamName.toLowerCase(),
             )
-            .slice(0, 8);
+            .slice(0, 6);
     }, [data, currentTeamName]);
 
     if (isLoading) {
         return (
             <div className="mt-16 pt-12 border-t border-border/40">
-                <h3 className="text-xl md:text-2xl font-bold mb-6">You May Also Like</h3>
-                <div className="flex overflow-x-auto md:grid md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 pb-4 md:pb-0">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i} className="min-w-[65vw] sm:min-w-[45vw] md:min-w-0 shrink-0 flex flex-col gap-3">
+                <h3 className="text-xl md:text-2xl font-bold mb-6">
+                    You May Also Like
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                        <div key={i} className="flex flex-col gap-3">
                             <Skeleton className="w-full aspect-[3/4] rounded-xl" />
                             <div className="space-y-2 px-1">
                                 <Skeleton className="h-4 w-2/3" />
@@ -353,17 +372,12 @@ function YouMayAlsoLike({
 
     return (
         <div className="mt-16 pt-12 border-t border-border/40">
-            <h3 className="text-xl md:text-2xl font-bold mb-6">You May Also Like</h3>
-            <div className="flex overflow-x-auto md:grid md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 pb-4 md:pb-0 snap-x snap-mandatory scrollbar-hide">
+            <h3 className="text-xl md:text-2xl font-bold mb-6">
+                You May Also Like
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                 {products.map((product) => (
-                    <div key={product.id} className="min-w-[65vw] sm:min-w-[45vw] md:min-w-0 shrink-0 snap-start">
-                        <ProductCard
-                            product={product}
-                            hrefOverride={`/collections/${categorySlug}/${teamNameToSlug(
-                                product.teamName
-                            )}`}
-                        />
-                    </div>
+                    <ProductCard key={product.id} product={product} />
                 ))}
             </div>
         </div>

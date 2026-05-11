@@ -1,168 +1,177 @@
-// "use client";
+"use client";
 
-// import React, { useMemo } from "react";
-// import Link from "next/link";
-// import { Alert, AlertDescription } from "@/components/ui/alert";
-// import { Button } from "@/components/ui/button";
-// import {
-//     Card,
-//     CardContent,
-//     CardDescription,
-//     CardHeader,
-//     CardTitle,
-// } from "@/components/ui/card";
-// import CheckoutForm from "@/components/modules/Commerce/CheckoutForm";
-// import {
-//     useActivePickupLocations,
-//     useMyCart,
-// } from "@/components/modules/Commerce/hooks/useCommerceCart";
-// import { useMyAddresses } from "@/components/modules/Customer/hooks";
+import React, { useRef, useState } from "react";
+import Link from "next/link";
+import { ArrowLeft, ShoppingBag } from "lucide-react";
+import { motion } from "motion/react";
 
-// export default function CheckoutPage() {
-//     const { data: cart, isLoading: isCartLoading } = useMyCart();
-//     const { data: addressesData, isLoading: isAddressesLoading } =
-//         useMyAddresses();
-//     const { data: pickupLocationsData, isLoading: isPickupLocationsLoading } =
-//         useActivePickupLocations();
+import { Button } from "@/components/ui/button";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import CheckoutForm from "@/components/modules/Checkout/CheckoutForm";
+import OrderSummary from "@/components/modules/Checkout/OrderSummary";
+import { useMyCart } from "@/hooks/useCheckout";
 
-//     const addresses = addressesData?.data ?? [];
-//     const pickupLocations = pickupLocationsData ?? [];
-
-//     const subtotal = useMemo(() => {
-//         return (
-//             cart?.items.reduce(
-//                 (sum, item) =>
-//                     sum + item.qty * (item.variant?.priceAmount || 0),
-//                 0,
-//             ) ?? 0
-//         );
-//     }, [cart]);
-
-//     if (isCartLoading) {
-//         return (
-//             <p className="text-sm text-muted-foreground">Loading checkout...</p>
-//         );
-//     }
-
-//     if (!cart || cart.items.length === 0) {
-//         return (
-//             <div className="space-y-4">
-//                 <Alert>
-//                     <AlertDescription>
-//                         Your cart is empty. Add products before going to
-//                         checkout.
-//                     </AlertDescription>
-//                 </Alert>
-//                 <Button asChild>
-//                     <Link href="/cart">Back to cart</Link>
-//                 </Button>
-//             </div>
-//         );
-//     }
-
-//     return (
-//         <div className="space-y-6">
-//             <div className="flex items-start justify-between gap-4">
-//                 <div>
-//                     <h1 className="text-3xl font-bold tracking-tight">
-//                         Checkout
-//                     </h1>
-//                     <p className="text-muted-foreground mt-1">
-//                         Confirm fulfillment details and place your order.
-//                     </p>
-//                 </div>
-//                 <Button asChild variant="outline">
-//                     <Link href="/cart">Back to cart</Link>
-//                 </Button>
-//             </div>
-
-//             <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.75fr)]">
-//                 <CheckoutForm
-//                     cart={cart}
-//                     addresses={addresses}
-//                     pickupLocations={pickupLocations.map((location) => ({
-//                         id: location.id,
-//                         name: location.name,
-//                         addressLine: location.addressLine,
-//                         city: location.city,
-//                         district: location.district,
-//                         postalCode: location.postalCode,
-//                     }))}
-//                     hasAddresses={addresses.length > 0}
-//                     hasPickupLocations={pickupLocations.length > 0}
-//                 />
-
-//                 <Card className="h-fit">
-//                     <CardHeader>
-//                         <CardTitle>Order summary</CardTitle>
-//                         <CardDescription>
-//                             Review the items that will be submitted with your
-//                             order.
-//                         </CardDescription>
-//                     </CardHeader>
-//                     <CardContent className="space-y-4">
-//                         <div className="space-y-3">
-//                             {cart.items.map((item) => (
-//                                 <div
-//                                     key={item.id}
-//                                     className="flex items-start justify-between gap-3 text-sm"
-//                                 >
-//                                     <div>
-//                                         <p className="font-medium">
-//                                             {item.variant?.product?.title ||
-//                                                 "Product"}
-//                                         </p>
-//                                         <p className="text-muted-foreground">
-//                                             {item.variant?.sku ||
-//                                                 item.variantId}{" "}
-//                                             · Qty {item.qty}
-//                                         </p>
-//                                     </div>
-//                                     <p>
-//                                         ৳
-//                                         {item.qty *
-//                                             (item.variant?.priceAmount || 0)}
-//                                     </p>
-//                                 </div>
-//                             ))}
-//                         </div>
-
-//                         <div className="rounded-lg border bg-muted/40 p-4 space-y-2 text-sm">
-//                             <div className="flex items-center justify-between">
-//                                 <span className="text-muted-foreground">
-//                                     Items
-//                                 </span>
-//                                 <span>{cart.items.length}</span>
-//                             </div>
-//                             <div className="flex items-center justify-between">
-//                                 <span className="text-muted-foreground">
-//                                     Subtotal
-//                                 </span>
-//                                 <span>৳{subtotal}</span>
-//                             </div>
-//                             <div className="flex items-center justify-between font-semibold">
-//                                 <span>Total</span>
-//                                 <span>৳{subtotal}</span>
-//                             </div>
-//                         </div>
-
-//                         <p className="text-sm text-muted-foreground">
-//                             Pickup orders should use an active pickup location.
-//                             Delivery orders require a saved address.
-//                         </p>
-//                     </CardContent>
-//                 </Card>
-//             </div>
-
-//             {isAddressesLoading || isPickupLocationsLoading ? (
-//                 <p className="text-sm text-muted-foreground">
-//                     Loading checkout options...
-//                 </p>
-//             ) : null}
-//         </div>
-//     );
-// }
+type BillingValues = {
+    name: string;
+    phone: string;
+    address: string;
+    email: string;
+    orderNote: string;
+    city: string;
+    area: string;
+};
 
 export default function CheckoutPage() {
-    return <div>Checkout Page</div>;
+    const { data: cart, isLoading } = useMyCart();
+
+    const [billingValues, setBillingValues] = useState<BillingValues>({
+        name: "",
+        phone: "",
+        address: "",
+        email: "",
+        orderNote: "",
+        city: "",
+        area: "",
+    });
+    const [isFormValid, setIsFormValid] = useState(false);
+
+    const formRef = useRef<{
+        validate: () => Promise<boolean>;
+        getValues: () => BillingValues;
+    } | null>(null);
+
+    const handleValuesChange = (values: BillingValues, valid: boolean) => {
+        setBillingValues(values);
+        setIsFormValid(valid);
+    };
+
+    const handleValidateForm = async (): Promise<boolean> => {
+        if (!formRef.current) return false;
+        return formRef.current.validate();
+    };
+
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="container mx-auto px-4 py-10">
+                <div className="grid gap-8 lg:grid-cols-[1fr_420px]">
+                    <div className="space-y-4">
+                        <Skeleton className="h-8 w-48" />
+                        <Skeleton className="h-64 w-full" />
+                    </div>
+                    <div className="space-y-4">
+                        <Skeleton className="h-8 w-32" />
+                        <Skeleton className="h-96 w-full" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Empty cart
+    if (!cart || cart.items.length === 0) {
+        return (
+            <div className="container mx-auto px-4 py-20">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mx-auto max-w-md text-center space-y-6"
+                >
+                    <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-muted">
+                        <ShoppingBag className="size-9 text-muted-foreground" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight">
+                            Your cart is empty
+                        </h1>
+                        <p className="text-muted-foreground mt-2">
+                            Add some jerseys to your cart before checking out.
+                        </p>
+                    </div>
+                    <Button asChild>
+                        <Link href="/products">
+                            <ArrowLeft className="size-4 mr-2" />
+                            Browse Products
+                        </Link>
+                    </Button>
+                </motion.div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="container mx-auto px-4 py-8 lg:py-12">
+            {/* Header */}
+            <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-8"
+            >
+                <div className="flex items-center gap-3 mb-2">
+                    <Button variant="ghost" size="sm" asChild>
+                        <Link href="/products">
+                            <ArrowLeft className="size-4 mr-1" />
+                            Continue Shopping
+                        </Link>
+                    </Button>
+                </div>
+                <h1 className="text-3xl font-bold tracking-tight font-heading">
+                    Checkout
+                </h1>
+                <p className="text-muted-foreground mt-1">
+                    Complete your order by filling in the details below
+                </p>
+            </motion.div>
+
+            {/* Two-Column Layout */}
+            <div className="grid gap-8 lg:grid-cols-[1fr_420px] items-start">
+                {/* Left Column — Billing Form */}
+                <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 }}
+                >
+                    <Card className="shadow-sm">
+                        <CardContent className="p-6">
+                            <CheckoutForm
+                                onValuesChange={handleValuesChange}
+                                formRef={formRef}
+                            />
+                        </CardContent>
+                    </Card>
+                </motion.div>
+
+                {/* Right Column — Order Summary */}
+                <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="lg:sticky lg:top-24"
+                >
+                    <Card className="shadow-sm">
+                        <CardHeader className="pb-4">
+                            <CardTitle className="text-lg">
+                                Order Summary
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-0 px-6 pb-6">
+                            <OrderSummary
+                                cart={cart}
+                                billingCity={billingValues.city}
+                                billingValues={billingValues as unknown as Record<string, unknown>}
+                                isFormValid={isFormValid}
+                                onValidateForm={handleValidateForm}
+                            />
+                        </CardContent>
+                    </Card>
+                </motion.div>
+            </div>
+        </div>
+    );
 }

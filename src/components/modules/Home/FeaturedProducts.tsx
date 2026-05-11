@@ -81,7 +81,7 @@ export default function FeaturedProducts() {
                         FIFA WORLD CUP 2026
                     </h2>
                     <Link
-                        href="/collections"
+                        href="/products"
                         className="text-sm font-semibold text-primary hover:text-primary/80 flex items-center group transition-colors"
                     >
                         View All

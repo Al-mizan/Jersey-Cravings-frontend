@@ -1,13 +1,48 @@
 import { z } from "zod";
 
-export const createOrderZodSchema = z.object({
-    addressId: z.string().uuid({ message: "Invalid address ID" }).optional(),
-    pickupLocationId: z
+// ── Checkout Billing & Shipping Form ──────────────────
+export const checkoutBillingFormSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+    phone: z
         .string()
-        .uuid({ message: "Invalid pickup location ID" })
-        .optional(),
-    couponCode: z.string().min(3, { message: "Invalid coupon code" }).optional(),
+        .min(11, "Phone number must be at least 11 digits")
+        .max(14, "Phone number is too long"),
+    address: z.string().min(1, "Address is required"),
+    email: z.string().email("Invalid email address").optional().or(z.literal("")),
+    orderNote: z
+        .string()
+        .max(500, "Order note must be under 500 characters")
+        .optional()
+        .or(z.literal("")),
+    city: z.string().min(1, "City is required"),
+    area: z.string().min(1, "Area is required"),
+});
+
+export type CheckoutBillingFormValues = z.infer<
+    typeof checkoutBillingFormSchema
+>;
+
+// ── Bkash TrxID Validation ────────────────────────────
+export const bkashTrxIdSchema = z.object({
+    trxId: z
+        .string()
+        .min(1, "Transaction ID is required")
+        .length(10, "Transaction ID must be exactly 10 characters"),
+});
+
+export type BkashTrxIdValues = z.infer<typeof bkashTrxIdSchema>;
+
+// ── Order Creation (matches backend contract) ─────────
+export const createOrderZodSchema = z.object({
+    fulfillmentMethod: z.enum(["DELIVERY", "PICKUP"]).optional(),
+    paymentMethod: z.enum(["STRIPE", "COD"]).optional(),
+    shippingAddressId: z.string().optional(),
+    pickupLocationId: z.string().optional(),
+    billingAddressSnapshot: z.record(z.string(), z.unknown()).optional(),
     notes: z.string().max(500, { message: "Notes too long" }).optional(),
+    couponCode: z.string().optional(),
+    redeemPoints: z.number().int().nonnegative().optional(),
+    referralCode: z.string().optional(),
 });
 
 export type ICreateOrderPayload = z.infer<typeof createOrderZodSchema>;
@@ -30,10 +65,7 @@ export type IUpdateOrderStatusPayload = z.infer<
 >;
 
 export const initiatePaymentZodSchema = z.object({
-    orderId: z.string().uuid({ message: "Invalid order ID" }),
-    paymentMethod: z.enum(["STRIPE", "COD"], {
-        message: "Invalid payment method",
-    }),
+    orderId: z.string().min(1, { message: "Order ID is required" }),
 });
 
 export type IInitiatePaymentPayload = z.infer<typeof initiatePaymentZodSchema>;

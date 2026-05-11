@@ -22,6 +22,7 @@ export interface ICartItem {
             title: string;
             slug: string;
             teamName: string;
+            thumbNail?: string | null;
         };
     };
 }
