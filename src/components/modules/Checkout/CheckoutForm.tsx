@@ -2,9 +2,16 @@
 
 import React, { useMemo } from "react";
 import { useForm } from "@tanstack/react-form";
-import { zodValidator } from "@tanstack/zod-form-adapter";
-import { checkoutBillingFormSchema } from "@/zod/order.validation";
-import { BD_DISTRICTS, getAreasForDistrict } from "@/lib/bd-locations";
+import { useStore } from "@tanstack/react-store";
+import {
+    checkoutBillingFormSchema,
+    type CheckoutBillingFormValues,
+} from "@/zod/order.validation";
+import {
+    BD_DIVISIONS,
+    getAreasForDistrict,
+    getDistrictsForDivision,
+} from "@/lib/bd-locations";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,19 +24,15 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-type CheckoutFormValues = {
-    name: string;
-    phone: string;
-    address: string;
-    email: string;
-    orderNote: string;
-    city: string;
-    area: string;
-};
+type CheckoutFormValues = CheckoutBillingFormValues;
 
 interface CheckoutFormProps {
+    shippingMethod: string;
     onValuesChange: (values: CheckoutFormValues, isValid: boolean) => void;
-    formRef: React.RefObject<{ validate: () => Promise<boolean>; getValues: () => CheckoutFormValues } | null>;
+    formRef: React.RefObject<{
+        validate: () => Promise<boolean>;
+        getValues: () => CheckoutFormValues;
+    } | null>;
 }
 
 function FieldError({ error }: { error: string | null }) {
@@ -41,15 +44,23 @@ function FieldError({ error }: { error: string | null }) {
     );
 }
 
-function getError(field: { state: { meta: { isTouched: boolean; errors: unknown[] } } }): string | null {
-    if (!field.state.meta.isTouched || field.state.meta.errors.length === 0) return null;
+function getError(field: {
+    state: { meta: { isTouched: boolean; errors: unknown[] } };
+}): string | null {
+    if (!field.state.meta.isTouched || field.state.meta.errors.length === 0)
+        return null;
     const err = field.state.meta.errors[0];
     if (typeof err === "string") return err;
-    if (err && typeof err === "object" && "message" in err) return (err as { message: string }).message;
+    if (err && typeof err === "object" && "message" in err)
+        return (err as { message: string }).message;
     return String(err);
 }
 
-export default function CheckoutForm({ onValuesChange, formRef }: CheckoutFormProps) {
+export default function CheckoutForm({
+    shippingMethod,
+    onValuesChange,
+    formRef,
+}: CheckoutFormProps) {
     const form = useForm({
         defaultValues: {
             name: "",
@@ -57,13 +68,11 @@ export default function CheckoutForm({ onValuesChange, formRef }: CheckoutFormPr
             address: "",
             email: "",
             orderNote: "",
-            city: "",
+            shippingMethod: shippingMethod || "ju",
+            division: "",
+            district: "",
             area: "",
         } as CheckoutFormValues,
-        validatorAdapter: zodValidator(),
-        validators: {
-            onChange: checkoutBillingFormSchema,
-        },
         onSubmit: () => {
             // submission is handled externally via formRef
         },
@@ -72,33 +81,77 @@ export default function CheckoutForm({ onValuesChange, formRef }: CheckoutFormPr
     // Expose validate + getValues to the parent
     React.useImperativeHandle(formRef, () => ({
         validate: async () => {
-            // Touch all fields to trigger validation display
-            form.validateAllFields("change");
-            const errors = form.state.fieldMeta;
-            const hasErrors = Object.values(errors).some(
-                (meta) => meta.errors && meta.errors.length > 0,
+            // Validate using Zod schema
+            const result = checkoutBillingFormSchema.safeParse(
+                form.state.values,
             );
-            return !hasErrors;
+            if (!result.success) {
+                // Set errors on form fields based on Zod validation
+                result.error.issues.forEach((issue) => {
+                    const fieldName = issue.path[0] as keyof CheckoutFormValues;
+                    if (fieldName) {
+                        form.setFieldValue(
+                            fieldName,
+                            form.state.values[fieldName],
+                        );
+                    }
+                });
+                return false;
+            }
+            return true;
         },
         getValues: () => form.state.values,
     }));
 
-    // Notify parent on value change
+    // Notify parent on value change (excluding shippingMethod to prevent loop)
+    const prevValuesRef = React.useRef(form.state.values);
     React.useEffect(() => {
         const values = form.state.values;
-        const hasErrors = Object.values(form.state.fieldMeta).some(
-            (meta) => meta.errors && meta.errors.length > 0,
-        );
-        onValuesChange(values, !hasErrors);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [form.state.values, form.state.fieldMeta]);
+        // Only notify if values actually changed (excluding shippingMethod which is controlled by parent)
+        const { shippingMethod: _, ...valuesWithoutShipping } = values;
+        const { shippingMethod: __, ...prevWithoutShipping } =
+            prevValuesRef.current;
 
-    const selectedCity = form.useStore((s) => s.values.city);
-    const orderNoteValue = form.useStore((s) => s.values.orderNote);
+        if (
+            JSON.stringify(valuesWithoutShipping) !==
+            JSON.stringify(prevWithoutShipping)
+        ) {
+            const result = checkoutBillingFormSchema.safeParse(values);
+            const isValid = result.success;
+            onValuesChange(values, isValid);
+            prevValuesRef.current = values;
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [form.state.values]);
+
+    React.useEffect(() => {
+        // Only update if the shippingMethod in the form is different from the prop
+        if (form.state.values.shippingMethod !== shippingMethod) {
+            form.setFieldValue("shippingMethod", shippingMethod);
+
+            if (shippingMethod === "ju") {
+                form.setFieldValue("division", "");
+                form.setFieldValue("district", "");
+                form.setFieldValue("area", "");
+                form.setFieldValue("address", "");
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [shippingMethod]);
+
+    const selectedDivision = useStore(form.store, (s) => s.values.division);
+    const selectedDistrict = useStore(form.store, (s) => s.values.district);
+    const orderNoteValue = useStore(form.store, (s) => s.values.orderNote);
+    const isPickup = shippingMethod === "ju";
+
+    const availableDistricts = useMemo(
+        () => getDistrictsForDivision(selectedDivision),
+        [selectedDivision],
+    );
 
     const availableAreas = useMemo(
-        () => getAreasForDistrict(selectedCity),
-        [selectedCity],
+        () => getAreasForDistrict(selectedDistrict),
+        [selectedDistrict],
     );
 
     return (
@@ -114,233 +167,499 @@ export default function CheckoutForm({ onValuesChange, formRef }: CheckoutFormPr
 
             {/* Name + Phone */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <form.Field name="name">
-                    {(field) => (
-                        <div className="space-y-1.5">
-                            <Label
-                                htmlFor="checkout-name"
-                                className={cn(getError(field) && "text-destructive")}
+                <form.Field
+                    name="name"
+                    validators={{
+                        onChange: ({ value }) => {
+                            const result =
+                                checkoutBillingFormSchema.shape.name.safeParse(
+                                    value,
+                                );
+                            if (!result.success) {
+                                return result.error.issues[0].message;
+                            }
+                        },
+                    }}
+                >
+                    {(field) => {
+                        const error = getError(field);
+                        return (
+                            <div
+                                className="space-y-1.5"
+                                data-error={error ? true : undefined}
                             >
-                                Name <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                                id="checkout-name"
-                                placeholder="Your full name"
-                                value={field.state.value}
-                                onBlur={field.handleBlur}
-                                onChange={(e) => field.handleChange(e.target.value)}
-                                className={cn(
-                                    getError(field) &&
-                                        "border-destructive focus-visible:ring-destructive/20",
-                                )}
-                            />
-                            <FieldError error={getError(field)} />
-                        </div>
-                    )}
+                                <Label
+                                    htmlFor="checkout-name"
+                                    className={cn(error && "text-destructive")}
+                                >
+                                    Name{" "}
+                                    <span className="text-destructive">*</span>
+                                </Label>
+                                <Input
+                                    id="checkout-name"
+                                    placeholder="Your full name"
+                                    value={field.state.value}
+                                    onBlur={field.handleBlur}
+                                    onChange={(e) =>
+                                        field.handleChange(e.target.value)
+                                    }
+                                    className={cn(
+                                        error &&
+                                            "border-destructive focus-visible:ring-destructive/20",
+                                    )}
+                                />
+                                <FieldError error={error} />
+                            </div>
+                        );
+                    }}
                 </form.Field>
 
-                <form.Field name="phone">
-                    {(field) => (
-                        <div className="space-y-1.5">
-                            <Label
-                                htmlFor="checkout-phone"
-                                className={cn(getError(field) && "text-destructive")}
+                <form.Field
+                    name="phone"
+                    validators={{
+                        onChange: ({ value }) => {
+                            const result =
+                                checkoutBillingFormSchema.shape.phone.safeParse(
+                                    value,
+                                );
+                            if (!result.success) {
+                                return result.error.issues[0].message;
+                            }
+                        },
+                    }}
+                >
+                    {(field) => {
+                        const error = getError(field);
+                        return (
+                            <div
+                                className="space-y-1.5"
+                                data-error={error ? true : undefined}
                             >
-                                Phone <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                                id="checkout-phone"
-                                placeholder="01XXXXXXXXX"
-                                value={field.state.value}
-                                onBlur={field.handleBlur}
-                                onChange={(e) => field.handleChange(e.target.value)}
-                                inputMode="tel"
-                                className={cn(
-                                    getError(field) &&
-                                        "border-destructive focus-visible:ring-destructive/20",
-                                )}
-                            />
-                            <FieldError error={getError(field)} />
-                        </div>
-                    )}
+                                <Label
+                                    htmlFor="checkout-phone"
+                                    className={cn(error && "text-destructive")}
+                                >
+                                    Phone{" "}
+                                    <span className="text-destructive">*</span>
+                                </Label>
+                                <Input
+                                    id="checkout-phone"
+                                    placeholder="01XXXXXXXXX"
+                                    value={field.state.value}
+                                    onBlur={field.handleBlur}
+                                    onChange={(e) =>
+                                        field.handleChange(e.target.value)
+                                    }
+                                    inputMode="tel"
+                                    className={cn(
+                                        error &&
+                                            "border-destructive focus-visible:ring-destructive/20",
+                                    )}
+                                />
+                                <FieldError error={error} />
+                            </div>
+                        );
+                    }}
                 </form.Field>
             </div>
 
-            {/* City + Area */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <form.Field name="city">
-                    {(field) => (
-                        <div className="space-y-1.5">
-                            <Label
-                                htmlFor="checkout-city"
-                                className={cn(getError(field) && "text-destructive")}
-                            >
-                                City <span className="text-destructive">*</span>
-                            </Label>
-                            <Select
-                                value={field.state.value}
-                                onValueChange={(value) => {
-                                    field.handleChange(value);
-                                    // Reset area when city changes
-                                    form.setFieldValue("area", "");
-                                }}
-                            >
-                                <SelectTrigger
-                                    id="checkout-city"
-                                    className={cn(
-                                        getError(field) &&
-                                            "border-destructive focus-visible:ring-destructive/20",
-                                    )}
-                                >
-                                    <SelectValue placeholder="Select City" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {BD_DISTRICTS.map((d) => (
-                                        <SelectItem key={d.value} value={d.value}>
-                                            {d.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FieldError error={getError(field)} />
-                        </div>
-                    )}
-                </form.Field>
-
-                <form.Field name="area">
-                    {(field) => (
-                        <div className="space-y-1.5">
-                            <Label
-                                htmlFor="checkout-area"
-                                className={cn(getError(field) && "text-destructive")}
-                            >
-                                Area <span className="text-destructive">*</span>
-                            </Label>
-                            <Select
-                                value={field.state.value}
-                                onValueChange={(value) => field.handleChange(value)}
-                                disabled={!selectedCity}
-                            >
-                                <SelectTrigger
-                                    id="checkout-area"
-                                    className={cn(
-                                        getError(field) &&
-                                            "border-destructive focus-visible:ring-destructive/20",
-                                    )}
-                                >
-                                    <SelectValue
-                                        placeholder={
-                                            selectedCity
-                                                ? "Select Area"
-                                                : "Select city first"
-                                        }
-                                    />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {availableAreas.map((a) => (
-                                        <SelectItem key={a.value} value={a.value}>
-                                            {a.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FieldError error={getError(field)} />
-                        </div>
-                    )}
-                </form.Field>
-            </div>
-
-            {/* Address */}
-            <form.Field name="address">
-                {(field) => (
-                    <div className="space-y-1.5">
-                        <Label
-                            htmlFor="checkout-address"
-                            className={cn(getError(field) && "text-destructive")}
+            {/* Division + District + Area */}
+            {shippingMethod !== "ju" && (
+                <>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        <form.Field
+                            name="division"
+                            validators={{
+                                onChange: ({ value }) => {
+                                    const result =
+                                        checkoutBillingFormSchema.shape.division.safeParse(
+                                            value,
+                                        );
+                                    if (!result.success) {
+                                        return result.error.issues[0].message;
+                                    }
+                                },
+                            }}
                         >
-                            Address <span className="text-destructive">*</span>
-                        </Label>
-                        <Input
-                            id="checkout-address"
-                            placeholder="House, Road, Village"
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            className={cn(
-                                getError(field) &&
-                                    "border-destructive focus-visible:ring-destructive/20",
-                            )}
-                        />
-                        <FieldError error={getError(field)} />
-                    </div>
-                )}
-            </form.Field>
+                            {(field) => {
+                                const error = getError(field);
+                                return (
+                                    <div
+                                        className="space-y-1.5"
+                                        data-error={error ? true : undefined}
+                                    >
+                                        <Label
+                                            htmlFor="checkout-division"
+                                            className={cn(
+                                                error && "text-destructive",
+                                            )}
+                                        >
+                                            Division{" "}
+                                            <span className="text-destructive">
+                                                *
+                                            </span>
+                                        </Label>
+                                        <Select
+                                            value={field.state.value}
+                                            disabled={isPickup}
+                                            onValueChange={(value) => {
+                                                field.handleChange(value);
+                                                form.setFieldValue(
+                                                    "district",
+                                                    "",
+                                                );
+                                                form.setFieldValue("area", "");
+                                            }}
+                                        >
+                                            <SelectTrigger
+                                                id="checkout-division"
+                                                className={cn(
+                                                    error &&
+                                                        "border-destructive focus-visible:ring-destructive/20",
+                                                )}
+                                            >
+                                                <SelectValue placeholder="Select Division" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {BD_DIVISIONS.map(
+                                                    (division) => (
+                                                        <SelectItem
+                                                            key={division.value}
+                                                            value={
+                                                                division.value
+                                                            }
+                                                        >
+                                                            {division.label}
+                                                        </SelectItem>
+                                                    ),
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                        <FieldError error={error} />
+                                    </div>
+                                );
+                            }}
+                        </form.Field>
 
+                        <form.Field
+                            name="district"
+                            validators={{
+                                onChange: ({ value }) => {
+                                    const result =
+                                        checkoutBillingFormSchema.shape.district.safeParse(
+                                            value,
+                                        );
+                                    if (!result.success) {
+                                        return result.error.issues[0].message;
+                                    }
+                                },
+                            }}
+                        >
+                            {(field) => {
+                                const error = getError(field);
+                                return (
+                                    <div
+                                        className="space-y-1.5"
+                                        data-error={error ? true : undefined}
+                                    >
+                                        <Label
+                                            htmlFor="checkout-district"
+                                            className={cn(
+                                                error && "text-destructive",
+                                            )}
+                                        >
+                                            District{" "}
+                                            <span className="text-destructive">
+                                                *
+                                            </span>
+                                        </Label>
+                                        <Select
+                                            value={field.state.value}
+                                            disabled={isPickup}
+                                            onValueChange={(value) => {
+                                                field.handleChange(value);
+                                                form.setFieldValue("area", "");
+                                            }}
+                                        >
+                                            <SelectTrigger
+                                                id="checkout-district"
+                                                className={cn(
+                                                    error &&
+                                                        "border-destructive focus-visible:ring-destructive/20",
+                                                )}
+                                            >
+                                                <SelectValue
+                                                    placeholder={
+                                                        selectedDivision
+                                                            ? "Select District"
+                                                            : "Select division first"
+                                                    }
+                                                />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {availableDistricts.map(
+                                                    (district) => (
+                                                        <SelectItem
+                                                            key={district.value}
+                                                            value={
+                                                                district.value
+                                                            }
+                                                        >
+                                                            {district.label}
+                                                        </SelectItem>
+                                                    ),
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                        <FieldError error={error} />
+                                    </div>
+                                );
+                            }}
+                        </form.Field>
+
+                        <form.Field
+                            name="area"
+                            validators={{
+                                onChange: ({ value }) => {
+                                    const result =
+                                        checkoutBillingFormSchema.shape.area.safeParse(
+                                            value,
+                                        );
+                                    if (!result.success) {
+                                        return result.error.issues[0].message;
+                                    }
+                                },
+                            }}
+                        >
+                            {(field) => {
+                                const error = getError(field);
+                                return (
+                                    <div
+                                        className="space-y-1.5"
+                                        data-error={error ? true : undefined}
+                                    >
+                                        <Label
+                                            htmlFor="checkout-area"
+                                            className={cn(
+                                                error && "text-destructive",
+                                            )}
+                                        >
+                                            {selectedDistrict === "dhaka"
+                                                ? "Area / Thana"
+                                                : "Upazila"}
+                                            <span className="text-destructive">
+                                                {" "}
+                                                *
+                                            </span>
+                                        </Label>
+                                        <Select
+                                            value={field.state.value}
+                                            onValueChange={(value) =>
+                                                field.handleChange(value)
+                                            }
+                                            disabled={
+                                                isPickup || !selectedDistrict
+                                            }
+                                        >
+                                            <SelectTrigger
+                                                id="checkout-area"
+                                                className={cn(
+                                                    error &&
+                                                        "border-destructive focus-visible:ring-destructive/20",
+                                                )}
+                                            >
+                                                <SelectValue
+                                                    placeholder={
+                                                        selectedDistrict
+                                                            ? "Select Area"
+                                                            : "Select district first"
+                                                    }
+                                                />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {availableAreas.map((area) => (
+                                                    <SelectItem
+                                                        key={area.value}
+                                                        value={area.value}
+                                                    >
+                                                        {area.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FieldError error={error} />
+                                    </div>
+                                );
+                            }}
+                        </form.Field>
+                    </div>
+                    {/* Address */}
+                    <form.Field
+                        name="address"
+                        validators={{
+                            onChange: ({ value }) => {
+                                const result =
+                                    checkoutBillingFormSchema.shape.address.safeParse(
+                                        value,
+                                    );
+                                if (!result.success) {
+                                    return result.error.issues[0].message;
+                                }
+                            },
+                        }}
+                    >
+                        {(field) => {
+                            const error = getError(field);
+                            return (
+                                <div
+                                    className="space-y-1.5"
+                                    data-error={error ? true : undefined}
+                                >
+                                    <Label
+                                        htmlFor="checkout-address"
+                                        className={cn(
+                                            error && "text-destructive",
+                                        )}
+                                    >
+                                        Address{" "}
+                                        <span className="text-destructive">
+                                            *
+                                        </span>
+                                    </Label>
+                                    <Input
+                                        id="checkout-address"
+                                        placeholder="House, Road, Village"
+                                        value={field.state.value}
+                                        onBlur={field.handleBlur}
+                                        onChange={(e) =>
+                                            field.handleChange(e.target.value)
+                                        }
+                                        disabled={isPickup}
+                                        className={cn(
+                                            error &&
+                                                "border-destructive focus-visible:ring-destructive/20",
+                                        )}
+                                    />
+                                    <FieldError error={error} />
+                                </div>
+                            );
+                        }}
+                    </form.Field>
+                </>
+            )}
             {/* Email */}
-            <form.Field name="email">
-                {(field) => (
-                    <div className="space-y-1.5">
-                        <Label htmlFor="checkout-email">
-                            Email{" "}
-                            <span className="text-muted-foreground text-xs font-normal">
-                                (optional)
-                            </span>
-                        </Label>
-                        <Input
-                            id="checkout-email"
-                            type="email"
-                            placeholder="email@example.com"
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            className={cn(
-                                getError(field) &&
-                                    "border-destructive focus-visible:ring-destructive/20",
-                            )}
-                        />
-                        <FieldError error={getError(field)} />
-                    </div>
-                )}
-            </form.Field>
-
-            {/* Order Note */}
-            <form.Field name="orderNote">
-                {(field) => (
-                    <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                            <Label htmlFor="checkout-note">
-                                Order Note{" "}
+            <form.Field
+                name="email"
+                validators={{
+                    onChange: ({ value }) => {
+                        const result =
+                            checkoutBillingFormSchema.shape.email.safeParse(
+                                value,
+                            );
+                        if (!result.success) {
+                            return result.error.issues[0].message;
+                        }
+                    },
+                }}
+            >
+                {(field) => {
+                    const error = getError(field);
+                    return (
+                        <div
+                            className="space-y-1.5"
+                            data-error={error ? true : undefined}
+                        >
+                            <Label
+                                htmlFor="checkout-email"
+                                className={cn(error && "text-destructive")}
+                            >
+                                Email{" "}
                                 <span className="text-muted-foreground text-xs font-normal">
                                     (optional)
                                 </span>
                             </Label>
-                            <span
+                            <Input
+                                id="checkout-email"
+                                type="email"
+                                placeholder="email@example.com"
+                                value={field.state.value}
+                                onBlur={field.handleBlur}
+                                onChange={(e) =>
+                                    field.handleChange(e.target.value)
+                                }
                                 className={cn(
-                                    "text-xs tabular-nums",
-                                    (orderNoteValue?.length ?? 0) > 450
-                                        ? "text-destructive"
-                                        : "text-muted-foreground",
+                                    error &&
+                                        "border-destructive focus-visible:ring-destructive/20",
                                 )}
-                            >
-                                {orderNoteValue?.length ?? 0}/500
-                            </span>
+                            />
+                            <FieldError error={error} />
                         </div>
-                        <Textarea
-                            id="checkout-note"
-                            placeholder="Any special instructions for your order..."
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            rows={3}
-                            className={cn(
-                                "resize-none",
-                                getError(field) &&
-                                    "border-destructive focus-visible:ring-destructive/20",
-                            )}
-                        />
-                        <FieldError error={getError(field)} />
-                    </div>
-                )}
+                    );
+                }}
+            </form.Field>
+
+            {/* Order Note */}
+            <form.Field
+                name="orderNote"
+                validators={{
+                    onChange: ({ value }) => {
+                        const result =
+                            checkoutBillingFormSchema.shape.orderNote.safeParse(
+                                value,
+                            );
+                        if (!result.success) {
+                            return result.error.issues[0].message;
+                        }
+                    },
+                }}
+            >
+                {(field) => {
+                    const error = getError(field);
+                    return (
+                        <div
+                            className="space-y-1.5"
+                            data-error={error ? true : undefined}
+                        >
+                            <div className="flex items-center justify-between">
+                                <Label
+                                    htmlFor="checkout-note"
+                                    className={cn(error && "text-destructive")}
+                                >
+                                    Order Note{" "}
+                                    <span className="text-muted-foreground text-xs font-normal">
+                                        (optional)
+                                    </span>
+                                </Label>
+                                <span
+                                    className={cn(
+                                        "text-xs tabular-nums",
+                                        (orderNoteValue?.length ?? 0) > 450
+                                            ? "text-destructive"
+                                            : "text-muted-foreground",
+                                    )}
+                                >
+                                    {orderNoteValue?.length ?? 0}/500
+                                </span>
+                            </div>
+                            <Textarea
+                                id="checkout-note"
+                                placeholder="Any special instructions for your order..."
+                                value={field.state.value}
+                                onBlur={field.handleBlur}
+                                onChange={(e) =>
+                                    field.handleChange(e.target.value)
+                                }
+                                rows={3}
+                                className={cn(
+                                    "resize-none",
+                                    error &&
+                                        "border-destructive focus-visible:ring-destructive/20",
+                                )}
+                            />
+                            <FieldError error={error} />
+                        </div>
+                    );
+                }}
             </form.Field>
         </div>
     );

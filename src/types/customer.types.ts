@@ -4,12 +4,10 @@ import { UserRole, UserStatus } from "./auth.types";
 export type SortOrder = "asc" | "desc";
 
 export type PointTransactionType =
-    | "EARN_PURCHASE"
-    | "REDEEM_ORDER"
-    | "REFERRAL_BONUS"
-    | "ADJUSTMENT"
-    | "EXPIRY"
-    | "REVERSAL";
+    | "ORDER_EARNED"
+    | "REFERRAL_EARNED"
+    | "REDEEMED"
+    | "ADJUSTED";
 
 export type ReferralRewardStatus = "PENDING" | "REWARDED" | "REJECTED";
 
@@ -38,7 +36,7 @@ export interface ICustomer {
     profilePhoto: string | null;
     contactNumber: string | null;
     address: string | null;
-    points: number;
+    pointsBalance: number;
     lifetimePointsEarned: number;
     lifetimePointsRedeemed: number;
     totalPurchasedQty: number;
@@ -95,7 +93,7 @@ export interface IPointTransaction {
 
 export interface IMyLoyaltySummary {
     customerId: string;
-    points: number;
+    pointsBalance: number;
     lifetimePointsEarned: number;
     lifetimePointsRedeemed: number;
     totalPurchasedQty: number;

@@ -23,6 +23,9 @@ export interface ICartItem {
             slug: string;
             teamName: string;
             thumbNail?: string | null;
+            media?: {
+                secureUrl: string;
+            }[];
         };
     };
 }
@@ -153,3 +156,15 @@ export interface IUpsertGiftAddonPayload {
     isGiftWrap?: boolean;
     giftMessage?: string;
 }
+
+export type BillingValues = {
+    name: string;
+    phone: string;
+    address: string;
+    email: string;
+    orderNote: string;
+    shippingMethod: string;
+    division: string;
+    district: string;
+    area: string;
+};

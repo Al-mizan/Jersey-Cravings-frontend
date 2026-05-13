@@ -16,10 +16,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-    Card,
-    CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMyOrders } from "@/hooks/useCheckout";
 
@@ -157,9 +154,9 @@ export default function OrdersListPage() {
                                                         <span className="flex items-center gap-1">
                                                             <CreditCard className="size-3" />
                                                             {order.paymentMethod ===
-                                                            "STRIPE"
-                                                                ? "Bkash"
-                                                                : "COD"}
+                                                            "COD"
+                                                                ? "COD"
+                                                                : "Bkash/Nagad"}
                                                         </span>
                                                     </div>
                                                 </div>

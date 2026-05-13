@@ -1,24 +1,9 @@
 "use server";
 
 import { httpClient } from "@/lib/axios/httpClient";
-import { safeServiceCall, safeServiceMutation } from "@/services/service-utils";
-import { ApiResponse } from "@/types/api.types";
+import { safeServiceCall, unwrapData } from "@/services/service-utils";
+import { IBanner } from "@/types/banner.types";
 
-export interface IBanner {
-    id: string;
-    imageUrl: string;
-    displayOrder: number;
-    isDeleted: boolean;
-    deletedAt: string | null;
-    createdAt: string;
-}
-
-const unwrapData = async <TData>(
-    request: Promise<ApiResponse<TData>>,
-): Promise<TData> => {
-    const response = await request;
-    return response.data;
-};
 
 export async function getActiveBanners(): Promise<IBanner[]> {
     return safeServiceCall(

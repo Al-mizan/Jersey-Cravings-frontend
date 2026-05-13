@@ -19,11 +19,8 @@ export default function OrderDetailCard({ order }: OrderDetailCardProps) {
         string,
         string
     >;
-    const shippingSnapshot =
-        (order.shippingAddressSnapshot ?? billingSnapshot) as Record<
-            string,
-            string
-        >;
+    const shippingSnapshot = (order.shippingAddressSnapshot ??
+        billingSnapshot) as Record<string, string>;
 
     const orderItems = order.items ?? [];
 
@@ -40,8 +37,9 @@ export default function OrderDetailCard({ order }: OrderDetailCardProps) {
                     </h4>
                     {orderItems.map((item) => {
                         const variantSnapshot =
-                            (item.variantSnapshot as { size?: string } | null) ??
-                            null;
+                            (item.variantSnapshot as {
+                                size?: string;
+                            } | null) ?? null;
                         const thumb =
                             item.product?.thumbNail ?? "/jersey_cravings.png";
                         const title =
@@ -49,9 +47,7 @@ export default function OrderDetailCard({ order }: OrderDetailCardProps) {
                             item.productTitleSnapshot ??
                             "Product";
                         const size =
-                            item.variant?.size ??
-                            variantSnapshot?.size ??
-                            "";
+                            item.variant?.size ?? variantSnapshot?.size ?? "";
                         const unitPrice = item.unitPriceAmount ?? 0;
                         const qty = item.qty ?? 1;
                         const lineTotal =
@@ -140,9 +136,9 @@ export default function OrderDetailCard({ order }: OrderDetailCardProps) {
                                 Method
                             </span>
                             <span className="font-medium">
-                                {order.paymentMethod === "STRIPE"
-                                    ? "Bkash"
-                                    : "Cash on Delivery"}
+                                {order.paymentMethod === "COD"
+                                    ? "Cash on Delivery"
+                                    : "Bkash/Nagad"}
                             </span>
                         </div>
                         {order.payment?.transactionId && (

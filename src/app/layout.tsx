@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import QueryProviders from "@/providers/QueryProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { FloatingContactButtons } from "@/components/shared/FloatingContactButtons";
 
 const interHeading = Inter({ subsets: ["latin"], variable: "--font-heading" });
 
@@ -47,6 +48,7 @@ export default function RootLayout({
                 <QueryProviders>
                     {children}
                     <Toaster position="bottom-right" richColors />
+                    <FloatingContactButtons />
                 </QueryProviders>
             </body>
         </html>

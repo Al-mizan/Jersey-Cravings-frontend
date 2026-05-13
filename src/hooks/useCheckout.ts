@@ -12,16 +12,34 @@ import {
     cancelMyOrder,
     initiatePayment,
     finalizePayment,
+    getMyLoyaltySummary,
+    getMyPointTransactions,
+    redeemPoints,
+    getMyReferralCode,
+    getMyReferralEvents,
     type CreateOrderPayload,
     type CouponValidateResponse,
     type FinalizePaymentPayload,
-} from "@/services/checkout.api";
+    type RedeemPointsResponse,
+} from "@/services/checkout.service";
 
 // ── Query Keys ────────────────────────────────────────
 export const checkoutKeys = {
     cart: ["cart", "my"] as const,
     orders: ["orders", "my"] as const,
     order: (id: string) => ["orders", "my", id] as const,
+    loyalty: ["loyalty", "me"] as const,
+    pointTransactions: {
+        all: ["loyalty", "transactions"] as const,
+        list: (params?: Record<string, unknown>) =>
+            ["loyalty", "transactions", params ?? {}] as const,
+    },
+    referralCode: ["referral", "code"] as const,
+    referralEvents: {
+        all: ["referral", "events"] as const,
+        list: (params?: Record<string, unknown>) =>
+            ["referral", "events", params ?? {}] as const,
+    },
 };
 
 // ── Cart ──────────────────────────────────────────────
@@ -44,6 +62,50 @@ export function useValidateCoupon() {
     });
 }
 
+// ── Loyalty & Points ─────────────────────────────────
+export function useMyLoyaltySummary() {
+    return useQuery({
+        queryKey: checkoutKeys.loyalty,
+        queryFn: getMyLoyaltySummary,
+        staleTime: 30_000,
+    });
+}
+
+export function useMyPointTransactions(params?: {
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+}) {
+    return useQuery({
+        queryKey: checkoutKeys.pointTransactions.list(params),
+        queryFn: () => getMyPointTransactions(params),
+        staleTime: 30_000,
+    });
+}
+
+export function useRedeemPoints() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (payload: { pointsToRedeem: number }) =>
+            redeemPoints(payload),
+        onSuccess: (data: RedeemPointsResponse) => {
+            queryClient.invalidateQueries({ queryKey: checkoutKeys.loyalty });
+            queryClient.invalidateQueries({
+                queryKey: checkoutKeys.pointTransactions.all,
+            });
+            toast.success(
+                `Redeemed ${data.pointsRedeemed} points successfully`,
+            );
+        },
+        onError: (error: unknown) => {
+            const message = getErrorMessage(error);
+            toast.error(message || "Failed to redeem points");
+        },
+    });
+}
+
 // ── Order ──────────────────────────────────────────────
 export function useCreateOrder() {
     const queryClient = useQueryClient();
@@ -55,7 +117,16 @@ export function useCreateOrder() {
             toast.success("Order placed successfully!");
             // Invalidate cart so navbar count resets to 0
             queryClient.invalidateQueries({ queryKey: checkoutKeys.cart });
-            router.push(`/make-payment/${order.id}`);
+
+            // Route based on payment method
+            const paymentMethod = order.paymentMethod as string | undefined;
+            if (paymentMethod === "COD") {
+                // COD orders go directly to orders page
+                router.push(`/my-section/orders/${order.id}`);
+            } else {
+                // Bkash/Nagad orders go to payment page
+                router.push(`/make-payment/${order.id}`);
+            }
         },
         onError: (error: unknown) => {
             const message = getErrorMessage(error);
@@ -135,6 +206,28 @@ export function useFinalizePayment() {
             const message = getErrorMessage(error);
             toast.error(message || "Payment verification failed");
         },
+    });
+}
+
+// ── Referral ─────────────────────────────────────────
+export function useMyReferralCode() {
+    return useQuery({
+        queryKey: checkoutKeys.referralCode,
+        queryFn: getMyReferralCode,
+        staleTime: 60_000,
+    });
+}
+
+export function useMyReferralEvents(params?: {
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+}) {
+    return useQuery({
+        queryKey: checkoutKeys.referralEvents.list(params),
+        queryFn: () => getMyReferralEvents(params),
+        staleTime: 30_000,
     });
 }
 

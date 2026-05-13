@@ -1,3 +1,5 @@
+import { ApiResponse } from "@/types/api.types";
+
 type AsyncFn<T> = () => Promise<T>;
 
 export const safeServiceCall = async <T>(
@@ -23,4 +25,11 @@ export const safeServiceMutation = async <T>(
         console.error(context, error);
         throw error;
     }
+};
+
+export const unwrapData = async <TData>(
+    request: Promise<ApiResponse<TData>>,
+): Promise<TData> => {
+    const response = await request;
+    return response.data;
 };

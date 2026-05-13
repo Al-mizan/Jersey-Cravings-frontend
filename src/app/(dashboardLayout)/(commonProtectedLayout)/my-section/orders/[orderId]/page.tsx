@@ -9,12 +9,7 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import OrderStatusStepper from "@/components/modules/Checkout/OrderStatusStepper";
 import OrderDetailCard from "@/components/modules/Checkout/OrderDetailCard";
@@ -94,9 +89,9 @@ export default function OrderTrackingPage() {
                             </span>
                             <span className="flex items-center gap-1">
                                 <CreditCard className="size-3.5" />
-                                {order.paymentMethod === "STRIPE"
-                                    ? "Bkash"
-                                    : "Cash on Delivery"}
+                                {order.paymentMethod === "COD"
+                                    ? "Cash on Delivery"
+                                    : "Bkash/Nagad"}
                             </span>
                         </div>
                     </div>

@@ -1,119 +1,271 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
 import Image from "next/image";
-import { Loader2, Tag, Truck, Building2, MapPin } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import axios from "axios";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Loader2, Tag, Truck, Trash2, Minus, Plus } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { isDhakaDistrict } from "@/lib/bd-locations";
-import { useValidateCoupon, useCreateOrder } from "@/hooks/useCheckout";
-import type { ICart } from "@/types/commerce.types";
-import type { CouponValidateResponse } from "@/services/checkout.api";
+import { cartQueryKey } from "@/hooks/useCart";
+import {
+    useCreateOrder,
+    useMyLoyaltySummary,
+    useRedeemPoints,
+    useValidateCoupon,
+} from "@/hooks/useCheckout";
+import {
+    verifyReferralCode,
+    type CouponValidateResponse,
+    type ReferralValidateResponse,
+} from "@/services/checkout.service";
+import type { ICart, ICartItem } from "@/types/commerce.types";
 
-// ── Shipping Options ──────────────────────────────────
+type ShippingId = "" | "ju" | "dhaka" | "outside";
+type PaymentId = "" | "COD" | "BKASH";
+
 const SHIPPING_OPTIONS = [
     {
         id: "ju",
-        label: "Jahangirnagar University",
+        label: "Delivery Inside Jahangirnagar University",
         emoji: "🏫",
-        sublabel: "Free — our HQ",
+        sublabel: "Free — pickup only",
         price: 0,
     },
     {
         id: "dhaka",
         label: "Delivery Inside Dhaka",
         emoji: "🏙️",
-        sublabel: "",
+        sublabel: "District must be Dhaka",
         price: 79,
     },
     {
         id: "outside",
         label: "Delivery Outside Dhaka",
         emoji: "🗺️",
-        sublabel: "",
+        sublabel: "Any district outside Dhaka",
         price: 119,
     },
 ] as const;
 
-type ShippingId = (typeof SHIPPING_OPTIONS)[number]["id"];
-
-// ── Payment Methods ───────────────────────────────────
 const PAYMENT_OPTIONS = [
     { id: "COD", label: "Cash on Delivery" },
-    { id: "STRIPE", label: "Bkash" },
+    { id: "BKASH", label: "Bkash/Nagad" },
 ] as const;
 
-type PaymentId = (typeof PAYMENT_OPTIONS)[number]["id"];
+const maxCartQty = 10;
 
-// ── Helpers ───────────────────────────────────────────
 const formatCurrency = (val: number) => `৳${val.toLocaleString("en-US")}`;
 
-// ── Component Props ───────────────────────────────────
+const updateCartItemQty = (
+    cart: ICart | null | undefined,
+    itemId: string,
+    qty: number,
+): ICart | null | undefined => {
+    if (!cart) return cart;
+    return {
+        ...cart,
+        items: cart.items.map((item: ICartItem) =>
+            item.id === itemId ? { ...item, qty } : item,
+        ),
+    };
+};
+
+const removeCartItem = (
+    cart: ICart | null | undefined,
+    itemId: string,
+): ICart | null | undefined => {
+    if (!cart) return cart;
+    return {
+        ...cart,
+        items: cart.items.filter((item: ICartItem) => item.id !== itemId),
+    };
+};
+
 interface OrderSummaryProps {
     cart: ICart;
-    billingCity: string;
+    billingDistrict: string;
     billingValues: Record<string, unknown>;
+    shippingMethod: ShippingId;
+    onShippingMethodChange: (method: ShippingId) => void;
     isFormValid: boolean;
     onValidateForm: () => Promise<boolean>;
+    mobileFormSlot?: ReactNode | null;
 }
 
 export default function OrderSummary({
     cart,
-    billingCity,
+    billingDistrict,
     billingValues,
+    shippingMethod,
+    onShippingMethodChange,
     isFormValid,
     onValidateForm,
+    mobileFormSlot,
 }: OrderSummaryProps) {
+    const queryClient = useQueryClient();
+
     const billingArea =
         typeof billingValues.area === "string" ? billingValues.area : "";
-    // ── Coupon State ──────────────────────────────────
+    const billingDivision =
+        typeof billingValues.division === "string"
+            ? billingValues.division
+            : "";
+    const billingShippingMethod =
+        typeof billingValues.shippingMethod === "string"
+            ? billingValues.shippingMethod
+            : "";
+
     const [showCoupon, setShowCoupon] = useState(false);
     const [couponCode, setCouponCode] = useState("");
-    const [appliedCoupon, setAppliedCoupon] = useState<CouponValidateResponse | null>(null);
+    const [appliedCoupon, setAppliedCoupon] =
+        useState<CouponValidateResponse | null>(null);
     const [couponError, setCouponError] = useState<string | null>(null);
+
+    const [showReferral, setShowReferral] = useState(false);
+    const [referralCode, setReferralCode] = useState("");
+    const [appliedReferral, setAppliedReferral] =
+        useState<ReferralValidateResponse | null>(null);
+    const [referralError, setReferralError] = useState<string | null>(null);
+
+    const [showRedeemPoints, setShowRedeemPoints] = useState(false);
+    const [redeemInput, setRedeemInput] = useState("");
+    const [redeemedPoints, setRedeemedPoints] = useState(0);
+    const [redeemError, setRedeemError] = useState<string | null>(null);
+    const [pointsBalanceOverride, setPointsBalanceOverride] = useState<
+        number | null
+    >(null);
+
+    const [shippingError, setShippingError] = useState<string | null>(null);
+    const [paymentError, setPaymentError] = useState<string | null>(null);
+
+    const [paymentMethod, setPaymentMethod] = useState<PaymentId>("");
 
     const validateCouponMutation = useValidateCoupon();
     const createOrderMutation = useCreateOrder();
+    const redeemPointsMutation = useRedeemPoints();
+    const { data: loyaltySummary } = useMyLoyaltySummary();
 
-    // ── Shipping State ────────────────────────────────
-    const autoShipping = useMemo<ShippingId>(() => {
-        if (billingArea === "Jahangirnagar University") return "ju";
-        if (billingCity && isDhakaDistrict(billingCity)) return "dhaka";
-        return "outside";
-    }, [billingArea, billingCity]);
-
-    const [shippingMethod, setShippingMethod] = useState<ShippingId>(autoShipping);
-
-    // Sync auto-detected shipping when city changes
-    React.useEffect(() => {
-        setShippingMethod(autoShipping);
-    }, [autoShipping]);
-
-    const shippingPrice = SHIPPING_OPTIONS.find((o) => o.id === shippingMethod)?.price ?? 0;
-
-    // ── Payment State ─────────────────────────────────
-    const [paymentMethod, setPaymentMethod] = useState<PaymentId>("COD");
-
-    // ── Calculations ──────────────────────────────────
+    const cartItems = cart.items;
     const subtotal = useMemo(
         () =>
-            cart.items.reduce(
-                (sum, item) => sum + item.qty * (item.variant?.priceAmount ?? 0),
+            cartItems.reduce(
+                (sum, item) =>
+                    sum + item.qty * (item.variant?.priceAmount ?? 0),
                 0,
             ),
-        [cart.items],
+        [cartItems],
     );
 
-    const discountAmount = appliedCoupon?.discountAmount ?? 0;
-    const total = Math.max(0, subtotal + shippingPrice - discountAmount);
+    const shippingPrice = useMemo(() => {
+        if (shippingMethod === "ju") return 0;
+        if (shippingMethod === "dhaka") return 79;
+        if (shippingMethod === "outside") return 119;
+        return 0;
+    }, [shippingMethod]);
 
-    // ── Coupon Handlers ───────────────────────────────
+    const discountAmount = appliedCoupon?.discountAmount ?? 0;
+    const totalBeforePoints = Math.max(
+        0,
+        subtotal + shippingPrice - discountAmount,
+    );
+    const pointsBalance =
+        pointsBalanceOverride ?? loyaltySummary?.pointsBalance ?? 0;
+    const maxRedeemable = Math.min(
+        pointsBalance,
+        Math.floor(totalBeforePoints * 0.5),
+    );
+    const total = Math.max(0, totalBeforePoints - redeemedPoints);
+
+    const isPickup = shippingMethod === "ju";
+    const isCodAllowed = isPickup;
+
+    useEffect(() => {
+        setShippingError(null);
+        if (!isCodAllowed && paymentMethod === "COD") {
+            setPaymentMethod("");
+        }
+        if (shippingMethod === "ju") {
+            setPaymentError(null);
+        }
+    }, [isCodAllowed, paymentMethod, shippingMethod]);
+
+    useEffect(() => {
+        if (billingShippingMethod && billingShippingMethod !== shippingMethod) {
+            onShippingMethodChange(billingShippingMethod as ShippingId);
+        }
+    }, [billingShippingMethod, onShippingMethodChange, shippingMethod]);
+
+    const updateCartItemMutation = useMutation({
+        mutationFn: async (payload: { itemId: string; qty: number }) => {
+            await axios.patch(`/api/proxy/carts/my/items/${payload.itemId}`, {
+                qty: payload.qty,
+            });
+        },
+        onMutate: async (variables) => {
+            await queryClient.cancelQueries({ queryKey: cartQueryKey });
+            const previousCart = queryClient.getQueryData<ICart>(cartQueryKey);
+            queryClient.setQueryData<ICart | null>(
+                cartQueryKey,
+                (current: any) =>
+                    updateCartItemQty(
+                        current,
+                        variables.itemId,
+                        variables.qty,
+                    ) ?? null,
+            );
+            return { previousCart };
+        },
+        onError: (_error, _variables, context) => {
+            if (context?.previousCart) {
+                queryClient.setQueryData(cartQueryKey, context.previousCart);
+            }
+            toast.error("Failed to update cart item");
+        },
+    });
+
+    const removeCartItemMutation = useMutation({
+        mutationFn: async (itemId: string) => {
+            await axios.delete(`/api/proxy/carts/my/items/${itemId}`);
+        },
+        onMutate: async (itemId) => {
+            await queryClient.cancelQueries({ queryKey: cartQueryKey });
+            const previousCart = queryClient.getQueryData<ICart>(cartQueryKey);
+            queryClient.setQueryData<ICart | null>(
+                cartQueryKey,
+                (current: any) => removeCartItem(current, itemId) ?? null,
+            );
+            return { previousCart };
+        },
+        onError: (_error, _variables, context) => {
+            if (context?.previousCart) {
+                queryClient.setQueryData(cartQueryKey, context.previousCart);
+            }
+            toast.error("Failed to remove cart item");
+        },
+        onSuccess: () => {
+            toast.success("Item removed from cart");
+        },
+    });
+
+    const verifyReferralMutation = useMutation({
+        mutationFn: async (code: string) => verifyReferralCode(code),
+        onError: (error) => {
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : "Invalid referral code";
+            toast.error(message || "Invalid referral code");
+        },
+    });
+
     const handleApplyCoupon = async () => {
         if (!couponCode.trim()) return;
         setCouponError(null);
@@ -127,41 +279,150 @@ export default function OrderSummary({
         } catch (err: unknown) {
             setAppliedCoupon(null);
             if (err && typeof err === "object" && "response" in err) {
-                const axiosErr = err as { response?: { data?: { message?: string } } };
-                setCouponError(axiosErr.response?.data?.message ?? "Invalid coupon");
+                const axiosErr = err as {
+                    response?: { data?: { message?: string } };
+                };
+                setCouponError(
+                    axiosErr.response?.data?.message ?? "Invalid coupon",
+                );
             } else {
                 setCouponError("Invalid coupon");
             }
         }
     };
 
-    // ── Place Order Handler ───────────────────────────
-    const handlePlaceOrder = async () => {
-        const formValid = await onValidateForm();
-        if (!formValid) return;
+    const handleApplyReferral = async () => {
+        if (!referralCode.trim()) return;
+        setReferralError(null);
+        try {
+            const result = await verifyReferralMutation.mutateAsync(
+                referralCode.trim(),
+            );
+            setAppliedReferral(result);
+            setReferralError(null);
+        } catch (error: unknown) {
+            setAppliedReferral(null);
+            if (error && typeof error === "object" && "response" in error) {
+                const axiosErr = error as {
+                    response?: { data?: { message?: string } };
+                };
+                setReferralError(
+                    axiosErr.response?.data?.message ?? "Invalid referral code",
+                );
+            } else if (error instanceof Error) {
+                setReferralError(error.message);
+            } else {
+                setReferralError("Invalid referral code");
+            }
+        }
+    };
 
-        const fulfillmentMethod = shippingMethod === "ju" ? "PICKUP" as const : "DELIVERY" as const;
+    const handleApplyRedeemPoints = async () => {
+        if (redeemedPoints > 0) return;
+        const raw = Number(redeemInput);
+
+        if (!Number.isFinite(raw) || raw <= 0) {
+            setRedeemError("Enter a valid points amount");
+            return;
+        }
+
+        const pointsToRedeem = Math.floor(raw);
+        if (pointsToRedeem > maxRedeemable) {
+            setRedeemError(`You can redeem up to ${maxRedeemable} points`);
+            return;
+        }
+
+        setRedeemError(null);
+        try {
+            const result = await redeemPointsMutation.mutateAsync({
+                pointsToRedeem,
+            });
+            setRedeemedPoints(pointsToRedeem);
+            setPointsBalanceOverride(result.pointsBalance);
+            setRedeemInput(String(pointsToRedeem));
+        } catch (error: unknown) {
+            const message =
+                error instanceof Error ? error.message : "Invalid points";
+            setRedeemError(message);
+        }
+    };
+
+    const handlePlaceOrder = async () => {
+        setShippingError(null);
+        setPaymentError(null);
+
+        if (!shippingMethod) {
+            setShippingError("Please select a shipping method");
+            return;
+        }
+
+        if (!paymentMethod) {
+            setPaymentError("Please select a payment method");
+            return;
+        }
+
+        if (paymentMethod === "COD" && !isCodAllowed) {
+            setPaymentError(
+                "Cash on Delivery is only available for pickup orders",
+            );
+            return;
+        }
+
+        if (shippingMethod === "dhaka" && billingDistrict !== "dhaka") {
+            setShippingError(
+                "Delivery Inside Dhaka requires the Dhaka district",
+            );
+            return;
+        }
+
+        if (shippingMethod === "outside" && billingDistrict === "dhaka") {
+            setShippingError(
+                "Delivery Outside Dhaka requires a district outside Dhaka",
+            );
+            return;
+        }
+
+        if (redeemedPoints > 0 && redeemedPoints > maxRedeemable) {
+            setRedeemError(
+                `Redeemed points exceed the current max of ${maxRedeemable}`,
+            );
+            return;
+        }
+
+        const formValid = await onValidateForm();
+        if (!formValid) {
+            document
+                .querySelector("[data-error]")
+                ?.scrollIntoView({ behavior: "smooth" });
+            return;
+        }
+
+        const fulfillmentMethod = isPickup
+            ? ("PICKUP" as const)
+            : ("DELIVERY" as const);
 
         createOrderMutation.mutate({
             fulfillmentMethod,
-            paymentMethod: paymentMethod,
+            paymentMethod,
             billingAddressSnapshot: {
                 recipientName: billingValues.name,
                 phone: billingValues.phone,
                 address: billingValues.address,
-                district: billingValues.city,
+                division: billingDivision,
+                district: billingDistrict,
                 area: billingValues.area,
                 email: billingValues.email || undefined,
             },
             notes: (billingValues.orderNote as string) || undefined,
             couponCode: appliedCoupon?.code || undefined,
+            referralCode: appliedReferral?.code || undefined,
+            redeemPoints: redeemedPoints || undefined,
         });
     };
 
     return (
         <div className="space-y-6">
-            {/* ── Coupon Section ─────────────────────── */}
-            <div>
+            <div className="space-y-3">
                 {!showCoupon ? (
                     <button
                         type="button"
@@ -186,7 +447,11 @@ export default function OrderSummary({
                                 <Input
                                     placeholder="Coupon Code"
                                     value={couponCode}
-                                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                    onChange={(e) =>
+                                        setCouponCode(
+                                            e.target.value.toUpperCase(),
+                                        )
+                                    }
                                     className="flex-1"
                                     disabled={!!appliedCoupon}
                                 />
@@ -206,7 +471,10 @@ export default function OrderSummary({
                                 ) : (
                                     <Button
                                         onClick={handleApplyCoupon}
-                                        disabled={validateCouponMutation.isPending || !couponCode.trim()}
+                                        disabled={
+                                            validateCouponMutation.isPending ||
+                                            !couponCode.trim()
+                                        }
                                         className="shrink-0 bg-pink-500 hover:bg-pink-600 text-white"
                                     >
                                         {validateCouponMutation.isPending ? (
@@ -218,11 +486,166 @@ export default function OrderSummary({
                                 )}
                             </div>
                             {couponError && (
-                                <p className="text-sm text-destructive">{couponError}</p>
+                                <p className="text-sm text-destructive">
+                                    {couponError}
+                                </p>
                             )}
                             {appliedCoupon && (
                                 <p className="text-sm text-emerald-600 font-medium">
-                                    ✓ Coupon applied — {formatCurrency(appliedCoupon.discountAmount)} off
+                                    ✓ Coupon applied —{" "}
+                                    {formatCurrency(
+                                        appliedCoupon.discountAmount,
+                                    )}{" "}
+                                    off
+                                </p>
+                            )}
+                        </motion.div>
+                    </AnimatePresence>
+                )}
+            </div>
+
+            <div className="space-y-3">
+                {!showReferral ? (
+                    <button
+                        type="button"
+                        onClick={() => setShowReferral(true)}
+                        className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline transition-colors"
+                    >
+                        <Tag className="size-4" />
+                        Have referral code?
+                    </button>
+                ) : (
+                    <AnimatePresence>
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="space-y-2"
+                        >
+                            <p className="text-sm font-medium text-primary">
+                                Have referral code?
+                            </p>
+                            <div className="flex gap-2">
+                                <Input
+                                    placeholder="Referral Code"
+                                    value={referralCode}
+                                    onChange={(e) =>
+                                        setReferralCode(
+                                            e.target.value.toUpperCase(),
+                                        )
+                                    }
+                                    className="flex-1"
+                                    disabled={!!appliedReferral}
+                                />
+                                {appliedReferral ? (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="shrink-0"
+                                        onClick={() => {
+                                            setAppliedReferral(null);
+                                            setReferralCode("");
+                                            setReferralError(null);
+                                        }}
+                                    >
+                                        Remove
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        onClick={handleApplyReferral}
+                                        disabled={
+                                            verifyReferralMutation.isPending ||
+                                            !referralCode.trim()
+                                        }
+                                        className="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                    >
+                                        {verifyReferralMutation.isPending ? (
+                                            <Loader2 className="size-4 animate-spin" />
+                                        ) : (
+                                            "Apply"
+                                        )}
+                                    </Button>
+                                )}
+                            </div>
+                            {referralError && (
+                                <p className="text-sm text-destructive">
+                                    {referralError}
+                                </p>
+                            )}
+                            {appliedReferral && (
+                                <p className="text-sm text-emerald-600 font-medium">
+                                    ✓ Referral code verified. Reward will be
+                                    applied after delivery.
+                                </p>
+                            )}
+                        </motion.div>
+                    </AnimatePresence>
+                )}
+            </div>
+
+            <div className="space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-primary">
+                        Have Redeem Points?
+                    </p>
+                    <span className="text-xs text-muted-foreground">
+                        Available: {pointsBalance} pts
+                    </span>
+                </div>
+
+                {!showRedeemPoints ? (
+                    <button
+                        type="button"
+                        onClick={() => setShowRedeemPoints(true)}
+                        className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline transition-colors"
+                    >
+                        Redeem your points
+                    </button>
+                ) : (
+                    <AnimatePresence>
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="space-y-2"
+                        >
+                            <div className="flex gap-2">
+                                <Input
+                                    type="number"
+                                    min={0}
+                                    placeholder={`Max ${maxRedeemable} pts`}
+                                    value={redeemInput}
+                                    onChange={(e) => {
+                                        setRedeemInput(e.target.value);
+                                        setRedeemError(null);
+                                    }}
+                                    className="flex-1"
+                                    disabled={redeemedPoints > 0}
+                                />
+                                <Button
+                                    onClick={handleApplyRedeemPoints}
+                                    disabled={
+                                        redeemPointsMutation.isPending ||
+                                        !redeemInput.trim() ||
+                                        redeemedPoints > 0
+                                    }
+                                    className="shrink-0 bg-slate-900 hover:bg-slate-800 text-white"
+                                >
+                                    {redeemPointsMutation.isPending ? (
+                                        <Loader2 className="size-4 animate-spin" />
+                                    ) : (
+                                        "Apply"
+                                    )}
+                                </Button>
+                            </div>
+                            {redeemError && (
+                                <p className="text-sm text-destructive">
+                                    {redeemError}
+                                </p>
+                            )}
+                            {redeemedPoints > 0 && (
+                                <p className="text-sm text-emerald-600 font-medium">
+                                    ✓ Redeemed {redeemedPoints} points
                                 </p>
                             )}
                         </motion.div>
@@ -232,17 +655,27 @@ export default function OrderSummary({
 
             <Separator />
 
-            {/* ── Shipping Method ────────────────────── */}
             <div className="space-y-3">
-                <h3 className="text-sm font-bold uppercase tracking-wide text-foreground">
-                    Choose Shipping Method
-                </h3>
+                <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-sm font-bold uppercase tracking-wide text-foreground">
+                        Choose Shipping Method
+                    </h3>
+                    {shippingError && (
+                        <span className="text-xs font-medium text-destructive">
+                            {shippingError}
+                        </span>
+                    )}
+                </div>
                 <RadioGroup
                     value={shippingMethod}
-                    onValueChange={(v) => setShippingMethod(v as ShippingId)}
+                    onValueChange={(value) => {
+                        onShippingMethodChange(value as ShippingId);
+                        setShippingError(null);
+                    }}
                     className="space-y-2"
                 >
                     {SHIPPING_OPTIONS.map((opt) => (
+                        // todo: hidden input for accessibility, currently just styling the label and using onClick on the label to select
                         <Label
                             key={opt.id}
                             htmlFor={`shipping-${opt.id}`}
@@ -258,9 +691,13 @@ export default function OrderSummary({
                                     value={opt.id}
                                     id={`shipping-${opt.id}`}
                                 />
-                                <div className="flex items-center gap-2">
-                                    <span className="text-base">{opt.emoji}</span>
-                                    <span className="text-sm font-medium">{opt.label}</span>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-base">
+                                        {opt.emoji}
+                                    </span>
+                                    <span className="text-sm font-medium">
+                                        {opt.label}
+                                    </span>
                                     {opt.sublabel && (
                                         <span className="text-xs text-muted-foreground">
                                             — {opt.sublabel}
@@ -269,57 +706,136 @@ export default function OrderSummary({
                                 </div>
                             </div>
                             <span className="text-sm font-semibold tabular-nums">
-                                {opt.price === 0 ? "Free" : formatCurrency(opt.price)}
+                                {opt.price === 0
+                                    ? "Free"
+                                    : formatCurrency(opt.price)}
                             </span>
                         </Label>
                     ))}
                 </RadioGroup>
+                {shippingMethod === "ju" && (
+                    <p className="text-xs text-muted-foreground">
+                        Pickup selected: billing location and address fields are
+                        disabled.
+                    </p>
+                )}
             </div>
+
+            {mobileFormSlot && <div className="pt-2">{mobileFormSlot}</div>}
 
             <Separator />
 
-            {/* ── Cart Items ────────────────────────── */}
             <div className="space-y-3">
-                {cart.items.map((item) => {
-                    const product = item.variant?.product;
-                    const thumb = product?.thumbNail ?? "/jersey_cravings.png";
-                    const title = product?.title ?? "Product";
-                    const size = item.variant?.size ?? "";
-                    const unitPrice = item.variant?.priceAmount ?? 0;
-                    return (
-                        <div
-                            key={item.id}
-                            className="flex items-center gap-3 text-sm"
-                        >
-                            <div className="relative size-12 shrink-0 overflow-hidden rounded-md bg-muted border">
-                                <Image
-                                    src={thumb}
-                                    alt={title}
-                                    fill
-                                    className="object-cover"
-                                />
+                <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
+                    {cartItems.map((item) => {
+                        const product = item.variant?.product;
+                        const thumb =
+                            product?.thumbNail ?? "/jersey_cravings.png";
+                        const title = product?.title ?? "Product";
+                        const size = item.variant?.size ?? "";
+                        const unitPrice = item.variant?.priceAmount ?? 0;
+
+                        return (
+                            <div
+                                key={item.id}
+                                className="flex gap-3 rounded-xl border border-border/60 p-3"
+                            >
+                                <div className="relative size-14 shrink-0 overflow-hidden rounded-md bg-muted border">
+                                    <Image
+                                        src={thumb}
+                                        alt={title}
+                                        fill
+                                        className="object-cover"
+                                    />
+                                </div>
+                                <div className="min-w-0 flex-1 space-y-2">
+                                    <div>
+                                        <p className="text-sm font-medium line-clamp-1">
+                                            {title}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {size && `Size: ${size} · `}Qty:{" "}
+                                            {item.qty}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center rounded-full border border-input">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon-sm"
+                                                onClick={() =>
+                                                    updateCartItemMutation.mutate(
+                                                        {
+                                                            itemId: item.id,
+                                                            qty: Math.max(
+                                                                1,
+                                                                item.qty - 1,
+                                                            ),
+                                                        },
+                                                    )
+                                                }
+                                                disabled={item.qty <= 1}
+                                                aria-label="Decrease quantity"
+                                            >
+                                                <Minus className="size-3" />
+                                            </Button>
+                                            <span className="w-8 text-center text-xs font-semibold">
+                                                {item.qty}
+                                            </span>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon-sm"
+                                                onClick={() =>
+                                                    updateCartItemMutation.mutate(
+                                                        {
+                                                            itemId: item.id,
+                                                            qty: Math.min(
+                                                                maxCartQty,
+                                                                item.qty + 1,
+                                                            ),
+                                                        },
+                                                    )
+                                                }
+                                                disabled={
+                                                    item.qty >= maxCartQty
+                                                }
+                                                aria-label="Increase quantity"
+                                            >
+                                                <Plus className="size-3" />
+                                            </Button>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon-sm"
+                                            className="text-muted-foreground hover:text-destructive"
+                                            onClick={() =>
+                                                removeCartItemMutation.mutate(
+                                                    item.id,
+                                                )
+                                            }
+                                            aria-label="Remove item"
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                                <span className="font-semibold tabular-nums shrink-0 self-start">
+                                    {formatCurrency(unitPrice * item.qty)}
+                                </span>
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="font-medium line-clamp-1">{title}</p>
-                                <p className="text-xs text-muted-foreground">
-                                    {size && `Size: ${size} · `}Qty: {item.qty}
-                                </p>
-                            </div>
-                            <span className="font-semibold tabular-nums shrink-0">
-                                {formatCurrency(unitPrice * item.qty)}
-                            </span>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
             </div>
 
             <Separator />
 
-            {/* ── Breakdown ─────────────────────────── */}
             <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span className="tabular-nums">{formatCurrency(subtotal)}</span>
+                    <span className="tabular-nums">
+                        {formatCurrency(subtotal)}
+                    </span>
                 </div>
                 <div className="flex justify-between">
                     <span className="text-muted-foreground flex items-center gap-1.5">
@@ -327,7 +843,9 @@ export default function OrderSummary({
                         Shipping
                     </span>
                     <span className="tabular-nums">
-                        {shippingPrice === 0 ? "Free" : formatCurrency(shippingPrice)}
+                        {shippingPrice === 0
+                            ? "Free"
+                            : formatCurrency(shippingPrice)}
                     </span>
                 </div>
                 {discountAmount > 0 && (
@@ -341,8 +859,18 @@ export default function OrderSummary({
                         </span>
                     </div>
                 )}
+                {redeemedPoints > 0 && (
+                    <div className="flex justify-between text-emerald-600">
+                        <span className="flex items-center gap-1.5">
+                            Redeemed Points
+                        </span>
+                        <span className="tabular-nums">
+                            −{formatCurrency(redeemedPoints)}
+                        </span>
+                    </div>
+                )}
                 <Separator />
-                <div className="flex justify-between items-center pt-1">
+                <div className="flex items-center justify-between pt-1">
                     <span className="font-bold text-base">Total Amount</span>
                     <span className="font-bold text-lg text-pink-600 tabular-nums">
                         {formatCurrency(total)}
@@ -352,41 +880,62 @@ export default function OrderSummary({
 
             <Separator />
 
-            {/* ── Payment Method ────────────────────── */}
             <div className="space-y-3">
                 <h3 className="text-sm font-bold uppercase tracking-wide text-foreground">
                     Choose Payment Method
                 </h3>
+                {paymentError && (
+                    <p className="text-xs font-medium text-destructive">
+                        {paymentError}
+                    </p>
+                )}
                 <RadioGroup
                     value={paymentMethod}
-                    onValueChange={(v) => setPaymentMethod(v as PaymentId)}
+                    onValueChange={(value) => {
+                        setPaymentMethod(value as PaymentId);
+                        setPaymentError(null);
+                    }}
                     className="space-y-2"
                 >
-                    {PAYMENT_OPTIONS.map((opt) => (
-                        <Label
-                            key={opt.id}
-                            htmlFor={`payment-${opt.id}`}
-                            className={cn(
-                                "flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-all",
-                                paymentMethod === opt.id
-                                    ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                                    : "border-border hover:border-muted-foreground/30",
-                            )}
-                        >
-                            <RadioGroupItem
-                                value={opt.id}
-                                id={`payment-${opt.id}`}
-                            />
-                            <span className="text-sm font-medium">{opt.label}</span>
-                        </Label>
-                    ))}
+                    {PAYMENT_OPTIONS.map((opt) => {
+                        const isDisabled = opt.id === "COD" && !isCodAllowed;
+                        return (
+                            <Label
+                                key={opt.id}
+                                htmlFor={`payment-${opt.id}`}
+                                className={cn(
+                                    "flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-all",
+                                    paymentMethod === opt.id
+                                        ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                                        : "border-border hover:border-muted-foreground/30",
+                                    isDisabled &&
+                                        "cursor-not-allowed opacity-60",
+                                )}
+                            >
+                                <RadioGroupItem
+                                    value={opt.id}
+                                    id={`payment-${opt.id}`}
+                                    disabled={isDisabled}
+                                />
+                                <span className="text-sm font-medium">
+                                    {opt.label}
+                                </span>
+                                {isDisabled && (
+                                    <span className="text-xs text-muted-foreground">
+                                        Available only for pickup orders
+                                    </span>
+                                )}
+                            </Label>
+                        );
+                    })}
                 </RadioGroup>
             </div>
 
-            {/* ── Place Order Button ─────────────────── */}
             <Button
                 onClick={handlePlaceOrder}
-                disabled={createOrderMutation.isPending || cart.items.length === 0}
+                disabled={
+                    createOrderMutation.isPending || cart.items.length === 0
+                }
                 className="w-full h-12 text-base font-bold bg-linear-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                 size="lg"
             >
@@ -396,7 +945,7 @@ export default function OrderSummary({
                         Placing Order...
                     </>
                 ) : (
-                    "PLACE ORDER"
+                    "অর্ডার করুন"
                 )}
             </Button>
         </div>

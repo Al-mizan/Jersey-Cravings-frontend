@@ -1,8 +1,7 @@
 "use server";
 
 import { httpClient } from "@/lib/axios/httpClient";
-import { safeServiceCall, safeServiceMutation } from "@/services/service-utils";
-import { ApiResponse } from "@/types/api.types";
+import { safeServiceCall, safeServiceMutation, unwrapData } from "@/services/service-utils";
 import type {
     IChangeCustomerStatusPayload,
     ICustomerAdminListResponse,
@@ -15,12 +14,6 @@ const CUSTOMER_PROFILE_ENDPOINTS = {
     base: "/customers/profile",
 };
 
-const unwrapData = async <TData>(
-    request: Promise<ApiResponse<TData>>,
-): Promise<TData> => {
-    const response = await request;
-    return response.data;
-};
 
 export async function getMyProfile(): Promise<ICustomerProfile | null> {
     return safeServiceCall(

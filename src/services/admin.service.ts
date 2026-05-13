@@ -1,7 +1,7 @@
 "use server";
 
 import { httpClient } from "@/lib/axios/httpClient";
-import { safeServiceCall } from "@/services/service-utils";
+import { safeServiceCall, unwrapData } from "@/services/service-utils";
 import {
     ICatalogStats,
     ICustomerStats,
@@ -12,7 +12,6 @@ import {
     IAuditLogListResponse,
     IActivityFeedResponse,
 } from "@/types/admin.types";
-import { ApiResponse } from "@/types/api.types";
 
 const ADMIN_ENDPOINTS = {
     dashboardSummary: "/dashboard/summary",
@@ -23,13 +22,6 @@ const ADMIN_ENDPOINTS = {
     auditLogs: "/audit-logs",
     myActivity: "/audit-logs/my-activity",
     activityTimeline: "/audit-logs/timeline",
-};
-
-const unwrapData = async <TData>(
-    request: Promise<ApiResponse<TData>>,
-): Promise<TData> => {
-    const response = await request;
-    return response.data;
 };
 
 // Dashboard Services

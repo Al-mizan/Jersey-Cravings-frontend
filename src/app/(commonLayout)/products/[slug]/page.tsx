@@ -56,6 +56,7 @@ import {
 } from "@/components/ui/table";
 
 import { useAuth } from "@/hooks/useAuth";
+import { cartQueryKey, useCart } from "@/hooks/useCart";
 import { addToCartZodSchema } from "@/zod/commerce.validation";
 import type { ApiResponse } from "@/types/api.types";
 import type { ICart, ICartItem } from "@/types/commerce.types";
@@ -81,7 +82,6 @@ const sizeChartRows = [
 ];
 
 const sizeOrder = ["S", "M", "L", "XL", "XXL"] as const;
-const cartQueryKey = ["cart", "my"] as const;
 
 type CartSummary = { itemCount: number; subtotalAmount: number };
 type CartResponse = ICart & { summary?: CartSummary };
@@ -111,6 +111,8 @@ export default function ProductDetailsPage({
     const [isMainMediaLoading, setIsMainMediaLoading] = useState(true);
 
     // ── Queries ──────────────────────────────────────────────────────────────
+    useCart();
+
     const {
         data: product,
         isLoading,
@@ -794,7 +796,7 @@ export default function ProductDetailsPage({
                                     Add to Cart
                                 </Button>
 
-                                <Button
+                                {/* <Button
                                     onClick={handleBuyNow}
                                     disabled={
                                         isOutOfStock ||
@@ -809,7 +811,7 @@ export default function ProductDetailsPage({
                                         <Zap className="mr-2 size-4" />
                                     )}
                                     Buy Now
-                                </Button>
+                                </Button> */}
                             </div>
                         </div>
 

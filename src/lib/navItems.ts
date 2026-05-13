@@ -120,21 +120,21 @@ export const customerNavItems: NavSection[] = [
             },
             {
                 title: "My Ratings and Reviews",
-                href: "/my-section/reviews",
+                href: "/my-section/reviews/not-reviewed",
                 icon: "MessageSquare",
             },
-            {
-                title: "My Addresses",
-                href: "/account/addresses",
-                icon: "MapPin",
-            },
+            // {
+            //     title: "My Address",
+            //     href: "/my-section/addresses",
+            //     icon: "MapPin",
+            // },
             {
                 title: "My Points",
                 href: "/my-section/points",
                 icon: "Gift",
             },
             {
-                title: "Manage Referral Code",
+                title: "Referral Code",
                 href: "/my-section/referral-code",
                 icon: "Share2",
             },

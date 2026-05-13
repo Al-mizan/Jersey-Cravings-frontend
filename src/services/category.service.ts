@@ -1,7 +1,7 @@
 "use server";
 
 import { httpClient } from "@/lib/axios/httpClient";
-import { safeServiceCall } from "@/services/service-utils";
+import { safeServiceCall, unwrapData } from "@/services/service-utils";
 import { ApiResponse } from "@/types/api.types";
 
 export interface ICategory {
@@ -15,12 +15,6 @@ export interface ICategory {
     updatedAt: string;
 }
 
-const unwrapData = async <TData>(
-    request: Promise<ApiResponse<TData>>,
-): Promise<TData> => {
-    const response = await request;
-    return response.data;
-};
 
 export async function getCategories(): Promise<ICategory[]> {
     return safeServiceCall(

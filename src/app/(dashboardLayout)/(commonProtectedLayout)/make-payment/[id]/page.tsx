@@ -31,17 +31,47 @@ import { useMyOrderById, useCancelOrder } from "@/hooks/useCheckout";
 const formatCurrency = (val: number) => `৳${val.toLocaleString("en-US")}`;
 
 function getStatusBadge(status: string) {
-    const map: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; className: string }> = {
-        PENDING_PAYMENT: { variant: "outline", className: "border-amber-300 bg-amber-50 text-amber-700" },
-        PAID: { variant: "outline", className: "border-teal-300 bg-teal-50 text-teal-700" },
-        PROCESSING: { variant: "outline", className: "border-amber-300 bg-amber-50 text-amber-700" },
-        SHIPPED: { variant: "outline", className: "border-blue-300 bg-blue-50 text-blue-700" },
-        DELIVERED: { variant: "outline", className: "border-emerald-300 bg-emerald-50 text-emerald-700" },
+    const map: Record<
+        string,
+        {
+            variant: "default" | "secondary" | "destructive" | "outline";
+            className: string;
+        }
+    > = {
+        PENDING_PAYMENT: {
+            variant: "outline",
+            className: "border-amber-300 bg-amber-50 text-amber-700",
+        },
+        PAID: {
+            variant: "outline",
+            className: "border-teal-300 bg-teal-50 text-teal-700",
+        },
+        PROCESSING: {
+            variant: "outline",
+            className: "border-amber-300 bg-amber-50 text-amber-700",
+        },
+        SHIPPED: {
+            variant: "outline",
+            className: "border-blue-300 bg-blue-50 text-blue-700",
+        },
+        DELIVERED: {
+            variant: "outline",
+            className: "border-emerald-300 bg-emerald-50 text-emerald-700",
+        },
         CANCELLED: { variant: "destructive", className: "" },
-        REFUNDED: { variant: "outline", className: "border-zinc-300 bg-zinc-50 text-zinc-700" },
-        EXPIRED: { variant: "outline", className: "border-zinc-300 bg-zinc-50 text-zinc-600" },
+        REFUNDED: {
+            variant: "outline",
+            className: "border-zinc-300 bg-zinc-50 text-zinc-700",
+        },
+        EXPIRED: {
+            variant: "outline",
+            className: "border-zinc-300 bg-zinc-50 text-zinc-600",
+        },
     };
-    const config = map[status] ?? { variant: "secondary" as const, className: "" };
+    const config = map[status] ?? {
+        variant: "secondary" as const,
+        className: "",
+    };
     return (
         <Badge variant={config.variant} className={config.className}>
             {status.replace(/_/g, " ")}
@@ -89,7 +119,8 @@ export default function MakePaymentPage() {
         );
     }
 
-    const isBkash = order.paymentMethod === "STRIPE";
+    const isBkash =
+        order.paymentMethod === "BKASH" || order.paymentMethod === "NAGAD";
     const isCod = order.paymentMethod === "COD";
     const isPendingPayment = order.status === "PENDING_PAYMENT";
 
@@ -139,7 +170,9 @@ export default function MakePaymentPage() {
                                 </span>
                                 <span className="font-semibold">
                                     {format(
-                                        new Date(order.placedAt || order.createdAt),
+                                        new Date(
+                                            order.placedAt || order.createdAt,
+                                        ),
                                         "MMMM dd, yyyy",
                                     )}
                                 </span>
@@ -158,7 +191,9 @@ export default function MakePaymentPage() {
                                     Payment method
                                 </span>
                                 <span className="font-semibold">
-                                    {isBkash ? "Bkash" : "Cash on Delivery"}
+                                    {isBkash
+                                        ? "Bkash/Nagad"
+                                        : "Cash on Delivery"}
                                 </span>
                             </div>
                             <div className="flex items-center justify-between text-sm">

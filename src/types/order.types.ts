@@ -20,7 +20,7 @@ export type PaymentStatus =
     | "CANCELED"
     | "REFUNDED";
 
-export type PaymentMethod = "STRIPE" | "COD";
+export type PaymentMethod = "BKASH" | "NAGAD" | "COD";
 
 export type FulfillmentMethod = "DELIVERY" | "PICKUP";
 
@@ -76,6 +76,7 @@ export interface IOrder {
     fulfillmentMethod: FulfillmentMethod;
     subtotalAmount: number;
     discountAmount: number;
+    couponUsed: boolean;
     shippingAmount: number;
     giftAddonAmount: number;
     pointsEarned: number;
@@ -100,6 +101,7 @@ export interface IOrder {
     giftAddon?: IOrderGiftAddon | null;
     userId: string;
     pickupLocationId?: string | null;
+    referralCodeId?: string | null;
 }
 
 export interface IPayment {

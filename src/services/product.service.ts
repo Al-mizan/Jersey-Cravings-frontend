@@ -1,7 +1,7 @@
 "use server";
 
 import { httpClient } from "@/lib/axios/httpClient";
-import { safeServiceCall, safeServiceMutation } from "@/services/service-utils";
+import { safeServiceCall, safeServiceMutation, unwrapData } from "@/services/service-utils";
 import { ApiResponse } from "@/types/api.types";
 import type {
     ICategory,
@@ -25,12 +25,6 @@ const PRODUCT_ENDPOINTS = {
     products: "/products",
 };
 
-const unwrapData = async <TData>(
-    request: Promise<ApiResponse<TData>>,
-): Promise<TData> => {
-    const response = await request;
-    return response.data;
-};
 
 type ListParams = {
     searchTerm?: string;

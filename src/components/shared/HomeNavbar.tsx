@@ -7,7 +7,7 @@ import { Menu, Minus, Plus, Search, ShoppingCart, Trash2 } from "lucide-react";
 import { AnimatePresence, motion, useAnimation } from "motion/react";
 import axios from "axios";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -24,9 +24,11 @@ import {
 } from "@/components/ui/sheet";
 import { GlowEffect } from "../ui/glow-effect";
 import { useAuth } from "@/hooks/useAuth";
+import { cartQueryKey, useCart } from "@/hooks/useCart";
 import { NavbarUserMenu } from "./NavbarUserMenu";
 import type { ApiResponse } from "@/types/api.types";
-import type { ICart, ICartItem } from "@/types/commerce.types";
+import type { ICartItem } from "@/types/commerce.types";
+import { CartResponse } from "@/services/cart.service";
 
 const primaryLinks = [
     { label: "Home", href: "/" },
@@ -35,24 +37,7 @@ const primaryLinks = [
     { label: "About", href: "/about" },
 ];
 
-const cartQueryKey = ["cart", "my"] as const;
 const maxCartQty = 10;
-
-type CartSummary = {
-    itemCount: number;
-    subtotalAmount: number;
-};
-
-type CartResponse = ICart & {
-    summary?: CartSummary;
-};
-
-const fetchMyCart = async (): Promise<CartResponse | null> => {
-    const response = await axios.get<ApiResponse<CartResponse>>(
-        "/api/proxy/carts/my",
-    );
-    return response.data.data ?? null;
-};
 
 const formatCurrency = (value: number) => `৳${value.toLocaleString("en-US")}`;
 
@@ -101,19 +86,9 @@ const HomeNavbar = () => {
     const iconControls = useAnimation();
     const badgeControls = useAnimation();
 
-    const { data: cart } = useQuery({
-        queryKey: cartQueryKey,
-        queryFn: fetchMyCart,
-        enabled: isCustomer,
-        staleTime: 60_000,
-    });
+    const { cartItems, itemCount } = useCart();
 
-    const cartItems = cart?.items ?? [];
-
-    const cartCount = useMemo(
-        () => cartItems.reduce((sum, item) => sum + item.qty, 0),
-        [cartItems],
-    );
+    const cartCount = itemCount;
 
     const cartSubtotal = useMemo(
         () =>
@@ -354,7 +329,7 @@ const HomeNavbar = () => {
                                 <Separator />
                                 <div className="grid gap-2">
                                     <Button variant="outline" asChild>
-                                        <Link href="/contact">Contact us</Link>
+                                        <Link href="/contact-us">Contact us</Link>
                                     </Button>
                                 </div>
                             </div>
@@ -399,6 +374,7 @@ const HomeNavbar = () => {
                             className="pl-9"
                         />
                     </form>
+                    {/* this is cart and other menu */}
 
                     <Sheet
                         open={isCartOpen}
@@ -484,12 +460,19 @@ const HomeNavbar = () => {
                                                 Add something to get started.
                                             </p>
                                         </div>
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => setIsCartOpen(false)}
+                                        <Link
+                                            href="/products"
+                                            className="cursor-pointer"
                                         >
-                                            Continue Shopping
-                                        </Button>
+                                            <Button
+                                                variant="outline"
+                                                onClick={() =>
+                                                    setIsCartOpen(false)
+                                                }
+                                            >
+                                                Continue Shopping
+                                            </Button>
+                                        </Link>
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
@@ -505,7 +488,10 @@ const HomeNavbar = () => {
                                                 ]
                                                     .filter(Boolean)
                                                     .join(" • ");
-                                                const productThumb =
+                                                const productMedia =
+                                                    item.variant?.product
+                                                        ?.media?.[0]
+                                                        ?.secureUrl ??
                                                     item.variant?.product
                                                         ?.thumbNail ??
                                                     "/jersey_cravings.png";
@@ -537,7 +523,7 @@ const HomeNavbar = () => {
                                                         <div className="relative size-16 overflow-hidden rounded-lg bg-muted">
                                                             <Image
                                                                 src={
-                                                                    productThumb
+                                                                    productMedia
                                                                 }
                                                                 alt={
                                                                     productTitle
@@ -570,7 +556,7 @@ const HomeNavbar = () => {
                                                                     <span className="text-sm font-semibold text-foreground">
                                                                         {formatCurrency(
                                                                             unitPrice *
-                                                                                item.qty,
+                                                                            item.qty,
                                                                         )}
                                                                     </span>
                                                                 </span>
@@ -584,7 +570,7 @@ const HomeNavbar = () => {
                                                                             handleQuantityChange(
                                                                                 item,
                                                                                 item.qty -
-                                                                                    1,
+                                                                                1,
                                                                             )
                                                                         }
                                                                         disabled={
@@ -606,7 +592,7 @@ const HomeNavbar = () => {
                                                                             handleQuantityChange(
                                                                                 item,
                                                                                 item.qty +
-                                                                                    1,
+                                                                                1,
                                                                             )
                                                                         }
                                                                         disabled={
@@ -702,7 +688,7 @@ const HomeNavbar = () => {
                         className="hidden sm:inline-flex"
                         asChild
                     >
-                        <Link href="/contact">Contact us</Link>
+                        <Link href="/contact-us">Contact us</Link>
                     </Button>
                 </div>
             </div>

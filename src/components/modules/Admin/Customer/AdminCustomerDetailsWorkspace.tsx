@@ -304,7 +304,7 @@ function CustomerSummaryCard({ customer }: { customer: ICustomerProfile }) {
                 <SummaryItem label="Address" value={customer.address ?? "—"} />
                 <SummaryItem
                     label="Lifetime points"
-                    value={`${customer.points} pts (earned ${customer.lifetimePointsEarned}, redeemed ${customer.lifetimePointsRedeemed})`}
+                    value={`${customer.pointsBalance} pts (earned ${customer.lifetimePointsEarned}, redeemed ${customer.lifetimePointsRedeemed})`}
                 />
                 <SummaryItem
                     label="Purchased quantity"

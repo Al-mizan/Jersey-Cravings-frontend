@@ -6,29 +6,17 @@ import { ArrowLeft, ShoppingBag } from "lucide-react";
 import { motion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import CheckoutForm from "@/components/modules/Checkout/CheckoutForm";
 import OrderSummary from "@/components/modules/Checkout/OrderSummary";
 import { useMyCart } from "@/hooks/useCheckout";
-
-type BillingValues = {
-    name: string;
-    phone: string;
-    address: string;
-    email: string;
-    orderNote: string;
-    city: string;
-    area: string;
-};
+import { useIsMobile } from "@/hooks/use-mobile";
+import { BillingValues } from "@/types/commerce.types";
 
 export default function CheckoutPage() {
     const { data: cart, isLoading } = useMyCart();
+    const isMobile = useIsMobile();
 
     const [billingValues, setBillingValues] = useState<BillingValues>({
         name: "",
@@ -36,7 +24,9 @@ export default function CheckoutPage() {
         address: "",
         email: "",
         orderNote: "",
-        city: "",
+        shippingMethod: "ju",
+        division: "",
+        district: "",
         area: "",
     });
     const [isFormValid, setIsFormValid] = useState(false);
@@ -105,6 +95,18 @@ export default function CheckoutPage() {
         );
     }
 
+    const formCard = (
+        <Card className="shadow-sm">
+            <CardContent className="p-6">
+                <CheckoutForm
+                    shippingMethod={billingValues.shippingMethod}
+                    onValuesChange={handleValuesChange}
+                    formRef={formRef}
+                />
+            </CardContent>
+        </Card>
+    );
+
     return (
         <div className="container mx-auto px-4 py-8 lg:py-12">
             {/* Header */}
@@ -132,20 +134,15 @@ export default function CheckoutPage() {
             {/* Two-Column Layout */}
             <div className="grid gap-8 lg:grid-cols-[1fr_420px] items-start">
                 {/* Left Column — Billing Form */}
-                <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 }}
-                >
-                    <Card className="shadow-sm">
-                        <CardContent className="p-6">
-                            <CheckoutForm
-                                onValuesChange={handleValuesChange}
-                                formRef={formRef}
-                            />
-                        </CardContent>
-                    </Card>
-                </motion.div>
+                {!isMobile && (
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 }}
+                    >
+                        {formCard}
+                    </motion.div>
+                )}
 
                 {/* Right Column — Order Summary */}
                 <motion.div
@@ -163,10 +160,21 @@ export default function CheckoutPage() {
                         <CardContent className="pt-0 px-6 pb-6">
                             <OrderSummary
                                 cart={cart}
-                                billingCity={billingValues.city}
-                                billingValues={billingValues as unknown as Record<string, unknown>}
+                                billingDistrict={billingValues.district}
+                                billingValues={billingValues}
+                                shippingMethod={
+                                    (billingValues.shippingMethod as any) ||
+                                    "ju"
+                                }
+                                onShippingMethodChange={(method) =>
+                                    setBillingValues((v) => ({
+                                        ...v,
+                                        shippingMethod: method,
+                                    }))
+                                }
                                 isFormValid={isFormValid}
                                 onValidateForm={handleValidateForm}
+                                mobileFormSlot={isMobile ? formCard : null}
                             />
                         </CardContent>
                     </Card>
