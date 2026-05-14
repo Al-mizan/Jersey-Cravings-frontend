@@ -8,8 +8,8 @@ import {
     updateBannerOrder,
     deleteBanner,
     restoreBanner,
-    type IBanner,
 } from "@/services/banner.service";
+import { type IBanner } from "@/types/banner.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";

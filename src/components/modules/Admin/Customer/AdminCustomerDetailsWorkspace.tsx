@@ -78,8 +78,8 @@ export function AdminCustomerDetailsWorkspace({
     });
 
     const orderColumns = useMemo(
-        () => orderColumnsDefinition(customerQuery.data?.email),
-        [customerQuery.data?.email],
+        () => orderColumnsDefinition(customerQuery.data?.identifier),
+        [customerQuery.data?.identifier],
     );
 
     const orderTotalPages =
@@ -126,7 +126,7 @@ export function AdminCustomerDetailsWorkspace({
                     <CardTitle className="text-lg">Orders &amp; payments</CardTitle>
                     <CardDescription>
                         Completed and in-progress checkout activity for{" "}
-                        <span className="font-medium text-foreground">{customerQuery.data.email}</span>
+                        <span className="font-medium text-foreground">{customerQuery.data.identifier}</span>
                         .
                     </CardDescription>
                 </CardHeader>
@@ -207,7 +207,7 @@ export function AdminCustomerDetailsWorkspace({
     );
 }
 
-function orderColumnsDefinition(fallbackEmail: string | undefined): ColumnDef<IAdminOrder>[] {
+function orderColumnsDefinition(fallbackIdentifier: string | undefined): ColumnDef<IAdminOrder>[] {
     const columns: ColumnDef<IAdminOrder>[] = [
         {
             id: "orderNumber",
@@ -278,11 +278,11 @@ function orderColumnsDefinition(fallbackEmail: string | undefined): ColumnDef<IA
             ),
         },
         {
-            id: "email",
+            id: "identifier",
             header: "Account",
             cell: ({ row }) => (
                 <span className="text-sm text-muted-foreground">
-                    {row.original.user?.email ?? fallbackEmail ?? "—"}
+                    {row.original.user?.identifier ?? fallbackIdentifier ?? "—"}
                 </span>
             ),
         },
@@ -296,7 +296,7 @@ function CustomerSummaryCard({ customer }: { customer: ICustomerProfile }) {
             <CardHeader className="border-b py-4">
                 <CardTitle className="text-lg">{customer.name}</CardTitle>
                 <CardDescription className="flex flex-wrap gap-x-3 gap-y-1">
-                    <span>{customer.email}</span>
+                    <span>{customer.identifier}</span>
                     {customer.contactNumber && <span>· {customer.contactNumber}</span>}
                 </CardDescription>
             </CardHeader>

@@ -97,7 +97,10 @@ export default function Cart() {
         () =>
             cartItems.reduce(
                 (sum, item) =>
-                    sum + item.qty * (item.variant?.priceAmount ?? 0),
+                    sum +
+                    item.qty *
+                        ((item.variant?.priceAmount ?? 0) +
+                            (item.customizationCharge ?? 0)),
                 0,
             ),
         [cartItems],
@@ -421,44 +424,76 @@ export default function Cart() {
                                                         {variantLabel ||
                                                             "Standard"}
                                                     </p>
-                                                    {(item.customPlayerName &&
-                                                        item.customJerseyNumber) && (
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            {item.customPlayerName && (
-                                                                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
-                                                                    Name:{" "}
-                                                                    {
-                                                                        item.customPlayerName
-                                                                    }
-                                                                </span>
-                                                            )}
-                                                            {item.customJerseyNumber && (
-                                                                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
-                                                                    #
-                                                                    {
-                                                                        item.customJerseyNumber
-                                                                    }
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                                    <span>
-                                                        Unit price:{" "}
-                                                        {formatCurrency(
-                                                            unitPrice,
+                                                    {item.customPlayerName &&
+                                                        item.customJerseyNumber && (
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                {item.customPlayerName && (
+                                                                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                                                                        Name:{" "}
+                                                                        {
+                                                                            item.customPlayerName
+                                                                        }
+                                                                    </span>
+                                                                )}
+                                                                {item.customJerseyNumber && (
+                                                                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                                                                        Number:{" "}
+                                                                        {
+                                                                            item.customJerseyNumber
+                                                                        }
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         )}
-                                                    </span>
-                                                    <span>
-                                                        Item total:{" "}
-                                                        <span className="text-sm font-semibold text-foreground">
+                                                </div>
+                                                <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                                                    {/* Unit Price */}
+                                                    <div className="flex items-center justify-between">
+                                                        <span>Unit price:</span>
+                                                        <span>
                                                             {formatCurrency(
-                                                                unitPrice *
-                                                                    item.qty,
+                                                                unitPrice,
                                                             )}
                                                         </span>
-                                                    </span>
+                                                    </div>
+
+                                                    {/* Customization Charge */}
+                                                    {item.customJerseyNumber &&
+                                                        item.customPlayerName && (
+                                                            <div className="flex items-center justify-between">
+                                                                <span>
+                                                                    Customization:
+                                                                </span>
+                                                                <span className="font-semibold tabular-nums">
+                                                                    +
+                                                                    {formatCurrency(
+                                                                        item.customizationCharge *
+                                                                            item.qty,
+                                                                    )}
+                                                                </span>
+                                                            </div>
+                                                        )}
+
+                                                    {/* Divider + Subtotal (only when customized) */}
+                                                    {item.customJerseyNumber &&
+                                                        item.customPlayerName && (
+                                                            <>
+                                                                <hr className="border-border my-0.5" />
+                                                                <div className="flex items-center justify-between font-black text-foreground">
+                                                                    <span>
+                                                                        Item
+                                                                        total:
+                                                                    </span>
+                                                                    <span>
+                                                                        {formatCurrency(
+                                                                            (unitPrice +
+                                                                                item.customizationCharge) *
+                                                                                item.qty,
+                                                                        )}
+                                                                    </span>
+                                                                </div>
+                                                            </>
+                                                        )}
                                                 </div>
                                                 <div className="flex flex-wrap items-center justify-between gap-2">
                                                     <div className="flex items-center rounded-full border border-input">

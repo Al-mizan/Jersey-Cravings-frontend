@@ -255,11 +255,11 @@ export default function AdminCustomersPageClient() {
                 ),
             },
             {
-                accessorKey: "email",
-                header: "Email",
+                accessorKey: "identifier",
+                header: "Identifier",
                 enableSorting: false,
                 cell: ({ row }) => (
-                    <span className="text-sm">{row.original.email}</span>
+                    <span className="text-sm">{row.original.identifier}</span>
                 ),
             },
             {
@@ -353,7 +353,7 @@ export default function AdminCustomersPageClient() {
                 }
                 search={{
                     initialValue: searchTerm,
-                    placeholder: "Search by name, email, or phone…",
+                    placeholder: "Search by name, identifier, or phone…",
                     debounceMs: 500,
                     onDebouncedChange: (value) => {
                         setSearchTerm(value);

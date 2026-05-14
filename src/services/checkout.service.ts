@@ -1,7 +1,7 @@
 "use server";
 
 import type { IOrder } from "@/types/order.types";
-import type { ICart } from "@/types/commerce.types";
+import type { ICart, IPickupLocation } from "@/types/commerce.types";
 import type {
     IMyLoyaltySummary,
     IPointTransaction,

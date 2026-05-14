@@ -17,6 +17,7 @@ import {
 import { GlowEffect } from "../../ui/glow-effect";
 import { useAuth } from "@/hooks/useAuth";
 import { NavbarUserMenu } from "./NavbarUserMenu";
+import Cart from "./Cart";
 
 const primaryLinks = [
     { label: "Home", href: "/" },
@@ -120,6 +121,8 @@ const HomeNavbar = () => {
                             className="pl-9"
                         />
                     </form>
+
+                    <Cart />
 
                     {isCustomer ? (
                         <NavbarUserMenu />

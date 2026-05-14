@@ -31,7 +31,6 @@ import { Trash2, Mail, Phone, User } from "lucide-react";
 interface Contact {
     id: string;
     fullName: string;
-    email: string;
     phone: string;
     subject: string;
     message: string;
@@ -151,7 +150,6 @@ export default function AdminContactsPageClient() {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Name</TableHead>
-                                        <TableHead>Email</TableHead>
                                         <TableHead>Phone</TableHead>
                                         <TableHead>Subject</TableHead>
                                         <TableHead>Status</TableHead>
@@ -177,9 +175,6 @@ export default function AdminContactsPageClient() {
                                                     <User className="h-4 w-4 text-muted-foreground" />
                                                     {contact.fullName}
                                                 </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                {contact.email}
                                             </TableCell>
                                             <TableCell>
                                                 {contact.phone}
@@ -260,12 +255,6 @@ export default function AdminContactsPageClient() {
                                 <p className="font-semibold">
                                     {selectedContact.fullName}
                                 </p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-muted-foreground">
-                                    Email
-                                </p>
-                                <p>{selectedContact.email}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">

@@ -5,8 +5,8 @@ export interface IUserInfo {
     id: string;
     createdAt: string;
     updatedAt: string;
-    email: string;
-    emailVerified: boolean;
+    identifier?: string;
+    identifierVerified?: boolean;
     name: string;
     image?: string | null;
     isDeleted: boolean;
@@ -16,13 +16,13 @@ export interface IUserInfo {
 }
 
 export interface ILoginPayload {
-    email: string;
+    identifier: string;
     password: string;
 }
 
 export interface IRegisterPayload {
     name: string;
-    email: string;
+    identifier: string;
     password: string;
 }
 
@@ -31,19 +31,48 @@ export interface IChangePasswordPayload {
     newPassword: string;
 }
 
-export interface IVerifyEmailPayload {
-    email: string;
+export interface IVerifyIdentifierPayload {
+    identifier: string;
     otp: string;
 }
 
 export interface IForgetPasswordPayload {
-    email: string;
+    identifier: string;
 }
 
 export interface IResetPasswordPayload {
-    email: string;
+    identifier: string;
     otp: string;
     newPassword: string;
+}
+
+export interface ILoginIdentifierPayload {
+    identifier: string;
+    password: string;
+}
+
+export interface IRegisterIdentifierPayload {
+    identifier: string;
+    name: string;
+    password: string;
+}
+
+export interface ISendOtpPayload {
+    identifier: string;
+}
+
+export interface IVerifyOtpPayload {
+    identifier: string;
+    otp: string;
+}
+
+export interface IVerifyOtpResponse {
+    verified: boolean;
+}
+
+export interface ISendOtpResponse {
+    channel: "email" | "sms";
+    expiresAt: string;
 }
 
 export interface ILoginResponse {

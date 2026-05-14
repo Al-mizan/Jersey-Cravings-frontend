@@ -220,7 +220,7 @@ export default function OrderDetailsPage() {
 
             {/* Customer Card */}
             <DetailCard title="Customer Information">
-                <DetailRow label="Email" value={order.user?.email ?? "—"} />
+                <DetailRow label="Identifier" value={order.user?.identifier ?? "—"} />
                 {billingSnapshot.recipientName && (
                     <DetailRow
                         label="Name"

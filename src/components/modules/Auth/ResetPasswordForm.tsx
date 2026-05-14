@@ -27,10 +27,10 @@ import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 
 interface ResetPasswordFormProps {
-    email: string;
+    identifier: string;
 }
 
-const ResetPasswordForm = ({ email }: ResetPasswordFormProps) => {
+const ResetPasswordForm = ({ identifier }: ResetPasswordFormProps) => {
     const [serverError, setServerError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
 
@@ -41,7 +41,7 @@ const ResetPasswordForm = ({ email }: ResetPasswordFormProps) => {
 
     const form = useForm({
         defaultValues: {
-            email: email || "",
+            identifier: identifier || "",
             otp: "",
             newPassword: "",
         },
@@ -69,7 +69,7 @@ const ResetPasswordForm = ({ email }: ResetPasswordFormProps) => {
                     Reset Password
                 </CardTitle>
                 <CardDescription>
-                    Enter the code we sent to your email and your new password.
+                    Enter the code we sent to your email or phone and your new password.
                 </CardDescription>
             </CardHeader>
 
@@ -86,17 +86,17 @@ const ResetPasswordForm = ({ email }: ResetPasswordFormProps) => {
                     className="space-y-4"
                 >
                     <form.Field
-                        name="email"
+                        name="identifier"
                         validators={{
-                            onChange: resetPasswordZodSchema.shape.email,
+                            onChange: resetPasswordZodSchema.shape.identifier,
                         }}
                     >
                         {(field) => (
                             <AppField
                                 field={field}
-                                label="Email Address"
-                                type="email"
-                                placeholder="Enter your email"
+                                label="Email or Phone Number"
+                                type="text"
+                                placeholder="Enter your email or phone number"
                                 disabled
                             />
                         )}

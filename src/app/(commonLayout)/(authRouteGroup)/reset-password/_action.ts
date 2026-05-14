@@ -29,7 +29,11 @@ export const resetPasswordAction = async (
 
     try {
         // Call auth service to reset password
-        const result = await resetPassword(parsedPayload.data);
+        const result = await resetPassword(
+            parsedPayload.data.identifier,
+            parsedPayload.data.otp,
+            parsedPayload.data.newPassword
+        );
         if (!result.success) {
             return {
                 success: false,

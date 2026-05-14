@@ -49,12 +49,12 @@ export default function FindYourTeam() {
         return (
             <section className="py-10 px-4">
                 <div className="container mx-auto">
-                    <div className="h-8 w-56 bg-muted rounded animate-pulse mb-6" />
+                    <div className="h-8 w-36 bg-muted rounded animate-pulse mb-6" />
                     <div className="flex gap-3">
-                        {Array.from({ length: 7 }).map((_, i) => (
+                        {Array.from({ length: 2 }).map((_, i) => (
                             <div
                                 key={i}
-                                className="flex-shrink-0 w-44 h-56 bg-muted rounded-lg animate-pulse"
+                                className="flex-shrink-0 w-36 h-36 bg-muted rounded-lg animate-pulse"
                             />
                         ))}
                     </div>

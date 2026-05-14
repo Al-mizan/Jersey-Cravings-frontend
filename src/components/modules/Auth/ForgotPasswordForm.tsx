@@ -23,6 +23,7 @@ import {
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
+import { IdentifierField } from "./IdentifierField";
 import { useState } from "react";
 
 const ForgotPasswordForm = () => {
@@ -36,7 +37,7 @@ const ForgotPasswordForm = () => {
 
     const form = useForm({
         defaultValues: {
-            email: "",
+            identifier: "",
         },
 
         onSubmit: async ({ value }) => {
@@ -52,7 +53,7 @@ const ForgotPasswordForm = () => {
                     return;
                 }
 
-                setSuccessMessage(result.message || "OTP sent to your email");
+                setSuccessMessage(result.message || "OTP sent to your email or phone");
                 form.reset();
             } catch (error: any) {
                 console.log(`Password reset request failed: ${error.message}`);
@@ -70,7 +71,7 @@ const ForgotPasswordForm = () => {
                     Reset Password
                 </CardTitle>
                 <CardDescription>
-                    Enter your email address and we&apos;ll send you a code to
+                    Enter your email or phone number and we&apos;ll send you a code to
                     reset your password.
                 </CardDescription>
             </CardHeader>
@@ -88,17 +89,22 @@ const ForgotPasswordForm = () => {
                     className="space-y-4"
                 >
                     <form.Field
-                        name="email"
+                        name="identifier"
                         validators={{
-                            onChange: forgetPasswordZodSchema.shape.email,
+                            onChange: forgetPasswordZodSchema.shape.identifier,
                         }}
                     >
                         {(field) => (
-                            <AppField
-                                field={field}
-                                label="Email Address"
-                                type="email"
-                                placeholder="Enter your email"
+                            <IdentifierField
+                                value={field.state.value}
+                                onChange={(val) => field.handleChange(val)}
+                                onBlur={field.handleBlur}
+                                error={
+                                    field.state.meta.errors?.[0]
+                                        ? String(field.state.meta.errors[0])
+                                        : undefined
+                                }
+                                disabled={isPending}
                             />
                         )}
                     </form.Field>

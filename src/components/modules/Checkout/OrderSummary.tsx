@@ -152,6 +152,7 @@ export default function OrderSummary({
     const createOrderMutation = useCreateOrder();
     const redeemPointsMutation = useRedeemPoints();
     const { data: loyaltySummary } = useMyLoyaltySummary();
+    // const { data: activePickupLocations } = useActivePickupLocations();
 
     const cartItems = cart.items;
     const subtotal = useMemo(
@@ -406,18 +407,27 @@ export default function OrderSummary({
             ? ("PICKUP" as const)
             : ("DELIVERY" as const);
 
+        // For PICKUP, only send name and phone. For DELIVERY, send full address.
+        const billingAddressSnapshot =
+            fulfillmentMethod === "PICKUP"
+                ? {
+                      recipientName: billingValues.name,
+                      phone: billingValues.phone,
+                  }
+                : {
+                      recipientName: billingValues.name,
+                      phone: billingValues.phone,
+                      address: billingValues.address,
+                      division: billingDivision,
+                      district: billingDistrict,
+                      area: billingValues.area,
+                      email: billingValues.email || undefined,
+                  };
+
         createOrderMutation.mutate({
             fulfillmentMethod,
             paymentMethod,
-            billingAddressSnapshot: {
-                recipientName: billingValues.name,
-                phone: billingValues.phone,
-                address: billingValues.address,
-                division: billingDivision,
-                district: billingDistrict,
-                area: billingValues.area,
-                email: billingValues.email || undefined,
-            },
+            billingAddressSnapshot,
             notes: (billingValues.orderNote as string) || undefined,
             couponCode: appliedCoupon?.code || undefined,
             referralCode: appliedReferral?.code || undefined,
@@ -719,10 +729,15 @@ export default function OrderSummary({
                     ))}
                 </RadioGroup>
                 {shippingMethod === "ju" && (
-                    <p className="text-xs text-muted-foreground">
-                        Pickup selected: billing location and address fields are
-                        disabled.
-                    </p>
+                    <div className="rounded-md border border-border/60 p-3 bg-primary/5">
+                        <p className="text-sm font-medium">Pickup Location</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Jahangirnagar University, Savar, Dhaka
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                            Delivery charge: Free
+                        </p>
+                    </div>
                 )}
             </div>
 
@@ -828,9 +843,26 @@ export default function OrderSummary({
                                         </Button>
                                     </div>
                                 </div>
-                                <span className="font-semibold tabular-nums shrink-0 self-start">
-                                    {formatCurrency(unitPrice * item.qty)}
-                                </span>
+                                <div className="flex flex-col items-end gap-0.5 text-sm">
+                                    <span className="text-muted-foreground">
+                                        {item.qty > 1 && `${item.qty} ×`}{" "}
+                                        {formatCurrency(unitPrice)}
+                                    </span>
+                                    <span className="text-muted-foreground tabular-nums">
+                                        + {item.qty > 1 && `${item.qty} ×`}{" "}
+                                        {formatCurrency(
+                                            item.customizationCharge,
+                                        )}
+                                    </span>
+                                    <hr className="w-full border-border" />
+                                    <span className="font-black text-foreground tabular-nums">
+                                        {formatCurrency(
+                                            (unitPrice +
+                                                item.customizationCharge) *
+                                                item.qty,
+                                        )}
+                                    </span>
+                                </div>
                             </div>
                         );
                     })}

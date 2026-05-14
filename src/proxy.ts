@@ -116,11 +116,11 @@ export async function proxy(request: NextRequest) {
 
         // Rule - 2 : User is trying to access reset password page
         if (pathname === "/reset-password") {
-            const email = request.nextUrl.searchParams.get("email");
+            const identifier = request.nextUrl.searchParams.get("identifier");
 
             // case - 1 user has needPasswordChange true
             //no need for case 1 if need password change is handled from change-password page
-            if (accessToken && email) {
+            if (accessToken && identifier) {
                 const userInfo = await getUserInfo();
 
                 return NextResponse.redirect(
@@ -133,7 +133,7 @@ export async function proxy(request: NextRequest) {
 
             // Case-2 user coming from forgot password
 
-            if (email) {
+            if (identifier) {
                 return NextResponse.next();
             }
 
@@ -162,15 +162,15 @@ export async function proxy(request: NextRequest) {
 
             if (userInfo) {
                 // need email verification scenario
-                if (userInfo.emailVerified === false) {
+                if (userInfo.identifierVerified === false) {
                     if (pathname !== "/verify-email") {
                         const verifyEmailUrl = new URL(
                             "/verify-email",
                             request.url,
                         );
                         verifyEmailUrl.searchParams.set(
-                            "email",
-                            userInfo.email,
+                            "identifier",
+                            userInfo.identifier,
                         );
                         return NextResponse.redirect(verifyEmailUrl);
                     }
@@ -178,7 +178,7 @@ export async function proxy(request: NextRequest) {
                     return NextResponse.next();
                 }
 
-                if (userInfo.emailVerified && pathname === "/verify-email") {
+                if (userInfo.identifierVerified && pathname === "/verify-email") {
                     return NextResponse.redirect(
                         new URL(
                             getDefaultDashboardRoute(userRole as UserRole),

@@ -23,16 +23,17 @@ export type OrderStatus =
 
 export interface IUserLite {
     id: string;
-    email: string;
+    identifier: string;
     role: UserRole;
     status: UserStatus;
     createdAt?: string;
+    accounts?: Array<{ providerId: string }>;
 }
 
 export interface ICustomer {
     id: string;
     name: string;
-    email: string;
+    identifier: string;
     profilePhoto: string | null;
     contactNumber: string | null;
     address: string | null;
@@ -116,7 +117,7 @@ export interface IReferralCode {
 export interface IReferralEventReferredCustomer {
     id: string;
     name: string;
-    email: string;
+    identifier: string;
 }
 
 export interface IReferralEventOrder {
@@ -190,7 +191,7 @@ export interface ICustomerStatusChangeResult {
     customer: ICustomer;
     user: {
         id: string;
-        email: string;
+        identifier: string;
         role: UserRole;
         status: UserStatus;
         isDeleted: boolean;
@@ -198,7 +199,7 @@ export interface ICustomerStatusChangeResult {
         createdAt: string;
         updatedAt: string;
         name: string;
-        emailVerified: boolean;
+        identifierVerified: boolean;
         image: string | null;
     };
 }

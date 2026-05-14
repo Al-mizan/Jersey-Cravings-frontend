@@ -5,7 +5,6 @@ import { z } from "zod";
  */
 export const contactZodSchema = z.object({
     fullName: z.string().min(2, "Full name must be at least 2 characters"),
-    email: z.email("Email must be valid"),
     phone: z
         .string()
         .min(11, "Phone number must be at least 11 digits")

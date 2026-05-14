@@ -14,7 +14,7 @@ export const createAdminZodSchema = z.object({
             .string()
             .min(2, { message: "Name must be at least 2 characters" })
             .max(100, { message: "Name must not exceed 100 characters" }),
-        email: z.string().email({ message: "Invalid email address" }),
+        identifier: z.string().min(1, { message: "Identifier is required" }).max(50, { message: "Identifier must not exceed 50 characters" }),
         contactNumber: z
             .string()
             .min(11, {

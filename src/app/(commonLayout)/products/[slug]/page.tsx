@@ -59,6 +59,8 @@ import {
     renderStars,
     ReviewsSection,
 } from "@/components/modules/Product/ReviewsSection";
+import { DeliveryStep } from "@/components/modules/Product/DeliveryStep";
+import { InfoRow } from "@/components/modules/Product/InfoRow";
 
 interface ProductDetailsPageProps {
     params: Promise<{ slug: string }>;
@@ -231,6 +233,7 @@ export default function ProductDetailsPage({
             qty: number;
             customPlayerName?: string;
             customJerseyNumber?: string;
+            customizationCharge?: number;
         }) => {
             const validated = addToCartZodSchema.parse(payload);
             const response = await axios.post<ApiResponse<ICartItem>>(
@@ -252,32 +255,32 @@ export default function ProductDetailsPage({
         onError: () => toast.error("Unable to add to cart right now"),
     });
 
-    const buyNowMutation = useMutation({
-        mutationFn: async (payload: {
-            variantId: string;
-            qty: number;
-            customPlayerName?: string;
-            customJerseyNumber?: string;
-        }) => {
-            const validated = addToCartZodSchema.parse(payload);
-            const response = await axios.post<ApiResponse<ICartItem>>(
-                "/api/proxy/carts/my/items",
-                validated,
-            );
-            return {
-                cartItem: response.data.data,
-                payload: {
-                    ...validated,
-                    customizationCharge: hasCustomization ? 290 : 0,
-                },
-            };
-        },
-        onSuccess: ({ cartItem, payload }) => {
-            updateCartCache(cartItem, payload);
-            router.push("/checkout");
-        },
-        onError: () => toast.error("Unable to add to cart right now"),
-    });
+    // const buyNowMutation = useMutation({
+    //     mutationFn: async (payload: {
+    //         variantId: string;
+    //         qty: number;
+    //         customPlayerName?: string;
+    //         customJerseyNumber?: string;
+    //     }) => {
+    //         const validated = addToCartZodSchema.parse(payload);
+    //         const response = await axios.post<ApiResponse<ICartItem>>(
+    //             "/api/proxy/carts/my/items",
+    //             validated,
+    //         );
+    //         return {
+    //             cartItem: response.data.data,
+    //             payload: {
+    //                 ...validated,
+    //                 customizationCharge: hasCustomization ? 290 : 0,
+    //             },
+    //         };
+    //     },
+    //     onSuccess: ({ cartItem, payload }) => {
+    //         updateCartCache(cartItem, payload);
+    //         router.push("/checkout");
+    //     },
+    //     onError: () => toast.error("Unable to add to cart right now"),
+    // });
 
     // ── Handlers ─────────────────────────────────────────────────────────────
     const handleScrollToReviews = useCallback(() => {
@@ -319,26 +322,27 @@ export default function ProductDetailsPage({
                 qty: Math.min(quantity, maxQty),
                 customPlayerName: customPlayerName.trim() || undefined,
                 customJerseyNumber: customJerseyNumber.trim() || undefined,
+                customizationCharge: customizationCharge || undefined,
             });
         } catch {
             return;
         }
     };
 
-    const handleBuyNow = async () => {
-        if (!selectedVariant || isOutOfStock) return;
-        if (!ensureAuthenticated()) return;
-        try {
-            await buyNowMutation.mutateAsync({
-                variantId: selectedVariant.id,
-                qty: Math.min(quantity, maxQty),
-                customPlayerName: customPlayerName.trim() || undefined,
-                customJerseyNumber: customJerseyNumber.trim() || undefined,
-            });
-        } catch {
-            return;
-        }
-    };
+    // const handleBuyNow = async () => {
+    //     if (!selectedVariant || isOutOfStock) return;
+    //     if (!ensureAuthenticated()) return;
+    //     try {
+    //         await buyNowMutation.mutateAsync({
+    //             variantId: selectedVariant.id,
+    //             qty: Math.min(quantity, maxQty),
+    //             customPlayerName: customPlayerName.trim() || undefined,
+    //             customJerseyNumber: customJerseyNumber.trim() || undefined,
+    //         });
+    //     } catch {
+    //         return;
+    //     }
+    // };
 
     // ── Effects ───────────────────────────────────────────────────────────────
     useEffect(() => {
@@ -1126,51 +1130,3 @@ function SizeChartTable() {
     );
 }
 
-function InfoRow({
-    icon,
-    title,
-    text,
-}: {
-    icon: React.ReactNode;
-    title: string;
-    text: string;
-}) {
-    return (
-        <div className="flex items-start gap-3 rounded-2xl border border-border/50 bg-muted/20 p-3.5">
-            <div className="flex size-8 flex-shrink-0 items-center justify-center rounded-xl bg-foreground/8 text-foreground">
-                {icon}
-            </div>
-            <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-foreground">
-                    {title}
-                </p>
-                <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-                    {text}
-                </p>
-            </div>
-        </div>
-    );
-}
-
-function DeliveryStep({
-    title,
-    description,
-}: {
-    title: string;
-    description: string;
-}) {
-    return (
-        <div className="flex items-start gap-3">
-            <div className="mt-1.5 flex flex-col items-center">
-                <span className="size-2.5 rounded-full bg-foreground" />
-                <span className="mt-1 h-7 w-px bg-border/70" />
-            </div>
-            <div className="pb-2">
-                <p className="text-sm font-bold text-foreground">{title}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                    {description}
-                </p>
-            </div>
-        </div>
-    );
-}

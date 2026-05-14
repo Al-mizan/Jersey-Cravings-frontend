@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * Email verification form component
- * Allows user to enter OTP to verify their email address
+ * Identifier verification form component
+ * Allows user to enter OTP to verify their email address or phone number
  */
 
-import { verifyEmail } from "@/services/auth.service";
+import { verifyIdentifier } from "@/services/auth.service";
 import AppField from "@/components/shared/form/AppField";
 import AppSubmitButton from "@/components/shared/form/AppSubmitButton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -17,29 +17,31 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import {
-    IVerifyEmailPayload,
-    verifyEmailZodSchema,
+    IVerifyIdentifierPayload,
+    verifyIdentifierZodSchema,
 } from "@/zod/auth.validation";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface VerifyEmailFormProps {
-    email: string;
+    identifier: string;
 }
 
-const VerifyEmailForm = ({ email }: VerifyEmailFormProps) => {
+const VerifyEmailForm = ({ identifier }: VerifyEmailFormProps) => {
     const [serverError, setServerError] = useState<string | null>(null);
+    const router = useRouter();
 
     const { mutateAsync, isPending } = useMutation({
-        mutationFn: (payload: IVerifyEmailPayload) =>
-            verifyEmail(payload.email, payload.otp),
+        mutationFn: (payload: IVerifyIdentifierPayload) =>
+            verifyIdentifier(payload.identifier, payload.otp),
     });
 
     const form = useForm({
         defaultValues: {
-            email: email || "",
+            identifier: identifier || "",
             otp: "",
         },
 
@@ -49,16 +51,17 @@ const VerifyEmailForm = ({ email }: VerifyEmailFormProps) => {
                 const result = await mutateAsync(value);
 
                 if (!result) {
-                    setServerError("Email verification failed");
+                    setServerError("Verification failed");
                     return;
                 }
 
-                toast.success("Email verified successfully!");
+                toast.success("Verified successfully!");
+                router.push("/login");
             } catch (error: any) {
                 const message =
                     error instanceof Error
                         ? error.message
-                        : "Email verification failed";
+                        : "Verification failed";
                 setServerError(message);
                 toast.error(message);
             }
@@ -69,11 +72,10 @@ const VerifyEmailForm = ({ email }: VerifyEmailFormProps) => {
         <Card className="w-full max-w-md mx-auto shadow-md">
             <CardHeader className="text-center">
                 <CardTitle className="text-2xl font-bold">
-                    Verify Email
+                    Verify Account
                 </CardTitle>
                 <CardDescription>
-                    We&apos;ve sent a verification code to your email. Please
-                    enter it below.
+                    We&apos;ve sent a verification code. Please enter it below.
                 </CardDescription>
             </CardHeader>
 
@@ -90,17 +92,17 @@ const VerifyEmailForm = ({ email }: VerifyEmailFormProps) => {
                     className="space-y-4"
                 >
                     <form.Field
-                        name="email"
+                        name="identifier"
                         validators={{
-                            onChange: verifyEmailZodSchema.shape.email,
+                            onChange: verifyIdentifierZodSchema.shape.identifier,
                         }}
                     >
                         {(field) => (
                             <AppField
                                 field={field}
-                                label="Email"
-                                type="email"
-                                placeholder="Enter your email"
+                                label="Email or Phone Number"
+                                type="text"
+                                placeholder="Enter your email or phone number"
                                 disabled
                             />
                         )}
@@ -109,7 +111,7 @@ const VerifyEmailForm = ({ email }: VerifyEmailFormProps) => {
                     <form.Field
                         name="otp"
                         validators={{
-                            onChange: verifyEmailZodSchema.shape.otp,
+                            onChange: verifyIdentifierZodSchema.shape.otp,
                         }}
                     >
                         {(field) => (
@@ -138,7 +140,7 @@ const VerifyEmailForm = ({ email }: VerifyEmailFormProps) => {
                                 pendingLabel="Verifying..."
                                 disabled={!canSubmit}
                             >
-                                Verify Email
+                                Verify
                             </AppSubmitButton>
                         )}
                     </form.Subscribe>

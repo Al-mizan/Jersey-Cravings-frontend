@@ -14,6 +14,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { IdentifierField } from "./IdentifierField";
 
 interface LoginFormProps {
     redirectPath?: string;
@@ -74,7 +75,7 @@ const LoginForm = ({ redirectPath, oauthError, message }: LoginFormProps) => {
     });
 
     const form = useForm({
-        defaultValues: { email: "", password: "" },
+        defaultValues: { identifier: "", password: "" },
         onSubmit: async ({ value }) => {
             try {
                 const result = (await mutateAsync(value)) as any;
@@ -129,40 +130,30 @@ const LoginForm = ({ redirectPath, oauthError, message }: LoginFormProps) => {
                         }}
                         className="space-y-5"
                     >
-                        {/* Email */}
+                        {/* Identifier Field */}
                         <form.Field
-                            name="email"
+                            name="identifier"
                             validators={{
-                                onChange: loginZodSchema.shape.email,
+                                onChange: loginZodSchema.shape.identifier,
                             }}
                         >
                             {(field) => (
-                                <div className="space-y-1.5">
-                                    <Label
-                                        htmlFor="email"
-                                        className="text-xs font-medium text-muted-foreground tracking-wide"
-                                    >
-                                        Email address
-                                    </Label>
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        placeholder="you@example.com"
-                                        value={field.state.value}
-                                        onChange={(e) =>
-                                            field.handleChange(e.target.value)
-                                        }
-                                        onBlur={field.handleBlur}
-                                        className="h-11 bg-background/50 border-border/60 focus-visible:ring-primary/30"
-                                    />
-                                    {field.state.meta.errors?.[0] && (
-                                        <p className="text-xs text-destructive">
-                                            {getErrorMessage(
-                                                field.state.meta.errors[0],
-                                            )}
-                                        </p>
-                                    )}
-                                </div>
+                                <IdentifierField
+                                    value={field.state.value}
+                                    onChange={(val) =>
+                                        field.handleChange(val)
+                                    }
+                                    onBlur={field.handleBlur}
+                                    error={
+                                        field.state.meta.errors?.[0]
+                                            ? getErrorMessage(
+                                                  field.state.meta
+                                                      .errors[0],
+                                              )
+                                            : undefined
+                                    }
+                                    disabled={isPending}
+                                />
                             )}
                         </form.Field>
 
@@ -184,7 +175,7 @@ const LoginForm = ({ redirectPath, oauthError, message }: LoginFormProps) => {
                                         </Label>
                                         <Link
                                             href="/forgot-password"
-                                            className="text-xs text-primary hover:underline underline-offset-4"
+                                            className="text-xs text-primary underline underline-offset-4"
                                         >
                                             Forgot password?
                                         </Link>
@@ -231,21 +222,6 @@ const LoginForm = ({ redirectPath, oauthError, message }: LoginFormProps) => {
                                 </div>
                             )}
                         </form.Field>
-
-                        {/* Alerts
-                        {(serverError || oauthErrorMessage || message) && (
-                            <Alert
-                                variant={message ? "default" : "destructive"}
-                                className="py-2.5"
-                            >
-                                <AlertCircle className="size-3.5" />
-                                <AlertDescription className="text-xs">
-                                    {serverError ||
-                                        oauthErrorMessage ||
-                                        message}
-                                </AlertDescription>
-                            </Alert>
-                        )} */}
 
                         {/* Submit */}
                         <form.Subscribe
@@ -325,7 +301,7 @@ const LoginForm = ({ redirectPath, oauthError, message }: LoginFormProps) => {
                     Don&apos;t have an account?{" "}
                     <Link
                         href="/register"
-                        className="text-primary font-medium hover:underline underline-offset-4"
+                        className="text-primary font-medium underline underline-offset-4"
                     >
                         Create one
                     </Link>

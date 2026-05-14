@@ -106,35 +106,75 @@ export async function logout() {
     }
 }
 
-export async function verifyEmail(email: string, otp: string) {
+export async function verifyIdentifier(identifier: string, otp: string) {
     try {
         const res = await fetch(`${BASE_API_URL}/auth/verify-email`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ email, otp }),
+            body: JSON.stringify({ identifier, otp }),
         });
         if (!res.ok) {
             const body = await res.json().catch(() => ({}));
-            throw new Error(body?.message || "Failed to verify email");
+            throw new Error(body?.message || "Failed to verify identifier");
         }
         const { data } = await res.json();
         return data;
     } catch (error) {
         if (error instanceof Error) throw error;
-        throw new Error("Failed to verify email");
+        throw new Error("Failed to verify identifier");
     }
 }
 
-export async function sendVerificationOtp(email: string) {
+export async function forgetPassword(identifier: string) {
+    try {
+        const res = await fetch(`${BASE_API_URL}/auth/forget-password`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ identifier }),
+        });
+        if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body?.message || "Failed to send reset OTP");
+        }
+        return await res.json();
+    } catch (error) {
+        if (error instanceof Error) throw error;
+        throw new Error("Failed to send reset OTP");
+    }
+}
+
+export async function resetPassword(identifier: string, otp: string, newPassword: string) {
+    try {
+        const res = await fetch(`${BASE_API_URL}/auth/reset-password`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ identifier, otp, newPassword }),
+        });
+        if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body?.message || "Failed to reset password");
+        }
+        return await res.json();
+    } catch (error) {
+        if (error instanceof Error) throw error;
+        throw new Error("Failed to reset password");
+    }
+}
+
+export async function sendVerificationOtp(identifier: string) {
     try {
         const res = await fetch(`${BASE_API_URL}/auth/send-otp`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ email }),
+            body: JSON.stringify({ identifier }),
         });
         if (!res.ok) {
             const body = await res.json().catch(() => ({}));
@@ -144,5 +184,48 @@ export async function sendVerificationOtp(email: string) {
     } catch (error) {
         if (error instanceof Error) throw error;
         throw new Error("Failed to send verification OTP");
+    }
+}
+
+export async function sendOtp(identifier: string) {
+    try {
+        const res = await fetch(`${BASE_API_URL}/auth/send-otp`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ identifier }),
+        });
+        console.log(res);
+        if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body?.message || "Failed to send OTP");
+        }
+        const data = await res.json();
+        return data.data || data;
+    } catch (error) {
+        if (error instanceof Error) throw error;
+        throw new Error("Failed to send OTP");
+    }
+}
+
+export async function verifyOtp(identifier: string, otp: string) {
+    try {
+        const res = await fetch(`${BASE_API_URL}/auth/verify-otp`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ identifier, otp }),
+        });
+        if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body?.message || "Failed to verify OTP");
+        }
+        const data = await res.json();
+        return data.data || data;
+    } catch (error) {
+        if (error instanceof Error) throw error;
+        throw new Error("Failed to verify OTP");
     }
 }

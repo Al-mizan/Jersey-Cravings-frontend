@@ -8,7 +8,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { Mail, Phone, MapPin, Send } from "lucide-react";
-import { FaFacebook, FaInstagram, FaTwitter } from "react-icons/fa";
+import { FaFacebook, FaInstagram } from "react-icons/fa";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,13 +43,18 @@ export default function ContactUs() {
     const form = useForm({
         defaultValues: {
             fullName: user?.name || "",
-            email: user?.email || "",
             phone: "",
             subject: "",
             message: "",
         },
         onSubmit: async ({ value }) => {
-            mutation.mutate(value);
+            const payload = {
+                fullName: value.fullName,
+                phone: value.phone,
+                subject: value.subject,
+                message: value.message,
+            };
+            mutation.mutate(payload as any);
         },
     });
 
@@ -160,7 +165,7 @@ export default function ContactUs() {
                                             )}
                                         </form.Field>
 
-                                        <div className="grid md:grid-cols-2 gap-6">
+                                        {/* <div className="grid md:grid-cols-2 gap-6">
                                             <form.Field
                                                 name="email"
                                                 validators={{
@@ -276,7 +281,7 @@ export default function ContactUs() {
                                                     </div>
                                                 )}
                                             </form.Field>
-                                        </div>
+                                        </div> */}
 
                                         <form.Field
                                             name="subject"

@@ -164,8 +164,8 @@ export type BillingValues = {
     name: string;
     phone: string;
     address: string;
-    email: string;
-    orderNote: string;
+    email?: string;
+    orderNote?: string;
     shippingMethod: string;
     division: string;
     district: string;

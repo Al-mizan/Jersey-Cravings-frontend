@@ -27,7 +27,7 @@ export const forgetPasswordAction = async (
 
     try {
         // Call auth service to request password reset
-        const result = await forgetPassword(parsedPayload.data);
+        const result = await forgetPassword(parsedPayload.data.identifier);
         if (!result.success) {
             return {
                 success: false,

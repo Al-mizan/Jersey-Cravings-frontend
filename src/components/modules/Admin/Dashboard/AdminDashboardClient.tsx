@@ -848,7 +848,7 @@ export default function AdminDashboardClient({
                                                             {customer.name}
                                                         </div>
                                                         <div className="truncate text-sm text-muted-foreground">
-                                                            {customer.email}
+                                                            {customer.identifier}
                                                         </div>
                                                     </div>
                                                 </div>

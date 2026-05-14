@@ -69,7 +69,7 @@ export function NavbarUserMenu() {
     if (!isAuthenticated || !user) return null;
 
     const displayName = profile?.name || user.name || "User";
-    const displayEmail = profile?.email || user.email || "";
+    const displayIdentifier = profile?.identifier || user.identifier || "";
     const displayPhoto = profile?.profilePhoto || user.image;
 
     /* Filter out the Logout item — we render it separately at the bottom */
@@ -111,7 +111,7 @@ export function NavbarUserMenu() {
                         {displayName}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
-                        {displayEmail}
+                        {displayIdentifier}
                     </p>
                 </div>
 

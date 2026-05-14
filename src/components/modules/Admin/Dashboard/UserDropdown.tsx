@@ -41,7 +41,7 @@ const UserDropdown = ({ userInfo }: UserDropdownProps) => {
                         <p className="text-sm font-medium">{userInfo.name}</p>
 
                         <p className="text-xs text-muted-foreground">
-                            {userInfo.email}
+                            {userInfo.identifier}
                         </p>
 
                         <p className="text-xs text-primary capitalize">

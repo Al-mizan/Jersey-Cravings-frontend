@@ -128,15 +128,15 @@ export interface IPaginatedResponse<T> {
     totalPages: number;
 }
 
-export interface IOrderListResponse extends IPaginatedResponse<IOrder> {}
-export interface IPaymentListResponse extends IPaginatedResponse<IPayment> {}
+export interface IOrderListResponse extends IPaginatedResponse<IOrder> { }
+export interface IPaymentListResponse extends IPaginatedResponse<IPayment> { }
 
 /** Admin order list item (includes relations returned by `GET /orders`). */
 export interface IAdminOrder extends IOrder {
     payment?: IPayment | null;
     user?: {
         id: string;
-        email: string;
+        identifier: string;
         role: string;
     };
 }

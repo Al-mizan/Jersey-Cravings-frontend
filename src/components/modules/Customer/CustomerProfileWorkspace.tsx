@@ -6,7 +6,7 @@ import { useForm } from "@tanstack/react-form";
 import { motion, AnimatePresence } from "motion/react";
 import { z } from "zod";
 import { getMyProfile, updateMyProfile } from "@/services/customer.service";
-import { verifyEmail, sendVerificationOtp } from "@/services/auth.service";
+import { verifyIdentifier, sendVerificationOtp } from "@/services/auth.service";
 import { customerProfileKeys } from "@/hooks/queries/customerQueryKeys";
 import {
     Avatar,
@@ -78,7 +78,7 @@ const formatCountdown = (seconds: number) => {
 
 /* ─── types ─────────────────────────────────────────────────────────── */
 
-type EmailChangeStep = "idle" | "newEmail" | "enterOtp";
+type IdentifierChangeStep = "idle" | "newIdentifier" | "enterOtp";
 
 /* ─── component ─────────────────────────────────────────────────────── */
 
@@ -91,9 +91,9 @@ export function CustomerProfileWorkspace() {
     const [localPhotoPreview, setLocalPhotoPreview] = useState<string | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-    /* ── email change state ────────────────────────────────────────── */
-    const [emailStep, setEmailStep] = useState<EmailChangeStep>("idle");
-    const [newEmail, setNewEmail] = useState("");
+    /* ── identifier change state ────────────────────────────────────────── */
+    const [identifierStep, setIdentifierStep] = useState<IdentifierChangeStep>("idle");
+    const [newIdentifier, setNewIdentifier] = useState("");
     const [otpCode, setOtpCode] = useState("");
     const [countdown, setCountdown] = useState(0);
 
@@ -127,10 +127,10 @@ export function CustomerProfileWorkspace() {
 
     /* ── send OTP mutation ─────────────────────────────────────────── */
     const sendOtpMutation = useMutation({
-        mutationFn: (email: string) => sendVerificationOtp(email),
+        mutationFn: (identifier: string) => sendVerificationOtp(identifier),
         onSuccess: () => {
-            toast.success("Verification code sent to your new email");
-            setEmailStep("enterOtp");
+            toast.success("Verification code sent to your new identifier");
+            setIdentifierStep("enterOtp");
             setCountdown(OTP_COUNTDOWN_SECONDS);
             setOtpCode("");
         },
@@ -141,16 +141,16 @@ export function CustomerProfileWorkspace() {
 
     /* ── verify OTP mutation ───────────────────────────────────────── */
     const verifyOtpMutation = useMutation({
-        mutationFn: ({ email, otp }: { email: string; otp: string }) =>
-            verifyEmail(email, otp),
+        mutationFn: ({ identifier, otp }: { identifier: string; otp: string }) =>
+            verifyIdentifier(identifier, otp),
         onSuccess: () => {
-            toast.success("Email updated successfully!");
+            toast.success("Identifier updated successfully!");
             queryClient.invalidateQueries({ queryKey: customerProfileKeys.me() });
-            resetEmailFlow();
+            resetIdentifierFlow();
         },
         onError: (error) => {
             toast.error(getErrorMessage(error));
-            resetEmailFlow();
+            // Don't reset flow here so user can try again with same identifier or re-enter OTP
         },
     });
 
@@ -193,21 +193,30 @@ export function CustomerProfileWorkspace() {
     });
 
     /* ── handlers ───────────────────────────────────────────────────── */
+
+    const resetIdentifierFlow = useCallback(() => {
+        setIdentifierStep("idle");
+        setNewIdentifier("");
+        setOtpCode("");
+        setCountdown(0);
+    }, []);
+    
     const handleEditClick = useCallback(() => {
         if (profile) {
             form.reset();
             form.setFieldValue("name", profile.name || "");
             form.setFieldValue("contactNumber", profile.contactNumber || "");
         }
+        resetIdentifierFlow();
         setIsEditing(true);
-    }, [profile, form]);
+    }, [profile, form, resetIdentifierFlow]);
 
     const handleCancelEdit = useCallback(() => {
         setIsEditing(false);
         setLocalPhotoPreview(null);
         setSelectedFile(null);
-        resetEmailFlow();
-    }, []);
+        resetIdentifierFlow();
+    }, [resetIdentifierFlow]);
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -221,29 +230,22 @@ export function CustomerProfileWorkspace() {
         }
     };
 
-    const resetEmailFlow = useCallback(() => {
-        setEmailStep("idle");
-        setNewEmail("");
-        setOtpCode("");
-        setCountdown(0);
-    }, []);
-
     const handleSendOtp = () => {
-        if (!newEmail.trim()) {
-            toast.error("Please enter a new email address.");
+        if (!newIdentifier.trim()) {
+            toast.error("Please enter a new identifier.");
             return;
         }
-        sendOtpMutation.mutate(newEmail.trim());
+        sendOtpMutation.mutate(newIdentifier.trim());
     };
 
     const handleVerifyOtp = () => {
-        if (!newEmail.trim() || !otpCode.trim()) return;
-        verifyOtpMutation.mutate({ email: newEmail.trim(), otp: otpCode.trim() });
+        if (!newIdentifier.trim() || !otpCode.trim()) return;
+        verifyOtpMutation.mutate({ identifier: newIdentifier.trim(), otp: otpCode.trim() });
     };
 
     const handleResendOtp = () => {
-        if (!newEmail.trim() || countdown > 0) return;
-        sendOtpMutation.mutate(newEmail.trim());
+        if (!newIdentifier.trim() || countdown > 0) return;
+        sendOtpMutation.mutate(newIdentifier.trim());
     };
 
     const displayPhoto = localPhotoPreview || profile?.profilePhoto;
@@ -385,13 +387,13 @@ export function CustomerProfileWorkspace() {
                         />
                     </div>
 
-                    {/* Name + email beneath avatar */}
+                    {/* Name + identifier beneath avatar */}
                     <div className="mt-3">
                         <h1 className="text-xl font-semibold tracking-tight">
                             {profile.name}
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            {profile.email}
+                            {profile.identifier}
                         </p>
                     </div>
 
@@ -489,52 +491,51 @@ export function CustomerProfileWorkspace() {
                         </div>
                     </div>
 
-                    {/* ── Email — read-only with change flow ────── */}
+                    {/* ── Identifier — read-only with change flow ────── */}
                     <div className="flex items-start gap-4 py-4">
                         <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted/60">
-                            <Mail className="size-4 text-muted-foreground" />
+                            <RefreshCw className="size-4 text-muted-foreground" />
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                Email Address
+                                Account Identifier
                             </p>
 
                             <AnimatePresence mode="wait">
-                                {emailStep === "idle" && (
+                                {identifierStep === "idle" && (
                                     <motion.div
-                                        key="email-idle"
+                                        key="identifier-idle"
                                         {...fadeSlide}
                                         className="mt-0.5 flex items-center gap-2"
                                     >
                                         <p className="text-sm text-foreground truncate">
-                                            {profile.email}
+                                            {profile.identifier}
                                         </p>
-                                        {isEditing && (
+                                        {isEditing && !profile.user.accounts?.some(acc => acc.providerId === 'google') && (
                                             <Button
-                                                id="change-email-btn"
+                                                id="change-identifier-btn"
                                                 variant="link"
                                                 size="sm"
                                                 className="h-auto p-0 text-xs text-primary shrink-0"
-                                                onClick={() => setEmailStep("newEmail")}
+                                                onClick={() => setIdentifierStep("newIdentifier")}
                                             >
-                                                Change Email
+                                                Change Identifier
                                             </Button>
                                         )}
                                     </motion.div>
                                 )}
 
-                                {emailStep === "newEmail" && (
+                                {identifierStep === "newIdentifier" && (
                                     <motion.div
-                                        key="email-newEmail"
+                                        key="identifier-newIdentifier"
                                         {...fadeSlide}
                                         className="mt-1.5 space-y-2"
                                     >
                                         <Input
-                                            id="new-email-input"
-                                            type="email"
-                                            value={newEmail}
-                                            onChange={(e) => setNewEmail(e.target.value)}
-                                            placeholder="Enter new email address"
+                                            id="new-identifier-input"
+                                            value={newIdentifier}
+                                            onChange={(e) => setNewIdentifier(e.target.value)}
+                                            placeholder="Enter new identifier"
                                             onKeyDown={(e) => {
                                                 if (e.key === "Enter") {
                                                     e.preventDefault();
@@ -549,7 +550,7 @@ export function CustomerProfileWorkspace() {
                                                 className="gap-1.5"
                                                 onClick={handleSendOtp}
                                                 disabled={
-                                                    !newEmail.trim() ||
+                                                    !newIdentifier.trim() ||
                                                     sendOtpMutation.isPending
                                                 }
                                             >
@@ -563,7 +564,7 @@ export function CustomerProfileWorkspace() {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                onClick={resetEmailFlow}
+                                                onClick={resetIdentifierFlow}
                                                 disabled={sendOtpMutation.isPending}
                                             >
                                                 Cancel
@@ -572,16 +573,16 @@ export function CustomerProfileWorkspace() {
                                     </motion.div>
                                 )}
 
-                                {emailStep === "enterOtp" && (
+                                {identifierStep === "enterOtp" && (
                                     <motion.div
-                                        key="email-enterOtp"
+                                        key="identifier-enterOtp"
                                         {...fadeSlide}
                                         className="mt-1.5 space-y-2.5"
                                     >
                                         <p className="text-xs text-muted-foreground">
                                             Enter the verification code sent to{" "}
                                             <span className="font-medium text-foreground">
-                                                {newEmail}
+                                                {newIdentifier}
                                             </span>
                                         </p>
 
@@ -590,10 +591,10 @@ export function CustomerProfileWorkspace() {
                                                 id="otp-input"
                                                 value={otpCode}
                                                 onChange={(e) => setOtpCode(e.target.value)}
-                                                placeholder="Enter code"
+                                                placeholder="Code"
                                                 inputMode="numeric"
                                                 className="max-w-[160px]"
-                                                maxLength={8}
+                                                maxLength={6}
                                                 onKeyDown={(e) => {
                                                     if (e.key === "Enter") {
                                                         e.preventDefault();
@@ -647,7 +648,7 @@ export function CustomerProfileWorkspace() {
                                             <button
                                                 type="button"
                                                 className="text-muted-foreground hover:text-foreground transition-colors"
-                                                onClick={resetEmailFlow}
+                                                onClick={resetIdentifierFlow}
                                             >
                                                 Cancel
                                             </button>

@@ -319,7 +319,7 @@ export default function AdminOrdersPageClient() {
                 enableSorting: false,
                 cell: ({ row }) => (
                     <span className="text-sm">
-                        {row.original.user?.email ?? "—"}
+                        {row.original.user?.identifier ?? "—"}
                     </span>
                 ),
             },
@@ -462,7 +462,7 @@ export default function AdminOrdersPageClient() {
                 }
                 search={{
                     initialValue: searchTerm,
-                    placeholder: "Search by order number or customer email…",
+                    placeholder: "Search by order number or customer identifier…",
                     debounceMs: 500,
                     onDebouncedChange: (value) => {
                         setSearchTerm(value);

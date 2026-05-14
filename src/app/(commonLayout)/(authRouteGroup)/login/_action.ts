@@ -35,7 +35,7 @@ export const loginAction = async (
         );
 
         const { accessToken, refreshToken, user } = response.data;
-        const { role, emailVerified, email } = user;
+        const { role, identifierVerified, identifier } = user;
         await setTokenInCookies("accessToken", accessToken);
         await setTokenInCookies("refreshToken", refreshToken);
 
@@ -62,9 +62,9 @@ export const loginAction = async (
         if (
             error &&
             error.response &&
-            error.response.data.message === "Email not verified"
+            error.response.data.message === "Identifier not verified"
         ) {
-            redirect(`/verify-email?email=${payload.email}`);
+            redirect(`/verify-email?identifier=${payload.identifier}`);
         }
         return {
             success: false,

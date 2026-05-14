@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useEffect, useImperativeHandle, useMemo, useRef } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useStore } from "@tanstack/react-store";
 import {
@@ -79,7 +79,7 @@ export default function CheckoutForm({
     });
 
     // Expose validate + getValues to the parent
-    React.useImperativeHandle(formRef, () => ({
+    useImperativeHandle(formRef, () => ({
         validate: async () => {
             // Validate using Zod schema
             const result = checkoutBillingFormSchema.safeParse(
@@ -104,8 +104,8 @@ export default function CheckoutForm({
     }));
 
     // Notify parent on value change (excluding shippingMethod to prevent loop)
-    const prevValuesRef = React.useRef(form.state.values);
-    React.useEffect(() => {
+    const prevValuesRef = useRef(form.state.values);
+    useEffect(() => {
         const values = form.state.values;
         // Only notify if values actually changed (excluding shippingMethod which is controlled by parent)
         const { shippingMethod: _, ...valuesWithoutShipping } = values;
@@ -124,7 +124,7 @@ export default function CheckoutForm({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [form.state.values]);
 
-    React.useEffect(() => {
+    useEffect(() => {
         // Only update if the shippingMethod in the form is different from the prop
         if (form.state.values.shippingMethod !== shippingMethod) {
             form.setFieldValue("shippingMethod", shippingMethod);
@@ -205,7 +205,7 @@ export default function CheckoutForm({
                                     }
                                     className={cn(
                                         error &&
-                                            "border-destructive focus-visible:ring-destructive/20",
+                                        "border-destructive focus-visible:ring-destructive/20",
                                     )}
                                 />
                                 <FieldError error={error} />
@@ -253,7 +253,7 @@ export default function CheckoutForm({
                                     inputMode="tel"
                                     className={cn(
                                         error &&
-                                            "border-destructive focus-visible:ring-destructive/20",
+                                        "border-destructive focus-visible:ring-destructive/20",
                                     )}
                                 />
                                 <FieldError error={error} />
@@ -315,7 +315,7 @@ export default function CheckoutForm({
                                                 id="checkout-division"
                                                 className={cn(
                                                     error &&
-                                                        "border-destructive focus-visible:ring-destructive/20",
+                                                    "border-destructive focus-visible:ring-destructive/20",
                                                 )}
                                             >
                                                 <SelectValue placeholder="Select Division" />
@@ -385,7 +385,7 @@ export default function CheckoutForm({
                                                 id="checkout-district"
                                                 className={cn(
                                                     error &&
-                                                        "border-destructive focus-visible:ring-destructive/20",
+                                                    "border-destructive focus-visible:ring-destructive/20",
                                                 )}
                                             >
                                                 <SelectValue
@@ -465,7 +465,7 @@ export default function CheckoutForm({
                                                 id="checkout-area"
                                                 className={cn(
                                                     error &&
-                                                        "border-destructive focus-visible:ring-destructive/20",
+                                                    "border-destructive focus-visible:ring-destructive/20",
                                                 )}
                                             >
                                                 <SelectValue
@@ -537,7 +537,7 @@ export default function CheckoutForm({
                                         disabled={isPickup}
                                         className={cn(
                                             error &&
-                                                "border-destructive focus-visible:ring-destructive/20",
+                                            "border-destructive focus-visible:ring-destructive/20",
                                         )}
                                     />
                                     <FieldError error={error} />
@@ -589,7 +589,7 @@ export default function CheckoutForm({
                                 }
                                 className={cn(
                                     error &&
-                                        "border-destructive focus-visible:ring-destructive/20",
+                                    "border-destructive focus-visible:ring-destructive/20",
                                 )}
                             />
                             <FieldError error={error} />
@@ -653,7 +653,7 @@ export default function CheckoutForm({
                                 className={cn(
                                     "resize-none",
                                     error &&
-                                        "border-destructive focus-visible:ring-destructive/20",
+                                    "border-destructive focus-visible:ring-destructive/20",
                                 )}
                             />
                             <FieldError error={error} />

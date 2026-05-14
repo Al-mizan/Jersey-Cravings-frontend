@@ -2,11 +2,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface UserInfoCellProps {
     name: string;
-    email: string;
+    identifier: string;
     profilePhoto?: string;
 }
 
-const UserInfoCell = ({ name, email, profilePhoto }: UserInfoCellProps) => {
+const UserInfoCell = ({ name, identifier, profilePhoto }: UserInfoCellProps) => {
     const initials = name
         .split(" ")
         .map((part) => part.charAt(0).toUpperCase())
@@ -22,7 +22,7 @@ const UserInfoCell = ({ name, email, profilePhoto }: UserInfoCellProps) => {
 
             <div className="flex flex-col">
                 <span className="font-medium text-sm">{name}</span>
-                <span className="text-muted-foreground text-xs">{email}</span>
+                <span className="text-muted-foreground text-xs">{identifier}</span>
             </div>
         </div>
     );

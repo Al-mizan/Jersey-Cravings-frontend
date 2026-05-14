@@ -22,6 +22,7 @@ import {
     type FinalizePaymentPayload,
     type RedeemPointsResponse,
 } from "@/services/checkout.service";
+import type { IPickupLocation } from "@/types/commerce.types";
 
 // ── Query Keys ────────────────────────────────────────
 export const checkoutKeys = {
@@ -40,6 +41,7 @@ export const checkoutKeys = {
         list: (params?: Record<string, unknown>) =>
             ["referral", "events", params ?? {}] as const,
     },
+    pickupLocations: ["fulfillment", "active"] as const,
 };
 
 // ── Cart ──────────────────────────────────────────────
@@ -47,6 +49,33 @@ export function useMyCart() {
     return useQuery({
         queryKey: checkoutKeys.cart,
         queryFn: fetchMyCart,
+        staleTime: 60_000,
+    });
+}
+
+// ── Fulfillment ────────────────────────────────────────
+export function useActivePickupLocations() {
+    const HARDCODED_PICKUP_LOCATIONS: IPickupLocation[] = [
+        {
+            id: "ju-main",
+            name: "Jahangirnagar University Pickup Point",
+            slug: "jahangirnagar-university",
+            addressLine: "Jahangirnagar University, Savar, Dhaka",
+            city: "Savar",
+            district: "Dhaka",
+            postalCode: null,
+            phone: "",
+            openingHours: null,
+            status: "ACTIVE",
+            isDefault: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        },
+    ];
+
+    return useQuery({
+        queryKey: checkoutKeys.pickupLocations,
+        queryFn: async () => HARDCODED_PICKUP_LOCATIONS,
         staleTime: 60_000,
     });
 }

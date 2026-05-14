@@ -114,7 +114,7 @@ export default function BkashPaymentDialog({
                                 <li>
                                     Send Money to{" "}
                                     <span className="font-mono font-bold text-foreground">
-                                        01XXXXXXXXX
+                                        01705094855
                                     </span>
                                 </li>
                                 <li>

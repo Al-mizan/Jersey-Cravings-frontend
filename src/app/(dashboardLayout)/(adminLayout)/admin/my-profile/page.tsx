@@ -7,18 +7,18 @@ import { AlertCircle } from "lucide-react";
 const MyProfile = async () => {
     const userInfo = await getUserInfo();
 
-    console.log("user email", userInfo?.email);
+    console.log("user email", userInfo?.identifier);
     if (!userInfo) {
         redirect("/login");
     }
 
     // getAllAdmins returns the array directly (unwrapData extracts ApiResponse.data)
-    const adminsResponse = await getAllAdmins(userInfo.email, 1, 3);
+    const adminsResponse = await getAllAdmins(userInfo.identifier, 1, 3);
     const admins = Array.isArray(adminsResponse)
         ? adminsResponse
         : (adminsResponse as any)?.data ?? [];
     const adminProfile = admins.find(
-        (a: any) => a.email === userInfo.email,
+        (a: any) => a.identifier === userInfo.identifier,
     ) ?? null;
 
     if (!adminProfile) {

@@ -279,7 +279,7 @@ export function MyProfileWorkspace({ adminId }: MyProfileWorkspaceProps) {
                             {admin.name}
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            {admin.email}
+                            {admin.identifier}
                         </p>
                     </div>
                 </CardContent>
@@ -315,9 +315,9 @@ export function MyProfileWorkspace({ adminId }: MyProfileWorkspaceProps) {
                     {/* Email — always read-only */}
                     <ProfileField
                         icon={<Mail className="size-4" />}
-                        label="Email Address"
+                        label="Account Identifier"
                         isEditing={false}
-                        value={admin.email}
+                        value={admin.identifier}
                     />
 
                     {/* Contact Number */}

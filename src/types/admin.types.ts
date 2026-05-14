@@ -8,7 +8,7 @@ export interface IDashboardStatusCount {
 export interface IRecentSignup {
     id: string;
     name: string;
-    email: string;
+    identifier: string;
     createdAt: string;
 }
 
@@ -83,7 +83,7 @@ export interface ICustomerStats {
 export interface IAdmin {
     id: string;
     name: string;
-    email: string;
+    identifier: string;
     profilePhoto?: string;
     contactNumber?: string;
     isDeleted: boolean;
@@ -91,7 +91,7 @@ export interface IAdmin {
     updatedAt: string;
     user?: {
         id: string;
-        email: string;
+        identifier: string;
         role: "ADMIN" | "SUPER_ADMIN";
         status: "ACTIVE" | "BLOCKED" | "DELETED";
     };
@@ -102,7 +102,7 @@ export interface ICreateAdminPayload {
     role: "ADMIN" | "SUPER_ADMIN";
     admin: {
         name: string;
-        email: string;
+        identifier: string;
         contactNumber?: string;
         profilePhoto?: string;
     };
@@ -137,7 +137,7 @@ export interface IAuditLog {
     admin?: {
         id: string;
         name: string;
-        email: string;
+        identifier: string;
     };
 }
 
@@ -147,7 +147,7 @@ export interface IActivityFeedItem {
     entityType: string;
     entityId: string;
     adminName: string;
-    adminEmail: string;
+    adminIdentifier: string;
     timestamp: string;
     description: string;
 }
