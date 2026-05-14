@@ -6,6 +6,8 @@ export const addToCartZodSchema = z.object({
         .number("Qty must be a number")
         .int({ message: "Qty must be an integer" })
         .positive({ message: "Qty must be at least 1" }),
+    customPlayerName: z.string().optional(),
+    customJerseyNumber: z.string().optional(),
 });
 
 export type IAddToCartPayload = z.infer<typeof addToCartZodSchema>;

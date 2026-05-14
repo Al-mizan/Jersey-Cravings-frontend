@@ -44,7 +44,7 @@ const faqs: FAQ[] = [
     {
         id: "payment-1",
         question: "What payment methods do you accept?",
-        answer: "We accept bKash, Nagad, Rocket, all major credit/debit cards (Visa, MasterCard), and Cash on Delivery (COD) for orders within Bangladesh. For international orders, we accept PayPal and international credit cards.",
+        answer: "We accept bKash, Nagad, and Cash on Delivery (COD) for orders within Bangladesh.",
         category: "payments",
     },
     {
@@ -56,7 +56,7 @@ const faqs: FAQ[] = [
     {
         id: "payment-3",
         question: "What is your refund policy?",
-        answer: "Refunds are processed within 7-10 business days for eligible returns. For payment gateway refunds (bKash, Nagad, cards), the amount will be credited back to your original payment method. For COD orders, refunds are processed via bank transfer or bKash/Nagad.",
+        answer: "Refunds are processed within 7 business days for eligible returns. For payment gateway refunds (bKash, Nagad), the amount will be credited back to your original payment method. For COD orders, refunds are processed via bank transfer or bKash/Nagad.",
         category: "payments",
     },
     // Shipping
@@ -69,7 +69,7 @@ const faqs: FAQ[] = [
     {
         id: "shipping-2",
         question: "Do you offer free shipping?",
-        answer: "Yes! We offer free shipping on orders above ৳1500 within Bangladesh. For orders below this threshold, a standard shipping fee of ৳60 applies.",
+        answer: "Yes! We offer free shipping on orders above ৳3000 within Bangladesh. For orders below this threshold, a standard shipping fee of ৳60 applies.",
         category: "shipping",
     },
     {
@@ -82,13 +82,13 @@ const faqs: FAQ[] = [
     {
         id: "product-1",
         question: "Are your jerseys authentic?",
-        answer: "Yes, all our jerseys are 100% authentic and sourced directly from authorized distributors. We provide authenticity certificates for premium jerseys and offer a quality guarantee on all products.",
+        answer: "Yes, all our jerseys are 100% authentic, imported and sourced directly from authorized distributors. We take pride in offering genuine products that meet the highest quality standards. Each jersey comes with official tags and packaging to ensure authenticity.",
         category: "products",
     },
     {
         id: "product-2",
         question: "What sizes do you offer?",
-        answer: "We offer sizes from XS to 5XL for most jerseys. Each product page includes a detailed size chart with measurements in both inches and centimeters. If you're unsure, our customer service can help you choose the right size.",
+        answer: "We offer sizes from S to XXL for most jerseys. Each product page includes a detailed size chart with measurements in both inches and centimeters. If you're unsure, our customer service can help you choose the right size.",
         category: "products",
     },
     {

@@ -14,6 +14,7 @@ export interface AdminProductListQueryParams extends ListQueryParams {
 export interface AdminOrdersListQueryParams extends ListQueryParams {
     status?: string;
     paymentStatus?: string;
+    paymentMethod?: string;
     needsManualReview?: boolean;
     userId?: string;
     sortBy?: string;
@@ -22,6 +23,13 @@ export interface AdminOrdersListQueryParams extends ListQueryParams {
 
 export interface AdminCustomerListQueryParams extends ListQueryParams {
     isDeleted?: boolean;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+}
+
+export interface AdminPaymentListQueryParams extends ListQueryParams {
+    method?: string;
+    status?: string;
     sortBy?: string;
     sortOrder?: "asc" | "desc";
 }
@@ -55,6 +63,8 @@ export const adminOrderKeys = {
     all: ["admin", "orders"] as const,
     list: (params: AdminOrdersListQueryParams) =>
         [...adminOrderKeys.all, "list", params] as const,
+    detail: (orderId: string) =>
+        [...adminOrderKeys.all, "detail", orderId] as const,
 };
 
 export const adminCustomerKeys = {
@@ -74,8 +84,13 @@ export const adminUserKeys = {
     },
 };
 
+export const adminPaymentKeys = {
+    all: ["admin", "payments"] as const,
+    list: (params: AdminPaymentListQueryParams) =>
+        [...adminPaymentKeys.all, "list", params] as const,
+};
+
 export const adminProfileKeys = {
     all: ["admin", "profile"] as const,
-    detail: (adminId: string) =>
-        [...adminProfileKeys.all, adminId] as const,
+    detail: (adminId: string) => [...adminProfileKeys.all, adminId] as const,
 };

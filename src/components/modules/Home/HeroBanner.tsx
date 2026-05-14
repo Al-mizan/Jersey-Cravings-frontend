@@ -1,10 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getActiveBanners, type IBanner } from "@/services/banner.service";
+import { getActiveBanners } from "@/services/banner.service";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ChevronLeft, ChevronRight, ImageOff } from "lucide-react";
 import Image from "next/image";
+import { IBanner } from "@/types/banner.types";
+
 
 export default function HeroBanner() {
     const {
@@ -58,7 +60,10 @@ export default function HeroBanner() {
                         {/* Left arrow placeholder */}
                         <div className="hidden md:flex shrink-0 size-10 rounded-full bg-muted animate-pulse" />
                         {/* Banner skeleton */}
-                        <div className="flex-1 rounded-2xl bg-muted animate-pulse" style={{ aspectRatio: "1920/640" }} />
+                        <div
+                            className="flex-1 rounded-2xl bg-muted animate-pulse"
+                            style={{ aspectRatio: "1920/640" }}
+                        />
                         {/* Right arrow placeholder */}
                         <div className="hidden md:flex shrink-0 size-10 rounded-full bg-muted animate-pulse" />
                     </div>
@@ -142,6 +147,7 @@ export default function HeroBanner() {
                                     className="object-cover object-center"
                                     sizes="(max-width: 768px) 100vw, 85vw"
                                     priority={index === 0}
+                                    loading={index === 0 ? "eager" : "lazy"}
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
                             </div>
@@ -187,10 +193,11 @@ export default function HeroBanner() {
                             <button
                                 key={index}
                                 onClick={() => goTo(index)}
-                                className={`rounded-full transition-all duration-300 cursor-pointer ${index === current
-                                    ? "w-7 h-2.5 bg-primary"
-                                    : "size-2.5 bg-zinc-300 dark:bg-zinc-600 hover:bg-zinc-400 dark:hover:bg-zinc-500"
-                                    }`}
+                                className={`rounded-full transition-all duration-300 cursor-pointer ${
+                                    index === current
+                                        ? "w-7 h-2.5 bg-primary"
+                                        : "size-2.5 bg-zinc-300 dark:bg-zinc-600 hover:bg-zinc-400 dark:hover:bg-zinc-500"
+                                }`}
                                 aria-label={`Go to slide ${index + 1}`}
                             />
                         ))}

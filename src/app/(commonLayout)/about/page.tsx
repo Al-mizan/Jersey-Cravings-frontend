@@ -12,18 +12,18 @@ export default function AboutPage() {
             {/* Hero Section */}
             <section className="relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 to-orange-600/20"></div>
-                <div className="relative container mx-auto px-4 py-24 lg:py-32">
+                <div className="relative container mx-auto px-4 py-16 sm:py-20 lg:py-32">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
                         className="text-center max-w-4xl mx-auto"
                     >
-                        <h1 className="text-5xl lg:text-7xl font-black mb-6 tracking-tight">
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black mb-6 tracking-tight">
                             We <span className="text-red-500">Live</span> for
                             the <span className="text-orange-500">Game</span>
                         </h1>
-                        <p className="text-xl lg:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                        <p className="text-base sm:text-lg lg:text-xl xl:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
                             Premium football jerseys for passionate fans who
                             demand quality, authenticity, and style that stands
                             out on and off the pitch.
@@ -35,11 +35,11 @@ export default function AboutPage() {
                         >
                             <Button
                                 size="lg"
-                                className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 text-lg font-bold rounded-full shadow-2xl hover:shadow-red-600/25 transition-all duration-300"
+                                className="bg-red-600 hover:bg-red-700 text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-bold rounded-full shadow-2xl hover:shadow-red-600/25 transition-all duration-300"
                                 asChild
                             >
                                 <Link
-                                    href="/collections"
+                                    href="/products"
                                     className="flex items-center"
                                 >
                                     Shop Now
@@ -51,16 +51,16 @@ export default function AboutPage() {
             </section>
 
             {/* Our Story Section */}
-            <section className="py-20 lg:py-32 bg-gray-800/50">
+            <section className="py-12 sm:py-16 lg:py-32 bg-gray-800/50">
                 <div className="container mx-auto px-4">
                     <motion.div
                         initial={{ opacity: 0, x: -50 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.8 }}
-                        className="grid lg:grid-cols-2 gap-16 items-center max-w-6xl mx-auto"
+                        className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center max-w-6xl mx-auto"
                     >
                         <div className="space-y-8">
-                            <h2 className="text-4xl font-bold mb-6 text-white">
+                            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 text-white">
                                 Our Story
                             </h2>
                             <div className="space-y-6 text-gray-300 leading-relaxed">
@@ -94,9 +94,9 @@ export default function AboutPage() {
                             transition={{ duration: 0.8, delay: 0.2 }}
                             className="relative"
                         >
-                            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl shadow-2xl">
+                            <div className="relative aspect-[4/5] sm:aspect-3/4 lg:aspect-4/5 overflow-hidden rounded-2xl shadow-2xl">
                                 <Image
-                                    src="/api/placeholder/1920/1440"
+                                    src="/jersey_craftsmanship.png"
                                     alt="Jersey craftsmanship"
                                     fill
                                     className="object-cover"
@@ -110,7 +110,7 @@ export default function AboutPage() {
             </section>
 
             {/* Why Choose Us Section */}
-            <section className="py-20 lg:py-32 bg-gray-900">
+            <section className="py-12 sm:py-16 lg:py-32 bg-gray-900">
                 <div className="container mx-auto px-4">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
@@ -118,20 +118,20 @@ export default function AboutPage() {
                         transition={{ duration: 0.8 }}
                         className="text-center mb-16"
                     >
-                        <h2 className="text-4xl font-bold mb-4 text-white">
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-white">
                             Why Choose Jersey Cravings
                         </h2>
-                        <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+                        <p className="text-base sm:text-lg lg:text-xl text-gray-400 max-w-3xl mx-auto">
                             We're not just another jersey store. We're your
                             partner in football excellence.
                         </p>
                     </motion.div>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 max-w-6xl mx-auto">
                         {[
                             {
                                 icon: Shield,
-                                title: "Authentic Products",
+                                title: "Authentic Imported Products",
                                 description:
                                     "100% genuine jerseys with verified quality certificates and authenticity guarantees.",
                             },
@@ -162,12 +162,12 @@ export default function AboutPage() {
                                     duration: 0.8,
                                     delay: index * 0.1,
                                 }}
-                                className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 text-center hover:bg-gray-800/70 transition-all duration-300 border border-gray-700/50 hover:border-red-500/50"
+                                className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 sm:p-8 text-center hover:bg-gray-800/70 transition-all duration-300 border border-gray-700/50 hover:border-red-500/50"
                             >
-                                <div className="w-16 h-16 bg-red-600/20 rounded-2xl flex items-center justify-center mb-6 mx-auto">
-                                    <item.icon className="w-8 h-8 text-red-500" />
+                                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-red-600/20 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 mx-auto">
+                                    <item.icon className="w-7 h-7 sm:w-8 sm:h-8 text-red-500" />
                                 </div>
-                                <h3 className="text-xl font-bold mb-3 text-white">
+                                <h3 className="text-lg sm:text-xl font-bold mb-3 text-white">
                                     {item.title}
                                 </h3>
                                 <p className="text-gray-400 leading-relaxed">
@@ -180,7 +180,7 @@ export default function AboutPage() {
             </section>
 
             {/* Brand Values Section */}
-            <section className="py-20 lg:py-32 bg-gradient-to-r from-red-600/10 to-orange-600/10">
+            <section className="py-12 sm:py-16 lg:py-32 bg-gradient-to-r from-red-600/10 to-orange-600/10">
                 <div className="container mx-auto px-4">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
@@ -188,16 +188,16 @@ export default function AboutPage() {
                         transition={{ duration: 0.8 }}
                         className="text-center mb-16"
                     >
-                        <h2 className="text-4xl font-bold mb-4 text-white">
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-white">
                             Our Values
                         </h2>
-                        <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+                        <p className="text-base sm:text-lg lg:text-xl text-gray-300 max-w-3xl mx-auto">
                             The principles that guide everything we do, every
                             single day.
                         </p>
                     </motion.div>
 
-                    <div className="grid md:grid-cols-3 gap-12 max-w-6xl mx-auto">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 lg:gap-12 max-w-6xl mx-auto">
                         {[
                             {
                                 value: "PASSION",
@@ -225,7 +225,7 @@ export default function AboutPage() {
                                 }}
                                 className="text-center"
                             >
-                                <div className="text-6xl font-black text-red-500 mb-4 tracking-wider">
+                                <div className="text-4xl sm:text-5xl lg:text-6xl font-black text-red-500 mb-4 tracking-wider">
                                     {item.value}
                                 </div>
                                 <p className="text-gray-300 leading-relaxed max-w-sm mx-auto">
@@ -238,7 +238,7 @@ export default function AboutPage() {
             </section>
 
             {/* CTA Section */}
-            <section className="py-20 lg:py-32 bg-gradient-to-r from-red-600 to-orange-600 relative overflow-hidden">
+            <section className="py-12 sm:py-16 lg:py-32 bg-gradient-to-r from-red-600 to-orange-600 relative overflow-hidden">
                 <div className="absolute inset-0 bg-black/20"></div>
                 <div className="relative container mx-auto px-4 text-center">
                     <motion.div
@@ -247,10 +247,10 @@ export default function AboutPage() {
                         transition={{ duration: 0.8 }}
                         className="max-w-4xl mx-auto"
                     >
-                        <h2 className="text-4xl lg:text-5xl font-bold mb-6 text-white">
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold mb-6 text-white">
                             Ready to Wear Your Pride?
                         </h2>
-                        <p className="text-xl lg:text-2xl text-gray-200 mb-8 max-w-3xl mx-auto leading-relaxed">
+                        <p className="text-base sm:text-lg lg:text-xl xl:text-2xl text-gray-200 mb-6 sm:mb-8 max-w-3xl mx-auto leading-relaxed">
                             Join thousands of satisfied customers who trust
                             Jersey Cravings for authentic football jerseys that
                             make a statement.
@@ -262,11 +262,11 @@ export default function AboutPage() {
                         >
                             <Button
                                 size="lg"
-                                className="bg-white text-red-600 hover:bg-gray-100 px-12 py-6 text-lg font-bold rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300"
+                                className="bg-white text-red-600 hover:bg-gray-100 px-8 sm:px-12 py-4 sm:py-6 text-base sm:text-lg font-bold rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300"
                                 asChild
                             >
                                 <Link
-                                    href="/collections"
+                                    href="/products"
                                     className="flex items-center"
                                 >
                                     Shop Collection

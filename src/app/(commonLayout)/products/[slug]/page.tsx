@@ -1,16 +1,5 @@
 "use client";
 
-// ─── FONT NOTE ────────────────────────────────────────────────────────────────
-// Add to your app/layout.tsx:
-//   import { Barlow_Condensed, Barlow } from "next/font/google"
-//   const barlowCondensed = Barlow_Condensed({ subsets:["latin"], weight:["700","800","900"], variable:"--font-bc" })
-//   const barlow = Barlow({ subsets:["latin"], weight:["400","500","600"], variable:"--font-b" })
-//   <body className={`${barlowCondensed.variable} ${barlow.variable}`}>
-// Then in tailwind.config.ts extend fontFamily:
-//   "bc": ["var(--font-bc)", "sans-serif"],
-//   "b":  ["var(--font-b)",  "sans-serif"],
-// ─────────────────────────────────────────────────────────────────────────────
-
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import axios from "axios";
@@ -19,6 +8,7 @@ import {
     BadgeCheck,
     ChevronRight,
     Loader2,
+    Lock,
     PlayCircle,
     ShieldCheck,
     ShoppingCart,
@@ -30,6 +20,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
     Accordion,
     AccordionContent,
@@ -109,6 +100,8 @@ export default function ProductDetailsPage({
     );
     const [quantity, setQuantity] = useState(1);
     const [isMainMediaLoading, setIsMainMediaLoading] = useState(true);
+    const [customPlayerName, setCustomPlayerName] = useState("");
+    const [customJerseyNumber, setCustomJerseyNumber] = useState("");
 
     // ── Queries ──────────────────────────────────────────────────────────────
     useCart();
@@ -153,13 +146,25 @@ export default function ProductDetailsPage({
 
     // ── Cart cache helper ────────────────────────────────────────────────────
     const updateCartCache = useCallback(
-        (cartItem: ICartItem, payload: { variantId: string; qty: number }) => {
+        (
+            cartItem: ICartItem,
+            payload: {
+                variantId: string;
+                qty: number;
+                customPlayerName?: string;
+                customJerseyNumber?: string;
+                customizationCharge: number;
+            },
+        ) => {
             if (!selectedVariant || !product) return;
             const now = new Date().toISOString();
             const nextCartItem: ICartItem = {
                 ...cartItem,
                 variantId: cartItem.variantId || payload.variantId,
                 qty: cartItem.qty ?? payload.qty,
+                customPlayerName: payload.customPlayerName,
+                customJerseyNumber: payload.customJerseyNumber,
+                customizationCharge: payload.customizationCharge,
                 createdAt: cartItem.createdAt ?? now,
                 updatedAt: cartItem.updatedAt ?? now,
                 variant: {
@@ -201,6 +206,10 @@ export default function ProductDetailsPage({
                             ...existing,
                             id: nextCartItem.id,
                             qty: nextCartItem.qty,
+                            customPlayerName: nextCartItem.customPlayerName,
+                            customJerseyNumber: nextCartItem.customJerseyNumber,
+                            customizationCharge:
+                                nextCartItem.customizationCharge,
                             variant: existing.variant || nextCartItem.variant,
                         };
                     } else {
@@ -217,13 +226,24 @@ export default function ProductDetailsPage({
 
     // ── Mutations ────────────────────────────────────────────────────────────
     const addToCartMutation = useMutation({
-        mutationFn: async (payload: { variantId: string; qty: number }) => {
+        mutationFn: async (payload: {
+            variantId: string;
+            qty: number;
+            customPlayerName?: string;
+            customJerseyNumber?: string;
+        }) => {
             const validated = addToCartZodSchema.parse(payload);
             const response = await axios.post<ApiResponse<ICartItem>>(
                 "/api/proxy/carts/my/items",
                 validated,
             );
-            return { cartItem: response.data.data, payload: validated };
+            return {
+                cartItem: response.data.data,
+                payload: {
+                    ...validated,
+                    customizationCharge: hasCustomization ? 290 : 0,
+                },
+            };
         },
         onSuccess: ({ cartItem, payload }) => {
             toast.success("Added to cart");
@@ -233,13 +253,24 @@ export default function ProductDetailsPage({
     });
 
     const buyNowMutation = useMutation({
-        mutationFn: async (payload: { variantId: string; qty: number }) => {
+        mutationFn: async (payload: {
+            variantId: string;
+            qty: number;
+            customPlayerName?: string;
+            customJerseyNumber?: string;
+        }) => {
             const validated = addToCartZodSchema.parse(payload);
             const response = await axios.post<ApiResponse<ICartItem>>(
                 "/api/proxy/carts/my/items",
                 validated,
             );
-            return { cartItem: response.data.data, payload: validated };
+            return {
+                cartItem: response.data.data,
+                payload: {
+                    ...validated,
+                    customizationCharge: hasCustomization ? 290 : 0,
+                },
+            };
         },
         onSuccess: ({ cartItem, payload }) => {
             updateCartCache(cartItem, payload);
@@ -286,6 +317,8 @@ export default function ProductDetailsPage({
             await addToCartMutation.mutateAsync({
                 variantId: selectedVariant.id,
                 qty: Math.min(quantity, maxQty),
+                customPlayerName: customPlayerName.trim() || undefined,
+                customJerseyNumber: customJerseyNumber.trim() || undefined,
             });
         } catch {
             return;
@@ -299,6 +332,8 @@ export default function ProductDetailsPage({
             await buyNowMutation.mutateAsync({
                 variantId: selectedVariant.id,
                 qty: Math.min(quantity, maxQty),
+                customPlayerName: customPlayerName.trim() || undefined,
+                customJerseyNumber: customJerseyNumber.trim() || undefined,
             });
         } catch {
             return;
@@ -338,6 +373,10 @@ export default function ProductDetailsPage({
     const averageRating = product?.totalRating ?? 0;
     const isOutOfStock = !selectedVariant || selectedVariant.stockQty <= 0;
     const maxQty = selectedVariant?.stockQty ?? 1;
+
+    const hasCustomization =
+        customPlayerName.trim() !== "" && customJerseyNumber.trim() !== "";
+    const customizationCharge = hasCustomization ? 290 : 0;
 
     // ── Loading state ─────────────────────────────────────────────────────────
     if (isLoading) {
@@ -585,7 +624,7 @@ export default function ProductDetailsPage({
                             )}
 
                             {/* Quick trust strip */}
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border/50 pt-3 text-xs text-muted-foreground">
+                            {/* <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border/50 pt-3 text-xs text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                     <BadgeCheck className="size-3.5 text-emerald-500" />{" "}
                                     Authentic Import
@@ -598,7 +637,7 @@ export default function ProductDetailsPage({
                                     <ShieldCheck className="size-3.5 text-violet-500" />{" "}
                                     Secure Checkout
                                 </span>
-                            </div>
+                            </div> */}
                         </div>
 
                         {/* ── Feature cards ─────────────────────────────── */}
@@ -722,6 +761,75 @@ export default function ProductDetailsPage({
 
                         <Separator className="bg-border/50" />
 
+                        {/* ── Customization Options ─────────────────────── */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-bold uppercase tracking-[0.1em] text-foreground">
+                                        Name & Number Printing
+                                    </p>
+                                    <p className="mt-0.5 text-xs text-muted-foreground">
+                                        Add custom name and number to your
+                                        jersey
+                                    </p>
+                                </div>
+                                <Badge className="rounded-full bg-foreground px-3 py-1 text-[11px] font-black uppercase tracking-widest text-background">
+                                    +৳290
+                                </Badge>
+                            </div>
+
+                            <Card className="border-border/60 bg-muted/20">
+                                <CardContent className="p-4 space-y-3">
+                                    <p className="text-[10px] text-muted-foreground">
+                                        Imported Best Quality Font (Not
+                                        Local/DTF Font)
+                                    </p>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-1.5">
+                                            <Input
+                                                placeholder="Enter name"
+                                                value={customPlayerName}
+                                                onChange={(e) =>
+                                                    setCustomPlayerName(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="h-9 text-sm"
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <Input
+                                                type="number"
+                                                placeholder="Enter number"
+                                                value={customJerseyNumber}
+                                                onChange={(e) =>
+                                                    setCustomJerseyNumber(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="h-9 text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {hasCustomization && (
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-muted-foreground">
+                                        Customization: +৳290 × {quantity}
+                                    </span>
+                                    <span className="font-semibold tabular-nums">
+                                        {formatCurrency(
+                                            customizationCharge * quantity,
+                                        )}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
+                        <Separator className="bg-border/50" />
+
                         {/* ── Quantity + CTA ────────────────────────────── */}
                         <div className="space-y-4">
                             {/* Quantity row */}
@@ -770,11 +878,37 @@ export default function ProductDetailsPage({
                                         : `${maxQty} available`}
                                 </span>
 
-                                {!isOutOfStock && quantity >= 1 && (
-                                    <span className="ml-auto text-sm font-black text-foreground">
-                                        {formatCurrency(priceAmount * quantity)}
-                                    </span>
-                                )}
+                                <span className="flex flex-col col-1 items-end gap-0.5">
+                                    {!isOutOfStock && quantity >= 1 && (
+                                        <span className="text-sm font-black text-foreground">
+                                            {formatCurrency(
+                                                priceAmount * quantity,
+                                            )}
+                                        </span>
+                                    )}
+                                    {hasCustomization && (
+                                        <span className="font-semibold tabular-nums text-sm text-muted-foreground">
+                                            +
+                                            {formatCurrency(
+                                                customizationCharge * quantity,
+                                            )}
+                                        </span>
+                                    )}
+                                    {hasCustomization &&
+                                        !isOutOfStock &&
+                                        quantity >= 1 && (
+                                            <>
+                                                <span className="w-full border-t border-border my-0.5" />
+                                                <span className="text-sm font-black text-foreground">
+                                                    {formatCurrency(
+                                                        (priceAmount +
+                                                            customizationCharge) *
+                                                            quantity,
+                                                    )}
+                                                </span>
+                                            </>
+                                        )}
+                                </span>
                             </div>
 
                             {/* CTA buttons */}

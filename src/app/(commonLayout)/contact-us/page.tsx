@@ -441,7 +441,7 @@ export default function ContactUs() {
                                                 Email
                                             </h3>
                                             <p className="text-gray-400 text-sm">
-                                                support@jerseycravings.com
+                                                mdalmizanakon@gmail.com
                                             </p>
                                         </div>
                                     </div>
@@ -469,7 +469,7 @@ export default function ContactUs() {
                                                 Location
                                             </h3>
                                             <p className="text-gray-400 text-sm">
-                                                Dhaka, Bangladesh
+                                                Savar, Dhaka, Bangladesh
                                             </p>
                                         </div>
                                     </div>
@@ -511,7 +511,7 @@ export default function ContactUs() {
                                                 <FaInstagram className="h-5 w-5" />
                                             </a>
                                         </Button>
-                                        <Button
+                                        {/* <Button
                                             variant="outline"
                                             size="icon"
                                             className="bg-gray-800/50 border-gray-600 hover:bg-sky-500 hover:border-sky-500 hover:text-white text-gray-400"
@@ -524,7 +524,7 @@ export default function ContactUs() {
                                             >
                                                 <FaTwitter className="h-5 w-5" />
                                             </a>
-                                        </Button>
+                                        </Button> */}
                                     </div>
                                 </CardContent>
                             </Card>

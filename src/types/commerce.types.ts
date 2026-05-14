@@ -10,6 +10,9 @@ export interface ICartItem {
     createdAt: string;
     updatedAt: string;
     variantId: string;
+    customPlayerName?: string;
+    customJerseyNumber?: string;
+    customizationCharge: number;
     variant?: {
         id: string;
         sku: string;

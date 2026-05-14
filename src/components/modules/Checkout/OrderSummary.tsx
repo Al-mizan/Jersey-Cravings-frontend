@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import axios from "axios";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Tag, Truck, Trash2, Minus, Plus } from "lucide-react";
+import { Loader2, Lock, Tag, Truck, Trash2, Minus, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
 
@@ -158,7 +158,9 @@ export default function OrderSummary({
         () =>
             cartItems.reduce(
                 (sum, item) =>
-                    sum + item.qty * (item.variant?.priceAmount ?? 0),
+                    sum +
+                    item.qty * (item.variant?.priceAmount ?? 0) +
+                    item.customizationCharge * item.qty,
                 0,
             ),
         [cartItems],
@@ -185,7 +187,10 @@ export default function OrderSummary({
     const total = Math.max(0, totalBeforePoints - redeemedPoints);
 
     const isPickup = shippingMethod === "ju";
-    const isCodAllowed = isPickup;
+    const hasCustomizedItems = cartItems.some(
+        (item) => item.customPlayerName && item.customJerseyNumber,
+    );
+    const isCodAllowed = isPickup && !hasCustomizedItems;
 
     useEffect(() => {
         setShippingError(null);
@@ -754,8 +759,12 @@ export default function OrderSummary({
                                             {title}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
-                                            {size && `Size: ${size} · `}Qty:{" "}
-                                            {item.qty}
+                                            {size && `Size: ${size}`}
+                                            {item.customPlayerName &&
+                                                ` · Name: ${item.customPlayerName}`}
+                                            {item.customJerseyNumber &&
+                                                ` · Number: ${item.customJerseyNumber}`}
+                                            {` · Qty: ${item.qty}`}
                                         </p>
                                     </div>
                                     <div className="flex items-center justify-between gap-2">
@@ -900,32 +909,42 @@ export default function OrderSummary({
                     {PAYMENT_OPTIONS.map((opt) => {
                         const isDisabled = opt.id === "COD" && !isCodAllowed;
                         return (
-                            <Label
-                                key={opt.id}
-                                htmlFor={`payment-${opt.id}`}
-                                className={cn(
-                                    "flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-all",
-                                    paymentMethod === opt.id
-                                        ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                                        : "border-border hover:border-muted-foreground/30",
-                                    isDisabled &&
-                                        "cursor-not-allowed opacity-60",
-                                )}
-                            >
-                                <RadioGroupItem
-                                    value={opt.id}
-                                    id={`payment-${opt.id}`}
-                                    disabled={isDisabled}
-                                />
-                                <span className="text-sm font-medium">
-                                    {opt.label}
-                                </span>
-                                {isDisabled && (
-                                    <span className="text-xs text-muted-foreground">
-                                        Available only for pickup orders
+                            <div key={opt.id}>
+                                <Label
+                                    htmlFor={`payment-${opt.id}`}
+                                    className={cn(
+                                        "flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-all",
+                                        paymentMethod === opt.id
+                                            ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                                            : "border-border hover:border-muted-foreground/30",
+                                        isDisabled &&
+                                            "cursor-not-allowed opacity-60",
+                                    )}
+                                >
+                                    <RadioGroupItem
+                                        value={opt.id}
+                                        id={`payment-${opt.id}`}
+                                        disabled={isDisabled}
+                                    />
+                                    <span className="text-sm font-medium">
+                                        {opt.label}
                                     </span>
-                                )}
-                            </Label>
+                                    {isDisabled && (
+                                        <span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
+                                            <Lock className="size-3" />
+                                            Unavailable
+                                        </span>
+                                    )}
+                                </Label>
+                                {isDisabled &&
+                                    hasCustomizedItems &&
+                                    opt.id === "COD" && (
+                                        <p className="mt-1.5 ml-9 text-xs text-muted-foreground">
+                                            Custom printed orders require
+                                            advance payment via Bkash or Nagad.
+                                        </p>
+                                    )}
+                            </div>
                         );
                     })}
                 </RadioGroup>

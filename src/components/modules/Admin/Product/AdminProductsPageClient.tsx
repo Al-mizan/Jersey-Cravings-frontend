@@ -227,7 +227,7 @@ export default function AdminProductsPageClient() {
         () => ({
             // Single "View / Edit" → opens the product detail page
             onViewEdit: (product: IProduct) =>
-                router.push(`/admin/products/${product.id}`),
+                router.push(`/admin/products/${product.slug}`),
             onDelete: async (product: IProduct) => {
                 toast.custom((t) => (
                     <div className="w-[360px] rounded-xl border bg-card p-4 shadow-lg">

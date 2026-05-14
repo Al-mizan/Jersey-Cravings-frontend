@@ -22,6 +22,7 @@ const ADMIN_ENDPOINTS = {
     auditLogs: "/audit-logs",
     myActivity: "/audit-logs/my-activity",
     activityTimeline: "/audit-logs/timeline",
+    contacts: "/contact",
 };
 
 // Dashboard Services
@@ -43,7 +44,9 @@ export async function getCatalogStats(): Promise<
 > {
     return safeServiceCall(
         () =>
-            unwrapData<ICatalogStats>(httpClient.get(ADMIN_ENDPOINTS.catalogStats)),
+            unwrapData<ICatalogStats>(
+                httpClient.get(ADMIN_ENDPOINTS.catalogStats),
+            ),
         null,
         "Failed to fetch catalog stats:",
     );
@@ -51,7 +54,8 @@ export async function getCatalogStats(): Promise<
 
 export async function getOrderStats(): Promise<IOrderStats | null | undefined> {
     return safeServiceCall(
-        () => unwrapData<IOrderStats>(httpClient.get(ADMIN_ENDPOINTS.orderStats)),
+        () =>
+            unwrapData<IOrderStats>(httpClient.get(ADMIN_ENDPOINTS.orderStats)),
         null,
         "Failed to fetch order stats:",
     );
@@ -98,7 +102,10 @@ export async function getAdminById(
     id: string,
 ): Promise<IAdmin | null | undefined> {
     return safeServiceCall(
-        () => unwrapData<IAdmin>(httpClient.get(`${ADMIN_ENDPOINTS.admins}/${id}`)),
+        () =>
+            unwrapData<IAdmin>(
+                httpClient.get(`${ADMIN_ENDPOINTS.admins}/${id}`),
+            ),
         null,
         "Failed to fetch admin:",
     );
@@ -196,5 +203,42 @@ export async function getEntityAuditLogs(
             ),
         null,
         "Failed to fetch entity audit logs:",
+    );
+}
+
+// Contact Services
+export async function getAllContacts(): Promise<any[] | null | undefined> {
+    return safeServiceCall(
+        () => unwrapData<any[]>(httpClient.get(ADMIN_ENDPOINTS.contacts)),
+        null,
+        "Failed to fetch contacts:",
+    );
+}
+
+export async function getContactById(
+    id: string,
+): Promise<any | null | undefined> {
+    return safeServiceCall(
+        () =>
+            unwrapData<any>(
+                httpClient.get(`${ADMIN_ENDPOINTS.contacts}/${id}`),
+            ),
+        null,
+        "Failed to fetch contact:",
+    );
+}
+
+export async function updateContactStatus(
+    id: string,
+    data: { status: string; isRead?: boolean },
+): Promise<any> {
+    return unwrapData<any>(
+        httpClient.patch(`${ADMIN_ENDPOINTS.contacts}/${id}/status`, data),
+    );
+}
+
+export async function deleteContact(id: string): Promise<any> {
+    return unwrapData<any>(
+        httpClient.delete(`${ADMIN_ENDPOINTS.contacts}/${id}`),
     );
 }

@@ -106,7 +106,7 @@ const shippingFAQs = [
     },
     {
         question: "Is Cash on Delivery (COD) available?",
-        answer: "Yes, COD is available for all orders within Bangladesh. For international orders, only prepaid payment methods are accepted.",
+        answer: "Yes, COD is available for all orders within Bangladesh. You can choose this option at checkout and pay the delivery agent when your package arrives.",
     },
     {
         question: "Can I track my shipment?",
@@ -272,7 +272,7 @@ export default function ShippingPage() {
             </section>
 
             {/* Shipping Zones Table */}
-            <section className="py-16 lg:py-24 bg-gray-800/50">
+            {/* <section className="py-16 lg:py-24 bg-gray-800/50">
                 <div className="container mx-auto px-4">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
@@ -345,7 +345,7 @@ export default function ShippingPage() {
                         </Card>
                     </motion.div>
                 </div>
-            </section>
+            </section> */}
 
             {/* Free Shipping Banner */}
             <section className="py-12 bg-gradient-to-r from-red-600 to-orange-600 relative overflow-hidden">
@@ -360,7 +360,7 @@ export default function ShippingPage() {
                         <div className="flex items-center justify-center mb-4">
                             <Shield className="w-12 h-12 text-white mr-4" />
                             <h2 className="text-3xl lg:text-4xl font-bold text-white">
-                                Free Delivery on Orders Above ৳1500
+                                Free Delivery on Orders Above ৳3000
                             </h2>
                         </div>
                         <p className="text-xl text-gray-200 mb-6">

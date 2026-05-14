@@ -9,15 +9,16 @@ if (!BASE_API_URL) {
     throw new Error("NEXT_PUBLIC_API_BASE_URL is not defined");
 }
 
-
-export async function getNewTokensWithRefreshToken(refreshToken: string): Promise<boolean> {
+export async function getNewTokensWithRefreshToken(
+    refreshToken: string,
+): Promise<boolean> {
     try {
         const res = await fetch(`${BASE_API_URL}/auth/refresh-token`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                Cookie: `refreshToken=${refreshToken}`
-            }
+                Cookie: `refreshToken=${refreshToken}`,
+            },
         });
 
         if (!res.ok) {
@@ -56,12 +57,16 @@ export async function getUserInfo() {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
-                Cookie: `accessToken=${accessToken}`
-            }
+                Cookie: `accessToken=${accessToken}`,
+            },
         });
 
         if (!res.ok) {
-            console.error("Failed to fetch user info:", res.status, res.statusText);
+            console.error(
+                "Failed to fetch user info:",
+                res.status,
+                res.statusText,
+            );
             return null;
         }
 
@@ -84,14 +89,18 @@ export async function logout() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Cookie: `refreshToken=${refreshToken}`
-                }
+                    Cookie: `refreshToken=${refreshToken}`,
+                },
             });
         }
 
         // Clear tokens from cookies
         await setTokenInCookies("accessToken", "", -1 /* expire immediately */);
-        await setTokenInCookies("refreshToken", "", -1 /* expire immediately */);
+        await setTokenInCookies(
+            "refreshToken",
+            "",
+            -1 /* expire immediately */,
+        );
     } catch (error) {
         console.error("Error during logout:", error);
     }
@@ -102,9 +111,9 @@ export async function verifyEmail(email: string, otp: string) {
         const res = await fetch(`${BASE_API_URL}/auth/verify-email`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             },
-            body: JSON.stringify({ email, otp })
+            body: JSON.stringify({ email, otp }),
         });
         if (!res.ok) {
             const body = await res.json().catch(() => ({}));
@@ -120,12 +129,12 @@ export async function verifyEmail(email: string, otp: string) {
 
 export async function sendVerificationOtp(email: string) {
     try {
-        const res = await fetch(`${BASE_API_URL}/auth/send-verification-otp`, {
+        const res = await fetch(`${BASE_API_URL}/auth/send-otp`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             },
-            body: JSON.stringify({ email })
+            body: JSON.stringify({ email }),
         });
         if (!res.ok) {
             const body = await res.json().catch(() => ({}));
