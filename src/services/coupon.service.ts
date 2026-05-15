@@ -91,7 +91,7 @@ export async function restoreCoupon(couponId: string): Promise<ICoupon> {
     return safeServiceMutation(
         () =>
             unwrapData<ICoupon>(
-                httpClient.patch(`${COUPON_ENDPOINTS.coupons}/${couponId}/restore`),
+                httpClient.patch(`${COUPON_ENDPOINTS.coupons}/${couponId}/restore`, {}),
             ),
         "Failed to restore coupon:",
     );
