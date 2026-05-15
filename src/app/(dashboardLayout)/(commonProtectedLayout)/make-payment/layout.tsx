@@ -1,5 +1,3 @@
-import HomeNavbar from "@/components/shared/Navbar/HomeNavbar";
-import Footer from "@/components/shared/Footer/Footer";
 
 export default function MakePaymentLayout({
     children,

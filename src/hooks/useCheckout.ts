@@ -11,7 +11,7 @@ import {
     getMyOrderById,
     cancelMyOrder,
     initiatePayment,
-    finalizePayment,
+    verifyTrxId,
     getMyLoyaltySummary,
     getMyPointTransactions,
     redeemPoints,
@@ -19,8 +19,8 @@ import {
     getMyReferralEvents,
     type CreateOrderPayload,
     type CouponValidateResponse,
-    type FinalizePaymentPayload,
     type RedeemPointsResponse,
+    type VerifyTrxIdPayload,
 } from "@/services/checkout.service";
 import type { IPickupLocation } from "@/types/commerce.types";
 
@@ -211,25 +211,19 @@ export function useInitiatePayment() {
     });
 }
 
-export function useFinalizePayment() {
+export function useVerifyTrxId() {
     const queryClient = useQueryClient();
     const router = useRouter();
 
     return useMutation({
-        mutationFn: (payload: FinalizePaymentPayload & { orderId: string }) => {
-            const { orderId, ...rest } = payload;
-            return finalizePayment(rest).then((result) => ({
-                ...result,
-                orderId,
-            }));
-        },
-        onSuccess: (data) => {
-            toast.success("Payment confirmed successfully!");
+        mutationFn: (payload: VerifyTrxIdPayload) => verifyTrxId(payload),
+        onSuccess: (order) => {
+            toast.success("Payment verified successfully!");
             queryClient.invalidateQueries({
-                queryKey: checkoutKeys.order(data.orderId),
+                queryKey: checkoutKeys.order(order.id),
             });
             queryClient.invalidateQueries({ queryKey: checkoutKeys.orders });
-            router.push(`/my-section/orders/${data.orderId}`);
+            router.push(`/my-section/orders/${order.id}`);
         },
         onError: (error: unknown) => {
             const message = getErrorMessage(error);

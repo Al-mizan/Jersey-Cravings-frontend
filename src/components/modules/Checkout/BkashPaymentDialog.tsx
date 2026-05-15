@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { useInitiatePayment, useFinalizePayment } from "@/hooks/useCheckout";
+import { useVerifyTrxId } from "@/hooks/useCheckout";
 import { bkashTrxIdSchema } from "@/zod/order.validation";
 
 interface BkashPaymentDialogProps {
@@ -36,10 +35,9 @@ export default function BkashPaymentDialog({
     const [trxId, setTrxId] = useState("");
     const [error, setError] = useState<string | null>(null);
 
-    const initiateMutation = useInitiatePayment();
-    const finalizeMutation = useFinalizePayment();
+    const verifyTrxIdMutation = useVerifyTrxId();
 
-    const isPending = initiateMutation.isPending || finalizeMutation.isPending;
+    const isPending = verifyTrxIdMutation.isPending;
 
     const handleConfirm = async () => {
         setError(null);
@@ -55,21 +53,13 @@ export default function BkashPaymentDialog({
         const normalizedTrxId = parsed.data.trxId;
 
         try {
-            // Step 1: Initiate payment
-            await initiateMutation.mutateAsync({ orderId });
-
-            // Step 2: Finalize with TrxID
-            await finalizeMutation.mutateAsync({
-                transactionId: normalizedTrxId,
-                status: "SUCCEEDED",
+            await verifyTrxIdMutation.mutateAsync({
                 orderId,
-                paymentGatewayData: {
-                    provider: "bkash",
-                    trxId: normalizedTrxId,
-                },
+                trxId: normalizedTrxId,
             });
+            // onOpenChange(false) and navigation are handled in the hook's onSuccess
         } catch {
-            // Error toasts are handled by the hooks
+            // Error toasts are handled by the hook
         }
     };
 
@@ -95,12 +85,7 @@ export default function BkashPaymentDialog({
                     </div>
                     <DialogTitle className="text-xl">Pay via Bkash</DialogTitle>
                     <DialogDescription className="text-sm text-muted-foreground">
-                        Send{" "}
-                        <span className="font-bold text-foreground">
-                            ৳{totalAmount.toLocaleString("en-US")}
-                        </span>{" "}
-                        to our Bkash merchant number and enter the Transaction
-                        ID below.
+                        Send money to our bKash merchant number and enter the Transaction ID below.
                     </DialogDescription>
                 </DialogHeader>
 

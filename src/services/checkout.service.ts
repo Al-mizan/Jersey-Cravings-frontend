@@ -218,16 +218,15 @@ export async function initiatePayment(
     );
 }
 
-export interface FinalizePaymentPayload {
-    transactionId: string;
-    status: "SUCCEEDED" | "FAILED" | "CANCELED" | "REFUNDED";
-    paymentGatewayData?: Record<string, unknown>;
+export interface VerifyTrxIdPayload {
+    orderId: string;
+    trxId: string;
 }
 
-export async function finalizePayment(
-    payload: FinalizePaymentPayload,
-): Promise<PaymentResult> {
-    return unwrapData<PaymentResult>(
-        httpClient.post("/payments/webhook/finalize", payload),
+export async function verifyTrxId(
+    payload: VerifyTrxIdPayload,
+): Promise<IOrder> {
+    return unwrapData<IOrder>(
+        httpClient.post("/payments/verify-trxid", payload),
     );
 }
