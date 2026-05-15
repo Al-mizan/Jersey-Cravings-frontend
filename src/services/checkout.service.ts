@@ -226,6 +226,7 @@ export interface VerifyTrxIdPayload {
 export async function verifyTrxId(
     payload: VerifyTrxIdPayload,
 ): Promise<IOrder> {
+    console.log(payload);
     return unwrapData<IOrder>(
         httpClient.post("/payments/verify-trxid", payload),
     );

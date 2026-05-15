@@ -85,7 +85,7 @@ export default function BkashPaymentDialog({
                     </div>
                     <DialogTitle className="text-xl">Pay via Bkash</DialogTitle>
                     <DialogDescription className="text-sm text-muted-foreground">
-                        Send money to our bKash merchant number and enter the Transaction ID below.
+                        Send money to our Bkash number and enter the Transaction ID below.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -114,7 +114,7 @@ export default function BkashPaymentDialog({
                     </div>
 
                     {/* Placeholder instruction images */}
-                    <div className="grid grid-cols-3 gap-2">
+                    {/* <div className="grid grid-cols-3 gap-2">
                         {[1, 2, 3].map((i) => (
                             <div
                                 key={i}
@@ -125,7 +125,7 @@ export default function BkashPaymentDialog({
                                 </span>
                             </div>
                         ))}
-                    </div>
+                    </div> */}
 
                     <Separator />
 
@@ -142,7 +142,7 @@ export default function BkashPaymentDialog({
                             placeholder="e.g. BK12345678"
                             value={trxId}
                             onChange={(e) => {
-                                setTrxId(e.target.value.toUpperCase());
+                                setTrxId(e.target.value);
                                 if (error) setError(null);
                             }}
                             maxLength={10}
