@@ -1,7 +1,11 @@
 "use server";
 
 import { httpClient } from "@/lib/axios/httpClient";
-import { safeServiceCall, safeServiceMutation, unwrapData } from "@/services/service-utils";
+import {
+    safeServiceCall,
+    safeServiceMutation,
+    unwrapData,
+} from "@/services/service-utils";
 import {
     ICatalogStats,
     ICustomerStats,
@@ -118,7 +122,10 @@ export async function createAdmin(
     payload: ICreateAdminPayload,
 ): Promise<IAdmin> {
     return safeServiceMutation(
-        () => unwrapData<IAdmin>(httpClient.post(ADMIN_ENDPOINTS.admins, payload)),
+        () =>
+            unwrapData<IAdmin>(
+                httpClient.post(ADMIN_ENDPOINTS.admins, payload),
+            ),
         "Failed to create admin:",
     );
 }
@@ -154,7 +161,10 @@ export async function changeUserStatus(
     return safeServiceMutation(
         () =>
             unwrapData<{ message: string }>(
-                httpClient.patch(`${ADMIN_ENDPOINTS.admins}/user/status`, payload),
+                httpClient.patch(
+                    `${ADMIN_ENDPOINTS.admins}/user/status`,
+                    payload,
+                ),
             ),
         "Failed to change user status:",
     );
@@ -166,7 +176,10 @@ export async function changeUserRole(
     return safeServiceMutation(
         () =>
             unwrapData<{ message: string }>(
-                httpClient.patch(`${ADMIN_ENDPOINTS.admins}/user/role`, payload),
+                httpClient.patch(
+                    `${ADMIN_ENDPOINTS.admins}/user/role`,
+                    payload,
+                ),
             ),
         "Failed to change user role:",
     );

@@ -52,10 +52,15 @@ export default function AdminViewDetailsDialog({
                     {/* Profile Section */}
                     <div className="flex flex-col items-center">
                         <Avatar className="h-20 w-20">
-                            <AvatarImage src={admin.profilePhoto || ""} alt={admin.name} />
+                            <AvatarImage
+                                src={admin.profilePhoto || ""}
+                                alt={admin.name}
+                            />
                             <AvatarFallback>{initials}</AvatarFallback>
                         </Avatar>
-                        <h3 className="mt-4 text-lg font-semibold">{admin.name}</h3>
+                        <h3 className="mt-4 text-lg font-semibold">
+                            {admin.name}
+                        </h3>
                         <p className="text-sm text-muted-foreground">
                             @{admin.identifier}
                         </p>

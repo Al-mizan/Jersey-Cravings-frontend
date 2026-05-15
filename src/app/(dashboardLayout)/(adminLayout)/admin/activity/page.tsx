@@ -1,8 +1,5 @@
+import ActivityPageClient from "@/components/modules/Admin/Governance/ActivityPageClient";
 
 export default function ActivityPage() {
-    return (
-        <div>
-            Activity Page
-        </div>
-    )
+    return <ActivityPageClient />;
 }

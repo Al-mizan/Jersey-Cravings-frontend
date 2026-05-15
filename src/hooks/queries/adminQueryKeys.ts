@@ -94,3 +94,11 @@ export const adminProfileKeys = {
     all: ["admin", "profile"] as const,
     detail: (adminId: string) => [...adminProfileKeys.all, adminId] as const,
 };
+
+export const adminQueryKeys = {
+    all: ["admin"] as const,
+    admins: (params: any) => [...adminUserKeys.admins.all, "list", params] as const,
+    auditLogs: (params: any) => ["admin", "audit-logs", params] as const,
+    activity: (params: any) => ["admin", "activity", params] as const,
+    coupons: (params: any) => ["admin", "coupons", params] as const,
+};

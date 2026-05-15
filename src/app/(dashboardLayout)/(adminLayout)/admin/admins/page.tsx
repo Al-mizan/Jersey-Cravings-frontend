@@ -1,3 +1,5 @@
+import AdminsPageClient from "@/components/modules/Admin/Governance/AdminsPageClient";
+
 export default function AdminsPage() {
-    return <div>Admins Page</div>;
+    return <AdminsPageClient />;
 }

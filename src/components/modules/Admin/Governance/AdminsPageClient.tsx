@@ -3,16 +3,27 @@
 import { Button } from "@/components/ui/button";
 import { useState, useMemo, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ColumnDef, PaginationState, SortingState } from "@tanstack/react-table";
+import type {
+    ColumnDef,
+    PaginationState,
+    SortingState,
+} from "@tanstack/react-table";
 import { toast } from "sonner";
 import { Plus, Trash2, Edit2 } from "lucide-react";
-import Link from "next/link";
 
 import DataTable from "@/components/shared/table/DataTable";
-import type { DataTableFilterConfig, DataTableFilterValues } from "@/components/shared/table/DataTableFilters";
+import type {
+    DataTableFilterConfig,
+    DataTableFilterValue,
+    DataTableFilterValues,
+} from "@/components/shared/table/DataTableFilters";
 import DateCell from "@/components/shared/cell/DateCell";
 
-import { getAllAdmins, deleteAdmin, changeUserStatus } from "@/services/admin.service";
+import {
+    getAllAdmins,
+    deleteAdmin,
+    changeUserStatus,
+} from "@/services/admin.service";
 import type { IAdmin } from "@/types/admin.types";
 import { adminQueryKeys } from "@/hooks/queries/adminQueryKeys";
 
@@ -34,16 +45,16 @@ const STATUS_CLASS: Record<string, string> = {
 
 export default function AdminsPageClient() {
     const queryClient = useQueryClient();
-    
+
     const [paginationState, setPaginationState] = useState<PaginationState>({
         pageIndex: 0,
         pageSize: DEFAULT_LIMIT,
     });
-    
+
     const [sortingState, setSortingState] = useState<SortingState>([
         { id: "createdAt", desc: true },
     ]);
-    
+
     const [searchTerm, setSearchTerm] = useState("");
     const [filters, setFilters] = useState<DataTableFilterValues>({});
     const [selectedAdmin, setSelectedAdmin] = useState<IAdmin | null>(null);
@@ -57,7 +68,14 @@ export default function AdminsPageClient() {
 
     // Query for admins
     const adminsQuery = useQuery({
-        queryKey: adminQueryKeys.admins({ page, limit, sortBy, sortOrder, searchTerm }),
+        queryKey: adminQueryKeys.admins({
+            page,
+            limit,
+            sortBy,
+            sortOrder,
+            searchTerm,
+            ...filters,
+        }),
         queryFn: () =>
             getAllAdmins(searchTerm || undefined, page, limit, false),
         placeholderData: (previousData) => previousData,
@@ -71,7 +89,9 @@ export default function AdminsPageClient() {
             queryClient.invalidateQueries({ queryKey: adminQueryKeys.all });
         },
         onError: (error: any) => {
-            toast.error(error?.response?.data?.message || "Failed to delete admin");
+            toast.error(
+                error?.response?.data?.message || "Failed to delete admin",
+            );
         },
     });
 
@@ -88,7 +108,9 @@ export default function AdminsPageClient() {
             setShowDetailsDialog(false);
         },
         onError: (error: any) => {
-            toast.error(error?.response?.data?.message || "Failed to update status");
+            toast.error(
+                error?.response?.data?.message || "Failed to update status",
+            );
         },
     });
 
@@ -115,6 +137,27 @@ export default function AdminsPageClient() {
         ],
         [],
     );
+
+    const handleFilterChange = useCallback(
+        (filterId: string, value: DataTableFilterValue | undefined) => {
+            setFilters((prev) => {
+                const next = { ...prev };
+                if (value === undefined || value === "") {
+                    delete next[filterId];
+                } else {
+                    next[filterId] = value;
+                }
+                return next;
+            });
+            setPaginationState((prev) => ({ ...prev, pageIndex: 0 }));
+        },
+        [],
+    );
+
+    const handleClearFilters = useCallback(() => {
+        setFilters({});
+        setPaginationState((prev) => ({ ...prev, pageIndex: 0 }));
+    }, []);
 
     const columns = useMemo<ColumnDef<IAdmin>[]>(
         () => [
@@ -150,7 +193,9 @@ export default function AdminsPageClient() {
                 cell: ({ row }) => (
                     <div
                         className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${
-                            STATUS_CLASS[row.original.user?.status || "ACTIVE"] ||
+                            STATUS_CLASS[
+                                row.original.user?.status || "ACTIVE"
+                            ] ||
                             "border-zinc-500/20 bg-zinc-500/10 text-zinc-600"
                         }`}
                     >
@@ -187,7 +232,11 @@ export default function AdminsPageClient() {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                                if (confirm("Are you sure you want to delete this admin?")) {
+                                if (
+                                    confirm(
+                                        "Are you sure you want to delete this admin?",
+                                    )
+                                ) {
                                     deleteMutation.mutate(row.original.id);
                                 }
                             }}
@@ -221,18 +270,32 @@ export default function AdminsPageClient() {
             <DataTable
                 columns={columns}
                 data={adminsQuery.data?.data ?? []}
-                pagination={paginationState}
-                onPaginationChange={setPaginationState}
-                sorting={sortingState}
-                onSortingChange={setSortingState}
-                searchValue={searchTerm}
-                onSearchChange={setSearchTerm}
-                filterConfigs={filterConfigs}
-                filterValues={filters}
-                onFiltersChange={setFilters}
+                pagination={{
+                    state: paginationState,
+                    onPaginationChange: setPaginationState,
+                }}
+                sorting={{
+                    state: sortingState,
+                    onSortingChange: setSortingState,
+                }}
+                search={{
+                    initialValue: searchTerm,
+                    onDebouncedChange: setSearchTerm,
+                    placeholder: "Search admins...",
+                }}
+                filters={{
+                    configs: filterConfigs,
+                    values: filters,
+                    onFilterChange: handleFilterChange,
+                    onClearAll: handleClearFilters,
+                }}
                 isLoading={adminsQuery.isLoading}
-                pageCount={adminsQuery.data?.totalPages ?? 0}
-                rowCount={adminsQuery.data?.total ?? 0}
+                meta={{
+                    page: adminsQuery.data?.page ?? 1,
+                    limit: adminsQuery.data?.limit ?? DEFAULT_LIMIT,
+                    total: adminsQuery.data?.total ?? 0,
+                    totalPages: adminsQuery.data?.totalPages ?? 0,
+                }}
             />
 
             {showCreateDialog && (

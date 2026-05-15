@@ -1,3 +1,5 @@
-export default function AuditLogs() {
-    return <div>This is AuditLogs component</div>;
+import AuditLogsPageClient from "@/components/modules/Admin/Governance/AuditLogsPageClient";
+
+export default function AuditLogsPage() {
+    return <AuditLogsPageClient />;
 }

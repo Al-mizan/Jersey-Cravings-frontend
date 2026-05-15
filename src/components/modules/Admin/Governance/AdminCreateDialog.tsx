@@ -1,7 +1,6 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
-import { zodValidator } from "@tanstack/zod-form-adapter";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +20,6 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { createAdminZodSchema } from "@/zod/admin.validation";
 import { createAdmin } from "@/services/admin.service";
 import type { ICreateAdminPayload } from "@/types/admin.types";
 
@@ -49,10 +47,10 @@ export default function AdminCreateDialog({
         },
     });
 
-    const form = useForm<ICreateAdminPayload>({
+    const form = useForm({
         defaultValues: {
             password: "",
-            role: "ADMIN",
+            role: "ADMIN" as "ADMIN" | "SUPER_ADMIN",
             admin: {
                 name: "",
                 identifier: "",
@@ -60,9 +58,8 @@ export default function AdminCreateDialog({
                 profilePhoto: "",
             },
         },
-        validatorAdapter: zodValidator(),
         onSubmit: async ({ value }) => {
-            createMutation.mutate(value);
+            createMutation.mutate(value as ICreateAdminPayload);
         },
     });
 
@@ -145,9 +142,7 @@ export default function AdminCreateDialog({
                         )}
                     </form.Field>
 
-                    <form.Field
-                        name="admin.contactNumber"
-                    >
+                    <form.Field name="admin.contactNumber">
                         {(field) => (
                             <div>
                                 <label className="block text-sm font-medium mb-2">
@@ -175,9 +170,11 @@ export default function AdminCreateDialog({
                         name="password"
                         validators={{
                             onChange: ({ value }) =>
-                                !value ? "Password is required" : value.length < 6
-                                    ? "Password must be at least 6 characters"
-                                    : undefined,
+                                !value
+                                    ? "Password is required"
+                                    : value.length < 6
+                                      ? "Password must be at least 6 characters"
+                                      : undefined,
                         }}
                     >
                         {(field) => (
@@ -204,9 +201,7 @@ export default function AdminCreateDialog({
                         )}
                     </form.Field>
 
-                    <form.Field
-                        name="role"
-                    >
+                    <form.Field name="role">
                         {(field) => (
                             <div>
                                 <label className="block text-sm font-medium mb-2">
@@ -216,7 +211,7 @@ export default function AdminCreateDialog({
                                     value={field.state.value}
                                     onValueChange={(value) =>
                                         field.handleChange(
-                                            value as "ADMIN" | "SUPER_ADMIN"
+                                            value as "ADMIN" | "SUPER_ADMIN",
                                         )
                                     }
                                     disabled={createMutation.isPending}
@@ -225,7 +220,9 @@ export default function AdminCreateDialog({
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="ADMIN">Admin</SelectItem>
+                                        <SelectItem value="ADMIN">
+                                            Admin
+                                        </SelectItem>
                                         <SelectItem value="SUPER_ADMIN">
                                             Super Admin
                                         </SelectItem>
