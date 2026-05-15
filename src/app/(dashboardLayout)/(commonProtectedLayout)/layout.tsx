@@ -1,6 +1,8 @@
 import HomeNavbar from "@/components/shared/Navbar/HomeNavbar";
 import Footer from "@/components/shared/Footer/Footer";
 
+export const dynamic = "force-dynamic";
+
 export default function MySectionLayout({
     children,
 }: Readonly<{
