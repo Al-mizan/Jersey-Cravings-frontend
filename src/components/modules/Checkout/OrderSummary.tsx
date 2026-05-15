@@ -169,7 +169,7 @@ export default function OrderSummary({
 
     const shippingPrice = useMemo(() => {
         if (shippingMethod === "ju") return 0;
-        if (shippingMethod === "dhaka") return 79;
+        if (shippingMethod === "dhaka") return 1; //todo: 79
         if (shippingMethod === "outside") return 119;
         return 0;
     }, [shippingMethod]);
@@ -750,7 +750,9 @@ export default function OrderSummary({
                     {cartItems.map((item) => {
                         const product = item.variant?.product;
                         const thumb =
-                            product?.thumbNail ?? "/jersey_cravings.png";
+                            item.variant?.product?.media?.[0]?.secureUrl ??
+                            item.variant?.product?.thumbNail ??
+                            "/jersey_cravings.png";
                         const title = product?.title ?? "Product";
                         const size = item.variant?.size ?? "";
                         const unitPrice = item.variant?.priceAmount ?? 0;

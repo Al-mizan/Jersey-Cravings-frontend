@@ -40,6 +40,10 @@ export interface IOrderItem {
         title: string;
         slug?: string;
         thumbNail?: string | null;
+        media?: {
+            id: string;
+            secureUrl: string;
+        }[]
     };
     variant?: {
         id: string;

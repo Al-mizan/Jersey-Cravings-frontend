@@ -1,7 +1,7 @@
 "use server";
 
 import { httpClient } from "@/lib/axios/httpClient";
-import { safeServiceCall, unwrapData } from "@/services/service-utils";
+import { safeServiceCall, safeServiceMutation, unwrapData } from "@/services/service-utils";
 import {
     ICatalogStats,
     ICustomerStats,
@@ -11,6 +11,9 @@ import {
     IAdmin,
     IAuditLogListResponse,
     IActivityFeedResponse,
+    ICreateAdminPayload,
+    IChangeUserStatusPayload,
+    IChangeUserRolePayload,
 } from "@/types/admin.types";
 
 const ADMIN_ENDPOINTS = {
@@ -111,14 +114,61 @@ export async function getAdminById(
     );
 }
 
+export async function createAdmin(
+    payload: ICreateAdminPayload,
+): Promise<IAdmin> {
+    return safeServiceMutation(
+        () => unwrapData<IAdmin>(httpClient.post(ADMIN_ENDPOINTS.admins, payload)),
+        "Failed to create admin:",
+    );
+}
+
 export async function updateAdminById(
     id: string,
     data: FormData,
 ): Promise<IAdmin> {
-    return unwrapData<IAdmin>(
-        httpClient.patch(`${ADMIN_ENDPOINTS.admins}/${id}`, data, {
-            headers: { "Content-Type": "multipart/form-data" },
-        }),
+    return safeServiceMutation(
+        () =>
+            unwrapData<IAdmin>(
+                httpClient.patch(`${ADMIN_ENDPOINTS.admins}/${id}`, data, {
+                    headers: { "Content-Type": "multipart/form-data" },
+                }),
+            ),
+        "Failed to update admin:",
+    );
+}
+
+export async function deleteAdmin(id: string): Promise<void> {
+    return safeServiceMutation(
+        () =>
+            unwrapData<void>(
+                httpClient.delete(`${ADMIN_ENDPOINTS.admins}/${id}`),
+            ),
+        "Failed to delete admin:",
+    );
+}
+
+export async function changeUserStatus(
+    payload: IChangeUserStatusPayload,
+): Promise<{ message: string }> {
+    return safeServiceMutation(
+        () =>
+            unwrapData<{ message: string }>(
+                httpClient.patch(`${ADMIN_ENDPOINTS.admins}/user/status`, payload),
+            ),
+        "Failed to change user status:",
+    );
+}
+
+export async function changeUserRole(
+    payload: IChangeUserRolePayload,
+): Promise<{ message: string }> {
+    return safeServiceMutation(
+        () =>
+            unwrapData<{ message: string }>(
+                httpClient.patch(`${ADMIN_ENDPOINTS.admins}/user/role`, payload),
+            ),
+        "Failed to change user role:",
     );
 }
 

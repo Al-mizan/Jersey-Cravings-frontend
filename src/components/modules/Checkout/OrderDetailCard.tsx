@@ -41,7 +41,9 @@ export default function OrderDetailCard({ order }: OrderDetailCardProps) {
                                 size?: string;
                             } | null) ?? null;
                         const thumb =
-                            item.product?.thumbNail ?? "/jersey_cravings.png";
+                            item.product?.media?.[0]?.secureUrl ??
+                            item.product?.thumbNail ??
+                            "/jersey_cravings.png";
                         const title =
                             item.product?.title ??
                             item.productTitleSnapshot ??

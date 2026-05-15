@@ -160,7 +160,7 @@ export function WriteReviewDialog({
                     <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
                         <div className="relative w-16 h-16">
                             <Image
-                                src={product.thumbnail}
+                                src={product.thumbnail ?? "/jersey_cravings.png"}
                                 alt={product.title}
                                 fill
                                 className="object-cover rounded-lg"
