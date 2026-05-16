@@ -1,5 +1,6 @@
 import { AnimatePresence, motion, useAnimation } from "motion/react";
 import { Button } from "../../ui/button";
+import { getMediaUrl } from "@/lib/media";
 import {
     Sheet,
     SheetContent,
@@ -378,10 +379,10 @@ export default function Cart() {
                                     ]
                                         .filter(Boolean)
                                         .join(" • ");
-                                    const productMedia =
-                                        item.variant?.product?.media?.[0]
-                                            ?.secureUrl ??
-                                        item.variant?.product?.thumbNail ??
+                                    const productMedia = getMediaUrl(
+                                        item.variant?.product?.media,
+                                    ) ||
+                                        item.variant?.product?.thumbNail ||
                                         "/jersey_cravings.png";
                                     const unitPrice =
                                         item.variant?.priceAmount ?? 0;

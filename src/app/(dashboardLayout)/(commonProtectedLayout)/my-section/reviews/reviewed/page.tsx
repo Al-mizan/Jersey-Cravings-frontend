@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
+import { getMediaUrl } from "@/lib/media";
 import { Star, Edit, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -83,7 +84,7 @@ export default function ReviewedPage() {
                         <div className="flex items-start space-x-3">
                             <div className="relative w-12 h-12 shrink-0">
                                 <Image
-                                    src={review.product.media?.[0]?.secureUrl || review.product.thumbnail}
+                                    src={getMediaUrl(review.product.media) || review.product.thumbnail}
                                     alt={review.product.title}
                                     fill
                                     className="object-cover rounded-lg"

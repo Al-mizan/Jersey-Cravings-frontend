@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { getMediaUrl } from "@/lib/media";
 import { cartQueryKey } from "@/hooks/useCart";
 import {
     useCreateOrder,
@@ -750,8 +751,8 @@ export default function OrderSummary({
                     {cartItems.map((item) => {
                         const product = item.variant?.product;
                         const thumb =
-                            item.variant?.product?.media?.[0]?.secureUrl ??
-                            item.variant?.product?.thumbNail ??
+                            getMediaUrl(product?.media) ||
+                            product?.thumbNail ||
                             "/jersey_cravings.png";
                         const title = product?.title ?? "Product";
                         const size = item.variant?.size ?? "";
