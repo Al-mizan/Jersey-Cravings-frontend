@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { getMediaUrl } from "@/lib/media";
 import { useMemo, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -841,7 +842,7 @@ export default function CreateProductPage() {
                                             {createdMedia.map((media) => {
                                                 const isVideo =
                                                     media.resourceType?.startsWith("video") ??
-                                                    /\.(mp4|webm|ogg|mov)$/i.test(media?.secureUrl);
+                                                    /\.(mp4|webm|ogg|mov)$/i.test(getMediaUrl(media));
 
                                                 return (
                                                     <div
@@ -850,7 +851,7 @@ export default function CreateProductPage() {
                                                     >
                                                         {isVideo ? (
                                                             <video
-                                                                src={media?.secureUrl || "/jersey_cravings.png"}
+                                                                src={getMediaUrl(media)}
                                                                 className="h-full w-full object-cover"
                                                                 muted
                                                                 playsInline
@@ -858,7 +859,7 @@ export default function CreateProductPage() {
                                                             />
                                                         ) : (
                                                             <Image
-                                                                src={media?.secureUrl || "/jersey_cravings.png"}
+                                                                src={getMediaUrl(media)}
                                                                 alt={media?.altText ?? "Uploaded product media"}
                                                                 fill
                                                                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { getMediaUrl } from "@/lib/media";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -821,7 +822,7 @@ export default function ProductDetailsPage() {
                                                 "video",
                                             ) ??
                                             /\.(mp4|webm|ogg|mov)$/i.test(
-                                                item?.secureUrl,
+                                                getMediaUrl(item),
                                             );
 
                                         return (
@@ -831,7 +832,7 @@ export default function ProductDetailsPage() {
                                             >
                                                 {isVideo ? (
                                                     <video
-                                                        src={item?.secureUrl || "/jersey_cravings.png"}
+                                                        src={getMediaUrl(item)}
                                                         className="h-full w-full object-cover"
                                                         muted
                                                         playsInline
@@ -839,7 +840,7 @@ export default function ProductDetailsPage() {
                                                     />
                                                 ) : (
                                                     <Image
-                                                        src={item?.secureUrl || "/jersey_cravings.png"}
+                                                        src={getMediaUrl(item)}
                                                         alt={
                                                             item?.altText ??
                                                             "Product media"

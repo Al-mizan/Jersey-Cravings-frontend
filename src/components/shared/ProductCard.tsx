@@ -11,6 +11,7 @@ import { IProduct } from "@/types/product.types";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { getMediaUrl } from "@/lib/media";
 import {
     Popover,
     PopoverContent,
@@ -173,9 +174,9 @@ export function ProductCard({
 
             {/* Image Container */}
             <div className="relative aspect-[3/4] h-50 md:h-80 w-full overflow-hidden bg-muted/30">
-                {product.media?.[0]?.secureUrl || product.thumbNail ? (
+                {getMediaUrl(product.media) || product.thumbNail ? (
                     <Image
-                        src={product.media?.[0]?.secureUrl || product.thumbNail || ""}
+                        src={getMediaUrl(product.media) || product.thumbNail || ""}
                         alt={product.title}
                         fill
                         className="object-fill md:object-cover md:object-center group-hover:scale-105 transition-transform duration-700 ease-out"

@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { MapPin, CreditCard, Tag, Truck } from "lucide-react";
+import { getMediaUrl } from "@/lib/media";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -41,8 +42,8 @@ export default function OrderDetailCard({ order }: OrderDetailCardProps) {
                                 size?: string;
                             } | null) ?? null;
                         const thumb =
-                            item.product?.media?.[0]?.secureUrl ??
-                            item.product?.thumbNail ??
+                            getMediaUrl(item.product?.media) ||
+                            item.product?.thumbNail ||
                             "/jersey_cravings.png";
                         const title =
                             item.product?.title ??

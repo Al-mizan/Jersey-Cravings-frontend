@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { IReview } from "@/types/customer.types";
+import { getMediaUrl } from "@/lib/media";
 import { Star } from "lucide-react";
 import Image from "next/image";
 import { useMemo } from "react";
@@ -178,15 +179,13 @@ export function ReviewsSection({
                                                         preload="metadata"
                                                     >
                                                         <source
-                                                            src={
-                                                                media?.secureUrl || "/jersey_cravings.png"
-                                                            }
+                                                            src={getMediaUrl(media)}
                                                             type="video/mp4"
                                                         />
                                                     </video>
                                                 ) : (
                                                     <Image
-                                                        src={media?.secureUrl || "/jersey_cravings.png"}
+                                                        src={getMediaUrl(media)}
                                                         alt="Review media"
                                                         fill
                                                         className="object-cover"

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
+import { getMediaUrl } from "@/lib/media";
 import { Button } from "@/components/ui/button";
 import { getPendingReviews } from "@/services/review.service";
 import type { PendingProduct } from "@/types/review.types";
@@ -75,7 +76,7 @@ export default function NotReviewedPage() {
                 >
                     <div className="relative w-16 h-16 shrink-0">
                         <Image
-                            src={product.media?.[0]?.secureUrl || product.thumbnail || "/jersey_cravings.png"}
+                            src={getMediaUrl(product.media) || product.thumbnail || "/jersey_cravings.png"}
                             alt={product.title}
                             fill
                             className="object-cover rounded-lg"

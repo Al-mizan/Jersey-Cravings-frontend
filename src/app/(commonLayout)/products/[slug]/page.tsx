@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { getMediaUrl } from "@/lib/media";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     BadgeCheck,
@@ -182,8 +183,8 @@ export default function ProductDetailsPage({
                         slug: product.slug,
                         teamName: product.teamName,
                         thumbNail:
-                        product.media?.[0]?.secureUrl ||
-                        product.thumbNail ||
+                            getMediaUrl(product.media) ||
+                            product.thumbNail ||
                             null,
                     },
                 },
@@ -478,14 +479,14 @@ export default function ProductDetailsPage({
                                         }
                                     >
                                         <source
-                                            src={activeMedia?.secureUrl || "/jersey_cravings.png"}
+                                            src={getMediaUrl(activeMedia)}
                                             type="video/mp4"
                                         />
                                     </video>
                                 ) : (
                                     <Image
                                         key={activeMedia.id}
-                                        src={activeMedia?.secureUrl || "/jersey_cravings.png"}
+                                        src={getMediaUrl(activeMedia)}
                                         alt={
                                             activeMedia.altText || product.title
                                         }
@@ -536,7 +537,7 @@ export default function ProductDetailsPage({
                                         </div>
                                     ) : (
                                         <Image
-                                            src={media?.secureUrl || "/jersey_cravings.png"}
+                                            src={getMediaUrl(media)}
                                             alt={media?.altText || product.title}
                                             fill
                                             className="object-cover"

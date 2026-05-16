@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { getMediaUrl } from "@/lib/media";
 import Image from "next/image";
 
 interface Product {
@@ -163,7 +164,7 @@ export function WriteReviewDialog({
                     <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
                         <div className="relative w-16 h-16">
                             <Image
-                                src={product.media?.[0]?.secureUrl || product.thumbnail || "/jersey_cravings.png"}
+                                src={getMediaUrl(product.media) || product.thumbnail || "/jersey_cravings.png"}
                                 alt={product.title}
                                 fill
                                 className="object-cover rounded-lg"

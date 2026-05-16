@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { adminOrderKeys } from "@/hooks/queries/adminQueryKeys";
 import { cn } from "@/lib/utils";
+import { getMediaUrl } from "@/lib/media";
 import {
     getOrderByIdForAdmin,
     updateOrderStatus,
@@ -270,8 +271,8 @@ export default function OrderDetailsPage() {
                                 sleeveType?: string;
                             } | null) ?? null;
                         const thumb =
-                            item.product?.media?.[0]?.secureUrl ??
-                            item.product?.thumbNail ??
+                            getMediaUrl(item.product?.media) ||
+                            item.product?.thumbNail ||
                             "/jersey_cravings.png";
                         const title =
                             item.product?.title ??
