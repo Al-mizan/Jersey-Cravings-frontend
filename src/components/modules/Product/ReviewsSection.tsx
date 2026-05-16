@@ -179,14 +179,14 @@ export function ReviewsSection({
                                                     >
                                                         <source
                                                             src={
-                                                                media.secureUrl
+                                                                media?.secureUrl || "/jersey_cravings.png"
                                                             }
                                                             type="video/mp4"
                                                         />
                                                     </video>
                                                 ) : (
                                                     <Image
-                                                        src={media.secureUrl}
+                                                        src={media?.secureUrl || "/jersey_cravings.png"}
                                                         alt="Review media"
                                                         fill
                                                         className="object-cover"

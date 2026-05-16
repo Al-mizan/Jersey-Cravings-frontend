@@ -841,7 +841,7 @@ export default function CreateProductPage() {
                                             {createdMedia.map((media) => {
                                                 const isVideo =
                                                     media.resourceType?.startsWith("video") ??
-                                                    /\.(mp4|webm|ogg|mov)$/i.test(media.secureUrl);
+                                                    /\.(mp4|webm|ogg|mov)$/i.test(media?.secureUrl);
 
                                                 return (
                                                     <div
@@ -850,7 +850,7 @@ export default function CreateProductPage() {
                                                     >
                                                         {isVideo ? (
                                                             <video
-                                                                src={media.secureUrl}
+                                                                src={media?.secureUrl || "/jersey_cravings.png"}
                                                                 className="h-full w-full object-cover"
                                                                 muted
                                                                 playsInline
@@ -858,8 +858,8 @@ export default function CreateProductPage() {
                                                             />
                                                         ) : (
                                                             <Image
-                                                                src={media.secureUrl}
-                                                                alt={media.altText ?? "Uploaded product media"}
+                                                                src={media?.secureUrl || "/jersey_cravings.png"}
+                                                                alt={media?.altText ?? "Uploaded product media"}
                                                                 fill
                                                                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                                                                 className="object-cover"
