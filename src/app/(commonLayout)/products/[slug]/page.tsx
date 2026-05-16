@@ -182,8 +182,8 @@ export default function ProductDetailsPage({
                         slug: product.slug,
                         teamName: product.teamName,
                         thumbNail:
-                            product.thumbNail ||
-                            product.media?.[0]?.secureUrl ||
+                        product.media?.[0]?.secureUrl ||
+                        product.thumbNail ||
                             null,
                     },
                 },
@@ -249,7 +249,7 @@ export default function ProductDetailsPage({
             };
         },
         onSuccess: ({ cartItem, payload }) => {
-            toast.success("Added to cart");
+            // toast.success("Added to cart");
             updateCartCache(cartItem, payload);
         },
         onError: () => toast.error("Unable to add to cart right now"),

@@ -25,7 +25,7 @@ const getTokenSecondsRemaining = (token: string): number => {
 export const setTokenInCookies = async (
     name: string,
     token: string,
-    fallbackMaxAgeInSeconds = 60 * 60 * 24 // 1 days
+    fallbackMaxAgeInSeconds = 60 * 60 * 24 * 30 // 30 days
 ) => {
     let maxAgeInSeconds;
 
@@ -36,7 +36,7 @@ export const setTokenInCookies = async (
 }
 
 
-export async function isTokenExpiringSoon(token: string, thresholdInSeconds = 300): Promise<boolean> {
+export async function isTokenExpiringSoon(token: string, thresholdInSeconds = 60 * 60 * 24 * 7): Promise<boolean> {
     const remainingSeconds = getTokenSecondsRemaining(token);
     return remainingSeconds > 0 && remainingSeconds <= thresholdInSeconds;
 }

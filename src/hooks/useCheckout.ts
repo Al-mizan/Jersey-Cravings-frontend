@@ -227,7 +227,7 @@ export function useVerifyTrxId() {
         },
         onError: (error: unknown) => {
             const message = getErrorMessage(error);
-            toast.error("Payment verification failed"); // message || 
+            toast.error(message || "Payment verification failed");
         },
     });
 }

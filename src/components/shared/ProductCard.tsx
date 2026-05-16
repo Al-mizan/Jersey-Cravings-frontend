@@ -56,7 +56,7 @@ export function ProductCard({
             });
         },
         onSuccess: () => {
-            toast.success("Added to cart");
+            // toast.success("Added to cart");
         },
         onError: () => {
             toast.error("Failed to add to cart");
@@ -175,7 +175,7 @@ export function ProductCard({
             <div className="relative aspect-[3/4] h-50 md:h-80 w-full overflow-hidden bg-muted/30">
                 {product.media?.[0]?.secureUrl || product.thumbNail ? (
                     <Image
-                        src={product.media![0].secureUrl || product.thumbNail || ""}
+                        src={product.media?.[0]?.secureUrl || product.thumbNail || ""}
                         alt={product.title}
                         fill
                         className="object-fill md:object-cover md:object-center group-hover:scale-105 transition-transform duration-700 ease-out"

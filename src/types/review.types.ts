@@ -9,6 +9,9 @@ export interface PendingProduct {
     title: string;
     thumbnail: string;
     variant: ProductVariant;
+    media?: {
+        secureUrl: string;
+    }[];
 }
 
 export interface Review {
@@ -18,6 +21,9 @@ export interface Review {
         slug: string;
         title: string;
         thumbnail: string;
+        media?: {
+            secureUrl: string;
+        }[];
     };
     rating: number;
     comment?: string;

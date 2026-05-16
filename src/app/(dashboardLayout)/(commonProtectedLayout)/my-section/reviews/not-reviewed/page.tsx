@@ -75,7 +75,7 @@ export default function NotReviewedPage() {
                 >
                     <div className="relative w-16 h-16 shrink-0">
                         <Image
-                            src={product.thumbnail ?? "/jersey_cravings.png"}
+                            src={product.media?.[0]?.secureUrl || product.thumbnail || "/jersey_cravings.png"}
                             alt={product.title}
                             fill
                             className="object-cover rounded-lg"
