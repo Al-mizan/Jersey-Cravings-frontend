@@ -10,6 +10,7 @@ import type {
     ICollectCodPayload,
     IRefundPaymentPayload,
     IUpdateOrderStatusPayload,
+    PaymentStatus,
 } from "@/types/order.types";
 
 const ORDER_ENDPOINTS = {
@@ -166,5 +167,22 @@ export async function refundPayment(
         },
         null,
         "Failed to refund payment:",
+    );
+}
+
+export async function updatePaymentStatus(
+    paymentId: string,
+    payload: { status: PaymentStatus },
+): Promise<IPayment | null> {
+    return safeServiceCall(
+        async () => {
+            const response = await httpClient.patch<IPayment>(
+                `${ORDER_ENDPOINTS.payments}/${paymentId}/status`,
+                payload,
+            );
+            return response.data;
+        },
+        null,
+        "Failed to update payment status:",
     );
 }

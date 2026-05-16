@@ -18,8 +18,7 @@ import { adminPaymentKeys } from "@/hooks/queries/adminQueryKeys";
 import { cn } from "@/lib/utils";
 import {
     getAllPaymentsForAdmin,
-    collectCod,
-    refundPayment,
+    updatePaymentStatus,
 } from "@/services/order.service";
 import type {
     IPayment,
@@ -53,199 +52,75 @@ const PAYMENT_METHOD_BADGE: Record<PaymentMethod, string> = {
     COD: "border-cyan-500/20 bg-cyan-500/10 text-cyan-600",
 };
 
-// ─── Payment Actions Cell ─────────────────────────────────────────────────
-function PaymentActionsCell({ payment }: { payment: IPayment }) {
+// ─── Payment Status Cell ──────────────────────────────────────────────────
+function PaymentStatusCell({ payment }: { payment: IPayment }) {
     const queryClient = useQueryClient();
     const [open, setOpen] = useState(false);
 
-    const collectCodMutation = useMutation({
-        mutationFn: () =>
-            collectCod(payment.id, { collectedAt: new Date().toISOString() }),
+    const updateStatusMutation = useMutation({
+        mutationFn: (newStatus: PaymentStatus) =>
+            updatePaymentStatus(payment.id, { status: newStatus }),
         onSuccess: () => {
-            toast.success("COD collected successfully");
+            toast.success("Payment status updated successfully");
             queryClient.invalidateQueries({ queryKey: adminPaymentKeys.all });
             setOpen(false);
         },
-        onError: () => toast.error("Failed to collect COD"),
+        onError: () => toast.error("Failed to update status"),
     });
 
-    const refundMutation = useMutation({
-        mutationFn: () =>
-            refundPayment(payment.id, { amount: 0, reason: "Admin refund" }),
-        onSuccess: () => {
-            toast.success("Payment refunded successfully");
-            queryClient.invalidateQueries({ queryKey: adminPaymentKeys.all });
-            setOpen(false);
-        },
-        onError: () => toast.error("Failed to refund payment"),
-    });
+    const isEditable = payment.status === "UNPAID";
 
-    const handleCollectCod = () => {
-        toast.custom(
-            (t) => (
-                <div className="w-90 rounded-xl border bg-card p-4 shadow-lg">
-                    <div className="space-y-1">
-                        <p className="text-sm font-semibold">
-                            Collect COD payment?
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                            Mark this COD payment as collected.
-                        </p>
-                    </div>
-                    <div className="mt-4 flex justify-end gap-2">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toast.dismiss(t)}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="button"
-                            size="sm"
-                            onClick={async () => {
-                                toast.dismiss(t);
-                                await collectCodMutation.mutateAsync();
-                            }}
-                            disabled={collectCodMutation.isPending}
-                        >
-                            {collectCodMutation.isPending
-                                ? "Collecting..."
-                                : "Confirm"}
-                        </Button>
-                    </div>
-                </div>
-            ),
-            {
-                position: "top-center",
-                duration: Infinity,
-            },
-        );
-    };
+    const badge = (
+        <span
+            className={cn(
+                "inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                PAYMENT_STATUS_CLASS[payment.status] ??
+                "border-border bg-muted text-muted-foreground",
+                isEditable && "cursor-pointer hover:opacity-80 transition-opacity"
+            )}
+        >
+            {payment.status}
+        </span>
+    );
 
-    const handleRefund = () => {
-        toast.custom(
-            (t) => (
-                <div className="w-90 rounded-xl border bg-card p-4 shadow-lg">
-                    <div className="space-y-1">
-                        <p className="text-sm font-semibold">
-                            Refund this payment?
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                            This will mark the payment as refunded.
-                        </p>
-                    </div>
-                    <div className="mt-4 flex justify-end gap-2">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toast.dismiss(t)}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="destructive"
-                            onClick={async () => {
-                                toast.dismiss(t);
-                                await refundMutation.mutateAsync();
-                            }}
-                            disabled={refundMutation.isPending}
-                        >
-                            {refundMutation.isPending
-                                ? "Refunding..."
-                                : "Confirm Refund"}
-                        </Button>
-                    </div>
-                </div>
-            ),
-            {
-                position: "top-center",
-                duration: Infinity,
-            },
-        );
-    };
-
-    const canCollectCod =
-        payment.method === "COD" && payment.status === "UNPAID";
-    const canRefund = payment.status === "SUCCEEDED";
-
-    if (!canCollectCod && !canRefund) {
-        return null;
+    if (!isEditable) {
+        return badge;
     }
 
     return (
         <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
             <DropdownMenuTrigger asChild>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                        "h-8 w-8 p-0 rounded-md transition-colors",
-                        "text-muted-foreground hover:text-foreground",
-                        "hover:bg-accent data-[state=open]:bg-accent data-[state=open]:text-foreground",
-                    )}
-                >
-                    <span className="sr-only">Open menu</span>
-                    <MoreHorizontal className="h-4 w-4" />
-                </Button>
+                {badge}
             </DropdownMenuTrigger>
 
             <DropdownMenuContent
-                align="end"
+                align="start"
                 sideOffset={4}
-                className="w-44 rounded-xl border border-border/60 shadow-lg p-1"
+                className="w-40 rounded-xl border border-border/60 shadow-lg p-1"
             >
-                {canCollectCod && (
-                    <DropdownMenuItem
-                        className={cn(
-                            "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm",
-                            "cursor-pointer transition-colors",
-                            "focus:bg-accent focus:text-accent-foreground",
-                        )}
-                        onClick={handleCollectCod}
-                        disabled={collectCodMutation.isPending}
-                    >
-                        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600">
-                            <DollarSign className="h-3.5 w-3.5" />
-                        </span>
-                        <div className="flex flex-col leading-none">
-                            <span className="font-medium">Collect COD</span>
-                            <span className="text-[11px] text-muted-foreground mt-0.5">
-                                Mark as collected
-                            </span>
-                        </div>
-                    </DropdownMenuItem>
-                )}
-
-                {canCollectCod && canRefund && (
-                    <DropdownMenuSeparator className="my-1" />
-                )}
-
-                {canRefund && (
-                    <DropdownMenuItem
-                        className={cn(
-                            "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm",
-                            "cursor-pointer transition-colors",
-                            "text-destructive focus:bg-destructive/10 focus:text-destructive",
-                        )}
-                        onClick={handleRefund}
-                        disabled={refundMutation.isPending}
-                    >
-                        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-destructive/10 text-destructive">
-                            <RotateCcw className="h-3.5 w-3.5" />
-                        </span>
-                        <div className="flex flex-col leading-none">
-                            <span className="font-medium">Refund</span>
-                            <span className="text-[11px] text-destructive/70 mt-0.5">
-                                Process refund
-                            </span>
-                        </div>
-                    </DropdownMenuItem>
-                )}
+                <DropdownMenuItem
+                    className={cn(
+                        "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm",
+                        "cursor-pointer transition-colors focus:bg-emerald-500/10 focus:text-emerald-600",
+                    )}
+                    onClick={() => updateStatusMutation.mutate("SUCCEEDED")}
+                    disabled={updateStatusMutation.isPending}
+                >
+                    <span className="font-medium">Mark as SUCCEEDED</span>
+                </DropdownMenuItem>
+                
+                <DropdownMenuSeparator className="my-1" />
+                
+                <DropdownMenuItem
+                    className={cn(
+                        "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm",
+                        "cursor-pointer transition-colors focus:bg-destructive/10 focus:text-destructive",
+                    )}
+                    onClick={() => updateStatusMutation.mutate("CANCELED")}
+                    disabled={updateStatusMutation.isPending}
+                >
+                    <span className="font-medium">Mark as CANCELED</span>
+                </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
     );
@@ -411,17 +286,7 @@ export default function AdminPaymentsPageClient() {
                 accessorKey: "status",
                 header: "Status",
                 enableSorting: true,
-                cell: ({ row }) => (
-                    <span
-                        className={cn(
-                            "inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider",
-                            PAYMENT_STATUS_CLASS[row.original.status] ??
-                            "border-border bg-muted text-muted-foreground",
-                        )}
-                    >
-                        {row.original.status}
-                    </span>
-                ),
+                cell: ({ row }) => <PaymentStatusCell payment={row.original} />,
             },
             {
                 accessorKey: "collectedAt",
@@ -433,15 +298,6 @@ export default function AdminPaymentsPageClient() {
                     ) : (
                         <span className="text-[11px] text-muted-foreground/60 italic">Not collected</span>
                     ),
-            },
-            {
-                id: "actions",
-                header: "Actions",
-                enableSorting: false,
-                meta: { align: "right" },
-                cell: ({ row }) => (
-                    <PaymentActionsCell payment={row.original} />
-                ),
             },
         ],
         [],

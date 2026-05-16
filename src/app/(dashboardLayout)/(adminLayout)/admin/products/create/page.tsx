@@ -803,28 +803,44 @@ export default function CreateProductPage() {
                                     }
                                 />
                             </label>
-                            <div className="space-y-2">
-                                {files.map((file) => (
-                                    <div
-                                        key={`${file.name}-${file.size}`}
-                                        className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
-                                    >
-                                        <span className="truncate">{file.name}</span>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() =>
-                                                setFiles((prev) =>
-                                                    prev.filter((item) => item !== file),
-                                                )
-                                            }
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                            {files.length > 0 && (
+                                <div className="space-y-2">
+                                    <h3 className="text-sm font-semibold">Selected Files</h3>
+                                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                                        {files.map((file) => {
+                                            const objectUrl = URL.createObjectURL(file);
+                                            return (
+                                                <div
+                                                    key={`${file.name}-${file.size}`}
+                                                    className="group relative aspect-square overflow-hidden rounded-lg border bg-muted"
+                                                >
+                                                    <Image
+                                                        src={objectUrl}
+                                                        alt={file.name}
+                                                        fill
+                                                        className="object-cover transition-transform group-hover:scale-105"
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 flex items-center justify-center">
+                                                        <Button
+                                                            type="button"
+                                                            variant="destructive"
+                                                            size="icon"
+                                                            className="h-8 w-8 rounded-full"
+                                                            onClick={() =>
+                                                                setFiles((prev) =>
+                                                                    prev.filter((item) => item !== file),
+                                                                )
+                                                            }
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                ))}
-                            </div>
+                                </div>
+                            )}
                             <Button
                                 type="button"
                                 onClick={() => uploadMediaMutation.mutate(product.id)}

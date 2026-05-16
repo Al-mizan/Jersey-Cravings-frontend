@@ -235,6 +235,7 @@ const DataTable = <TData,>({
         getSortedRowModel: getSortedRowModel(),
         manualSorting: !!sorting,
         manualPagination: !!pagination,
+        autoResetPageIndex: false,
         pageCount: pagination ? Math.max(meta?.totalPages ?? 0, 0) : undefined,
         state: {
             ...(sorting ? { sorting: sorting.state } : {}),

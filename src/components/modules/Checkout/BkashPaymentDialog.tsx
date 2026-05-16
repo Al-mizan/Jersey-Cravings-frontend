@@ -73,7 +73,7 @@ export default function BkashPaymentDialog({
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader className="text-center">
                     {/* Bkash Branding */}
                     <div className="mx-auto mb-2 flex items-center justify-center">
