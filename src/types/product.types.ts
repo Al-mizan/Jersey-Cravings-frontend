@@ -49,7 +49,7 @@ export interface IProduct {
     slug: string;
     description?: string;
     teamName: string;
-    tournamentTag?: string;
+    tournamentTag: string;
     jerseyType: JerseyType;
     status: ProductStatus;
     totalRating?: number;
@@ -78,7 +78,7 @@ export interface ICreateProductPayload {
     slug: string;
     description?: string;
     teamName: string;
-    tournamentTag?: string;
+    tournamentTag: string;
     jerseyType: JerseyType;
     categoryId: string;
     thumbNail?: string;
@@ -89,7 +89,7 @@ export interface IUpdateProductPayload {
     slug?: string;
     description?: string;
     teamName?: string;
-    tournamentTag?: string;
+    tournamentTag: string;
     jerseyType?: JerseyType;
     categoryId?: string;
     thumbNail?: string;

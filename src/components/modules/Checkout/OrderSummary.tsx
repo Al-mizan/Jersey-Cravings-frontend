@@ -751,7 +751,7 @@ export default function OrderSummary({
                     {cartItems.map((item) => {
                         const product = item.variant?.product;
                         const thumb =
-                            getMediaUrl(product?.media) ||
+                            getMediaUrl(product?.media, "") ||
                             product?.thumbNail ||
                             "/jersey_cravings.png";
                         const title = product?.title ?? "Product";

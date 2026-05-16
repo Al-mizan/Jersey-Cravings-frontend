@@ -113,19 +113,14 @@ export default function BkashPaymentDialog({
                         </div>
                     </div>
 
-                    {/* Placeholder instruction images */}
-                    {/* <div className="grid grid-cols-3 gap-2">
-                        {[1, 2, 3].map((i) => (
-                            <div
-                                key={i}
-                                className="aspect-4/3 rounded-lg bg-linear-to-br from-pink-100 to-rose-100 border border-pink-200/50 flex items-center justify-center"
-                            >
-                                <span className="text-xs text-pink-400 font-medium">
-                                    Step {i}
-                                </span>
-                            </div>
-                        ))}
-                    </div> */}
+                    {/* Reference Image for TrxID */}
+                    <div className="flex justify-center mt-2">
+                        <img 
+                            src="/eg_bkash.png" 
+                            alt="bKash TrxID Example" 
+                            className="rounded-lg max-h-48 border border-pink-200 shadow-sm"
+                        />
+                    </div>
 
                     <Separator />
 

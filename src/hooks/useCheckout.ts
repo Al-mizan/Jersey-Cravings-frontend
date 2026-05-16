@@ -178,6 +178,19 @@ export function useMyOrderById(orderId: string) {
         queryFn: () => getMyOrderById(orderId),
         enabled: !!orderId,
         staleTime: 30_000,
+        refetchInterval: (query) => {
+            const order = query.state.data as any;
+            if (!order) return false;
+            // Stop polling if order is in a terminal status
+            if (
+                ["DELIVERED", "CANCELLED", "REFUNDED", "EXPIRED"].includes(
+                    order.status,
+                )
+            ) {
+                return false;
+            }
+            return 10_000; // Poll every 10s for active orders
+        },
     });
 }
 

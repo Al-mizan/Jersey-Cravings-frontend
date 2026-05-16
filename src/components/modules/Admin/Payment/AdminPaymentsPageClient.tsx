@@ -333,34 +333,48 @@ export default function AdminPaymentsPageClient() {
                 cell: ({ row, table }) => {
                     const { pageIndex, pageSize } = table.getState().pagination;
                     return (
-                        <span className="text-sm text-muted-foreground tabular-nums">
+                        <span className="text-sm font-medium text-muted-foreground/70 tabular-nums">
                             {pageIndex * pageSize + row.index + 1}
                         </span>
                     );
                 },
             },
             {
-                accessorKey: "orderId",
-                header: "Order Number",
+                accessorKey: "order.orderNumber",
+                header: "Order No.",
                 enableSorting: false,
                 cell: ({ row }) => (
-                    <span className="text-sm font-mono">
-                        {row.original.orderId}
-                    </span>
+                    <div className="flex flex-col">
+                        <span className="text-sm font-bold font-mono tracking-tighter">
+                            #{row.original.order?.orderNumber || row.original.orderId.slice(-6).toUpperCase()}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground tabular-nums opacity-60">
+                            {row.original.orderId}
+                        </span>
+                    </div>
                 ),
             },
             {
                 id: "customer",
                 header: "Customer",
                 enableSorting: false,
-                cell: ({ row }) => <span className="text-sm">—</span>,
+                cell: ({ row }) => (
+                    <div className="flex flex-col">
+                        <span className="text-sm font-medium line-clamp-1">
+                            {row.original.order?.user?.identifier || "Guest"}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground opacity-60">
+                            {row.original.order?.userId.slice(0, 8)}...
+                        </span>
+                    </div>
+                ),
             },
             {
                 accessorKey: "amount",
                 header: "Amount",
-                enableSorting: false,
+                enableSorting: true,
                 cell: ({ row }) => (
-                    <span className="text-sm font-semibold tabular-nums">
+                    <span className="text-sm font-black text-pink-600 dark:text-pink-400 tabular-nums">
                         ৳{row.original.amount.toLocaleString("en-US")}
                     </span>
                 ),
@@ -368,13 +382,13 @@ export default function AdminPaymentsPageClient() {
             {
                 accessorKey: "method",
                 header: "Method",
-                enableSorting: false,
+                enableSorting: true,
                 cell: ({ row }) => (
                     <span
                         className={cn(
-                            "rounded-md border px-2 py-1 text-xs font-medium",
+                            "rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider",
                             PAYMENT_METHOD_BADGE[row.original.method] ??
-                                "border-border bg-muted text-muted-foreground",
+                            "border-border bg-muted text-muted-foreground",
                         )}
                     >
                         {row.original.method}
@@ -386,21 +400,23 @@ export default function AdminPaymentsPageClient() {
                 header: "TrxID",
                 enableSorting: false,
                 cell: ({ row }) => (
-                    <span className="text-sm font-mono">
-                        {row.original.transactionId ?? "—"}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] font-mono bg-muted/50 px-1.5 py-0.5 rounded border border-border/40 max-w-[120px] truncate">
+                            {row.original.transactionId ?? "—"}
+                        </span>
+                    </div>
                 ),
             },
             {
                 accessorKey: "status",
                 header: "Status",
-                enableSorting: false,
+                enableSorting: true,
                 cell: ({ row }) => (
                     <span
                         className={cn(
-                            "inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold",
+                            "inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider",
                             PAYMENT_STATUS_CLASS[row.original.status] ??
-                                "border-border bg-muted text-muted-foreground",
+                            "border-border bg-muted text-muted-foreground",
                         )}
                     >
                         {row.original.status}
@@ -409,19 +425,20 @@ export default function AdminPaymentsPageClient() {
             },
             {
                 accessorKey: "collectedAt",
-                header: "Collected At",
+                header: "Collected",
                 enableSorting: true,
                 cell: ({ row }) =>
                     row.original.collectedAt ? (
                         <DateCell date={row.original.collectedAt} />
                     ) : (
-                        <span className="text-sm text-muted-foreground">—</span>
+                        <span className="text-[11px] text-muted-foreground/60 italic">Not collected</span>
                     ),
             },
             {
                 id: "actions",
                 header: "Actions",
                 enableSorting: false,
+                meta: { align: "right" },
                 cell: ({ row }) => (
                     <PaymentActionsCell payment={row.original} />
                 ),
@@ -430,82 +447,81 @@ export default function AdminPaymentsPageClient() {
         [],
     );
 
-    const SERVER_SORT_COLUMNS = ["collectedAt"];
+    const SERVER_SORT_COLUMNS = ["collectedAt", "amount", "method", "status"];
 
     const isServerSort = SERVER_SORT_COLUMNS.includes(sortBy);
 
     const sortedData = useMemo(() => {
-        const raw = paymentsQuery.data?.data ?? [];
-        if (isServerSort || !sortingState[0]) return raw;
-        return raw;
-    }, [paymentsQuery.data?.data, sortingState, isServerSort]);
+        return paymentsQuery.data?.data ?? [];
+    }, [paymentsQuery.data?.data]);
 
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-semibold tracking-tight">
+        <div className="space-y-8 p-1">
+            <div className="flex flex-col gap-2">
+                <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                     Payments
                 </h1>
-                <p className="text-sm text-muted-foreground">
-                    Track payment transactions, collect COD, and process
-                    refunds.
+                <p className="text-sm text-muted-foreground max-w-2xl">
+                    Financial command center. Monitor transaction flow, verify COD collections, and manage administrative refunds with precision.
                 </p>
             </div>
 
-            <DataTable<IPayment>
-                data={sortedData}
-                columns={columns}
-                isLoading={paymentsQuery.isLoading}
-                emptyMessage="No payments found."
-                meta={
-                    paymentsQuery.data
-                        ? {
-                              page: paymentsQuery.data.page,
-                              limit: paymentsQuery.data.limit,
-                              total: paymentsQuery.data.total,
-                              totalPages: paymentsQuery.data.totalPages,
-                          }
-                        : undefined
-                }
-                search={{
-                    initialValue: searchTerm,
-                    placeholder: "Search by transaction ID or order ID…",
-                    debounceMs: 500,
-                    onDebouncedChange: (value) => {
-                        setSearchTerm(value);
-                        setPaginationState((prev) => ({
-                            ...prev,
-                            pageIndex: 0,
-                        }));
-                    },
-                }}
-                filters={{
-                    configs: filterConfigs,
-                    values: filters,
-                    onFilterChange: (filterId, value) => {
-                        setFilters((prev) => ({ ...prev, [filterId]: value }));
-                        setPaginationState((prev) => ({
-                            ...prev,
-                            pageIndex: 0,
-                        }));
-                    },
-                    onClearAll: () => {
-                        setFilters({});
-                        setPaginationState((prev) => ({
-                            ...prev,
-                            pageIndex: 0,
-                        }));
-                    },
-                }}
-                sorting={{
-                    state: sortingState,
-                    onSortingChange: setSortingState,
-                }}
-                pagination={{
-                    state: paginationState,
-                    onPaginationChange: setPaginationState,
-                }}
-            />
+            <div className="rounded-2xl border border-border/50 bg-card/30 backdrop-blur-xl shadow-2xl shadow-primary/5 overflow-hidden">
+                <DataTable<IPayment>
+                    data={sortedData}
+                    columns={columns}
+                    isLoading={paymentsQuery.isLoading}
+                    emptyMessage="No payments found."
+                    meta={
+                        paymentsQuery.data
+                            ? {
+                                page: paymentsQuery.data.page,
+                                limit: paymentsQuery.data.limit,
+                                total: paymentsQuery.data.total,
+                                totalPages: paymentsQuery.data.totalPages,
+                            }
+                            : undefined
+                    }
+                    search={{
+                        initialValue: searchTerm,
+                        placeholder: "Search by transaction ID or order ID…",
+                        debounceMs: 500,
+                        onDebouncedChange: (value) => {
+                            setSearchTerm(value);
+                            setPaginationState((prev) => ({
+                                ...prev,
+                                pageIndex: 0,
+                            }));
+                        },
+                    }}
+                    filters={{
+                        configs: filterConfigs,
+                        values: filters,
+                        onFilterChange: (filterId, value) => {
+                            setFilters((prev) => ({ ...prev, [filterId]: value }));
+                            setPaginationState((prev) => ({
+                                ...prev,
+                                pageIndex: 0,
+                            }));
+                        },
+                        onClearAll: () => {
+                            setFilters({});
+                            setPaginationState((prev) => ({
+                                ...prev,
+                                pageIndex: 0,
+                            }));
+                        },
+                    }}
+                    sorting={{
+                        state: sortingState,
+                        onSortingChange: setSortingState,
+                    }}
+                    pagination={{
+                        state: paginationState,
+                        onPaginationChange: setPaginationState,
+                    }}
+                />
+            </div>
         </div>
     );
 }

@@ -5,11 +5,7 @@ import { z } from "zod";
  */
 export const contactZodSchema = z.object({
     fullName: z.string().min(2, "Full name must be at least 2 characters"),
-    phone: z
-        .string()
-        .min(11, "Phone number must be at least 11 digits")
-        .max(14, "Phone number must not exceed 14 digits")
-        .regex(/^01[3-9]\d{8}$/, "Please enter a valid Bangladesh phone number"),
+    credential: z.string().min(3, "Contact information is required"),
     subject: z.string().min(1, "Please select a subject"),
     message: z
         .string()

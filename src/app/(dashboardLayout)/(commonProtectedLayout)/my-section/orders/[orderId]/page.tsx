@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import OrderStatusStepper from "@/components/modules/Checkout/OrderStatusStepper";
 import OrderDetailCard from "@/components/modules/Checkout/OrderDetailCard";
+import BkashPaymentDialog from "@/components/modules/Checkout/BkashPaymentDialog";
 import { useMyOrderById } from "@/hooks/useCheckout";
 
 const formatCurrency = (val: number) => `৳${val.toLocaleString("en-US")}`;
@@ -32,6 +33,7 @@ export default function OrderTrackingPage() {
     const orderId = params.orderId;
 
     const { data: order, isLoading, error } = useMyOrderById(orderId);
+    const [bkashDialogOpen, setBkashDialogOpen] = React.useState(false);
 
     if (isLoading) {
         return (
@@ -73,18 +75,18 @@ export default function OrderTrackingPage() {
                         All Orders
                     </Link>
                 </Button>
-                <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight font-heading flex items-center gap-2">
-                            <Hash className="size-5" />
+                        <h1 className="text-xl sm:text-2xl font-bold tracking-tight font-heading flex items-center gap-2">
+                            <Hash className="size-4 sm:size-5 text-pink-500" />
                             Order {order.orderNumber}
                         </h1>
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:text-sm text-muted-foreground mt-1.5">
                             <span className="flex items-center gap-1">
                                 <Calendar className="size-3.5" />
                                 {format(
                                     new Date(order.placedAt || order.createdAt),
-                                    "MMMM dd, yyyy",
+                                    "MMM dd, yyyy",
                                 )}
                             </span>
                             <span className="flex items-center gap-1">
@@ -95,9 +97,12 @@ export default function OrderTrackingPage() {
                             </span>
                         </div>
                     </div>
-                    <span className="font-bold text-xl text-pink-600 tabular-nums">
-                        {formatCurrency(order.totalAmount)}
-                    </span>
+                    <div className="flex flex-col items-start sm:items-end">
+                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Amount</span>
+                        <span className="font-bold text-xl sm:text-2xl text-pink-600 tabular-nums">
+                            {formatCurrency(order.totalAmount)}
+                        </span>
+                    </div>
                 </div>
             </motion.div>
 
@@ -108,10 +113,34 @@ export default function OrderTrackingPage() {
                 transition={{ delay: 0.1 }}
             >
                 <Card className="shadow-sm mb-6">
-                    <CardHeader className="pb-0">
-                        <CardTitle className="text-base">
+                    <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
+                        <CardTitle className="text-base font-bold">
                             Order Status
                         </CardTitle>
+                        {order.status === "PENDING_PAYMENT" &&
+                            order.paymentMethod !== "COD" && (
+                                <div className="flex gap-2">
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="border-pink-200 text-pink-600 hover:bg-pink-50 h-8 text-xs font-bold px-3"
+                                        onClick={() => setBkashDialogOpen(true)}
+                                    >
+                                        <Hash className="size-3.5 mr-1.5" />
+                                        Manual Verify
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        className="bg-pink-600 hover:bg-pink-700 text-white h-8 text-xs font-bold px-4"
+                                        asChild
+                                    >
+                                        <Link href={`/make-payment/${order.id}`}>
+                                            <CreditCard className="size-3.5 mr-1.5" />
+                                            Pay Now
+                                        </Link>
+                                    </Button>
+                                </div>
+                            )}
                     </CardHeader>
                     <CardContent className="px-6 pb-4">
                         <OrderStatusStepper
@@ -129,6 +158,14 @@ export default function OrderTrackingPage() {
             >
                 <OrderDetailCard order={order} />
             </motion.div>
+
+            {/* Bkash Dialog */}
+            <BkashPaymentDialog
+                open={bkashDialogOpen}
+                onOpenChange={setBkashDialogOpen}
+                orderId={order.id}
+                totalAmount={order.totalAmount}
+            />
         </div>
     );
 }

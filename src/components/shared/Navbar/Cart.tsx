@@ -183,6 +183,16 @@ export default function Cart() {
     };
 
     useEffect(() => {
+        const interval = setInterval(() => {
+            if (cartCount > 0) {
+                triggerCartIconAnimation();
+            }
+        }, 10000); // 10 seconds
+
+        return () => clearInterval(interval);
+    }, [cartCount, triggerCartIconAnimation]);
+
+    useEffect(() => {
         return () => {
             if (ringTimeoutRef.current) {
                 clearTimeout(ringTimeoutRef.current);
