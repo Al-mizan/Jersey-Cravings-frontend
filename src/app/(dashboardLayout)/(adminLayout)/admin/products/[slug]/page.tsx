@@ -821,7 +821,7 @@ export default function ProductDetailsPage() {
                                                 "video",
                                             ) ??
                                             /\.(mp4|webm|ogg|mov)$/i.test(
-                                                item.secureUrl,
+                                                item?.secureUrl,
                                             );
 
                                         return (
@@ -831,7 +831,7 @@ export default function ProductDetailsPage() {
                                             >
                                                 {isVideo ? (
                                                     <video
-                                                        src={item.secureUrl}
+                                                        src={item?.secureUrl || "/jersey_cravings.png"}
                                                         className="h-full w-full object-cover"
                                                         muted
                                                         playsInline
@@ -839,9 +839,9 @@ export default function ProductDetailsPage() {
                                                     />
                                                 ) : (
                                                     <Image
-                                                        src={item.secureUrl}
+                                                        src={item?.secureUrl || "/jersey_cravings.png"}
                                                         alt={
-                                                            item.altText ??
+                                                            item?.altText ??
                                                             "Product media"
                                                         }
                                                         fill

@@ -478,14 +478,14 @@ export default function ProductDetailsPage({
                                         }
                                     >
                                         <source
-                                            src={activeMedia.secureUrl}
+                                            src={activeMedia?.secureUrl || "/jersey_cravings.png"}
                                             type="video/mp4"
                                         />
                                     </video>
                                 ) : (
                                     <Image
                                         key={activeMedia.id}
-                                        src={activeMedia.secureUrl}
+                                        src={activeMedia?.secureUrl || "/jersey_cravings.png"}
                                         alt={
                                             activeMedia.altText || product.title
                                         }
@@ -536,8 +536,8 @@ export default function ProductDetailsPage({
                                         </div>
                                     ) : (
                                         <Image
-                                            src={media.secureUrl}
-                                            alt={media.altText || product.title}
+                                            src={media?.secureUrl || "/jersey_cravings.png"}
+                                            alt={media?.altText || product.title}
                                             fill
                                             className="object-cover"
                                         />
