@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useUrlPaginationState } from "@/hooks/useUrlPaginationState";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -92,13 +93,7 @@ export default function AdminContactsPageClient() {
     const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
     const [isViewOpen, setIsViewOpen] = useState(false);
 
-    const [paginationState, setPaginationState] = useState<PaginationState>({
-        pageIndex: 0,
-        pageSize: DEFAULT_LIMIT,
-    });
-
-    const page = paginationState.pageIndex + 1;
-    const limit = paginationState.pageSize;
+    const { paginationState, setPaginationState, page, limit } = useUrlPaginationState(DEFAULT_LIMIT);
 
     const { data: contactsResponse, isLoading } = useQuery({
         queryKey: ["admin-contacts", page, limit],

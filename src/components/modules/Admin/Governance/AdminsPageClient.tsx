@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useState, useMemo, useCallback } from "react";
+import { useUrlPaginationState } from "@/hooks/useUrlPaginationState";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
     ColumnDef,
@@ -46,10 +47,7 @@ const STATUS_CLASS: Record<string, string> = {
 export default function AdminsPageClient() {
     const queryClient = useQueryClient();
 
-    const [paginationState, setPaginationState] = useState<PaginationState>({
-        pageIndex: 0,
-        pageSize: DEFAULT_LIMIT,
-    });
+    const { paginationState, setPaginationState, page, limit } = useUrlPaginationState(DEFAULT_LIMIT);
 
     const [sortingState, setSortingState] = useState<SortingState>([
         { id: "createdAt", desc: true },
@@ -61,8 +59,6 @@ export default function AdminsPageClient() {
     const [showCreateDialog, setShowCreateDialog] = useState(false);
     const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
-    const page = paginationState.pageIndex + 1;
-    const limit = paginationState.pageSize;
     const sortBy = sortingState[0]?.id || "createdAt";
     const sortOrder = sortingState[0]?.desc ? "desc" : "asc";
 

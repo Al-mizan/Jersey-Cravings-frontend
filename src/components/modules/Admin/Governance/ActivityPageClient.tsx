@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
+import { useUrlPaginationState } from "@/hooks/useUrlPaginationState";
 import { useQuery } from "@tanstack/react-query";
 import type {
     ColumnDef,
@@ -50,10 +51,7 @@ const ACTION_BADGES: Record<string, { label: string; color: string }> = {
 };
 
 export default function ActivityPageClient() {
-    const [paginationState, setPaginationState] = useState<PaginationState>({
-        pageIndex: 0,
-        pageSize: DEFAULT_LIMIT,
-    });
+    const { paginationState, setPaginationState, page, limit } = useUrlPaginationState(DEFAULT_LIMIT);
 
     const [sortingState, setSortingState] = useState<SortingState>([
         { id: "timestamp", desc: true },
@@ -62,8 +60,6 @@ export default function ActivityPageClient() {
     const [searchTerm, setSearchTerm] = useState("");
     const [filters, setFilters] = useState<DataTableFilterValues>({});
 
-    const page = paginationState.pageIndex + 1;
-    const limit = paginationState.pageSize;
     const sortBy = sortingState[0]?.id || "timestamp";
     const sortOrder = sortingState[0]?.desc ? "desc" : "asc";
 

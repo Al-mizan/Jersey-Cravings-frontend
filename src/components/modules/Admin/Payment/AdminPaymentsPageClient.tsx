@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useMemo, useState } from "react";
+import { useUrlPaginationState } from "@/hooks/useUrlPaginationState";
 import Link from "next/link";
 import { MessageSquareText } from "lucide-react";
 
@@ -135,18 +136,12 @@ function PaymentStatusCell({ payment }: { payment: IPayment }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────
 export default function AdminPaymentsPageClient() {
-    const [paginationState, setPaginationState] = useState<PaginationState>({
-        pageIndex: 0,
-        pageSize: DEFAULT_LIMIT,
-    });
+    const { paginationState, setPaginationState, page, limit } = useUrlPaginationState(DEFAULT_LIMIT, "page");
     const [sortingState, setSortingState] = useState<SortingState>([
         { id: "collectedAt", desc: true },
     ]);
     const [searchTerm, setSearchTerm] = useState("");
     const [filters, setFilters] = useState<DataTableFilterValues>({});
-
-    const page = paginationState.pageIndex + 1;
-    const limit = paginationState.pageSize;
     const sortBy = sortingState[0]?.id || "collectedAt";
     const sortOrder = sortingState[0]?.desc ? "desc" : "asc";
     const method =
@@ -440,13 +435,7 @@ export default function AdminPaymentsPageClient() {
 }
 
 function SmsLogsTable() {
-    const [paginationState, setPaginationState] = useState<PaginationState>({
-        pageIndex: 0,
-        pageSize: 20,
-    });
-    
-    const page = paginationState.pageIndex + 1;
-    const limit = paginationState.pageSize;
+    const { paginationState, setPaginationState, page, limit } = useUrlPaginationState(20, "smsPage");
 
     const logsQuery = useQuery({
         queryKey: adminSmsLogKeys.list({ page, limit }),

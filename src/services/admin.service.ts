@@ -137,7 +137,9 @@ export async function createAdmin(
     return safeServiceMutation(
         () =>
             unwrapData<IAdmin>(
-                httpClient.post(ADMIN_ENDPOINTS.admins, payload),
+                httpClient.post(ADMIN_ENDPOINTS.admins, payload, {
+                    headers: { "Content-Type": "application/json" },
+                }),
             ),
         "Failed to create admin:",
     );

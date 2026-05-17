@@ -124,11 +124,11 @@ export default function AdminCreateDialog({
                         {(field) => (
                             <div>
                                 <label className="block text-sm font-medium mb-2">
-                                    Identifier (Username)
+                                    Identifier (Email)
                                 </label>
                                 <Input
-                                    type="text"
-                                    placeholder="e.g., john_admin"
+                                    type="email"
+                                    placeholder="e.g., [email@example.com]"
                                     value={field.state.value}
                                     onChange={(e) =>
                                         field.handleChange(e.target.value)

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
+import { useUrlPaginationState } from "@/hooks/useUrlPaginationState";
 import { useQuery } from "@tanstack/react-query";
 import type {
     ColumnDef,
@@ -23,10 +24,7 @@ import { adminQueryKeys } from "@/hooks/queries/adminQueryKeys";
 const DEFAULT_LIMIT = 10;
 
 export default function AuditLogsPageClient() {
-    const [paginationState, setPaginationState] = useState<PaginationState>({
-        pageIndex: 0,
-        pageSize: DEFAULT_LIMIT,
-    });
+    const { paginationState, setPaginationState, page, limit } = useUrlPaginationState(DEFAULT_LIMIT);
 
     const [sortingState, setSortingState] = useState<SortingState>([
         { id: "createdAt", desc: true },
@@ -35,8 +33,6 @@ export default function AuditLogsPageClient() {
     const [searchTerm, setSearchTerm] = useState("");
     const [filters, setFilters] = useState<DataTableFilterValues>({});
 
-    const page = paginationState.pageIndex + 1;
-    const limit = paginationState.pageSize;
     const sortBy = sortingState[0]?.id || "createdAt";
     const sortOrder = sortingState[0]?.desc ? "desc" : "asc";
 

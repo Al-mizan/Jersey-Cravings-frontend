@@ -41,6 +41,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useRef, useEffect } from "react";
+import { useUrlPaginationState } from "@/hooks/useUrlPaginationState";
 import axios from "axios";
 
 const DEFAULT_LIMIT = 10;
@@ -76,6 +77,7 @@ const PAYMENT_METHOD_BADGE: Record<PaymentMethod, string> = {
 
 const ORDER_STATUS_OPTIONS: OrderStatus[] = [
     "PENDING_PAYMENT",
+    "PAID",
     "PROCESSING",
     "SHIPPED",
     "DELIVERED",
@@ -106,7 +108,7 @@ function StatusUpdateDialog({
         },
         onSuccess: () => {
             toast.success("Order status updated");
-            queryClient.invalidateQueries({ queryKey: adminOrderKeys.all });
+            queryClient.invalidateQueries({ queryKey: ["admin"] });
             setOpen(false);
         },
         onError: () => toast.error("Failed to update order status"),
@@ -187,18 +189,12 @@ function StatusUpdateDialog({
 export default function AdminOrdersPageClient() {
     const router = useRouter();
     const queryClient = useQueryClient();
-    const [paginationState, setPaginationState] = useState<PaginationState>({
-        pageIndex: 0,
-        pageSize: DEFAULT_LIMIT,
-    });
+    const { paginationState, setPaginationState, page, limit } = useUrlPaginationState(DEFAULT_LIMIT);
     const [sortingState, setSortingState] = useState<SortingState>([
         { id: "placedAt", desc: true },
     ]);
     const [searchTerm, setSearchTerm] = useState("");
     const [filters, setFilters] = useState<DataTableFilterValues>({});
-
-    const page = paginationState.pageIndex + 1;
-    const limit = paginationState.pageSize;
     const sortBy = sortingState[0]?.id || "placedAt";
     const sortOrder = sortingState[0]?.desc ? "desc" : "asc";
     const status =
