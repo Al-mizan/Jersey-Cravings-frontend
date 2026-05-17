@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ export default function BkashPaymentDialog({
     orderId,
     totalAmount,
 }: BkashPaymentDialogProps) {
+    const router = useRouter();
     const [trxId, setTrxId] = useState("");
     const [error, setError] = useState<string | null>(null);
 
@@ -57,9 +59,14 @@ export default function BkashPaymentDialog({
                 orderId,
                 trxId: normalizedTrxId,
             });
-            // onOpenChange(false) and navigation are handled in the hook's onSuccess
-        } catch {
-            // Error toasts are handled by the hook
+            // Success: hook handles redirect to /my-section/orders/${orderId}
+        } catch (err: any) {
+            // Show error inline instead of toast
+            const message =
+                err?.response?.data?.message ||
+                (err && typeof err === "object" && "message" in err ? err.message : null) ||
+                "Payment verification failed";
+            setError(message);
         }
     };
 
@@ -68,6 +75,8 @@ export default function BkashPaymentDialog({
             setTrxId("");
             setError(null);
             onOpenChange(false);
+            // Redirect to order page on cancel
+            router.push(`/my-section/orders/${orderId}`);
         }
     };
 

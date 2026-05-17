@@ -36,11 +36,12 @@ import type {
 import type { PaginationState, SortingState } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, Eye, PencilLine } from "lucide-react";
+import { Copy, Eye, PencilLine, Package, TrendingUp, Clock } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useRef, useEffect } from "react";
+import axios from "axios";
 
 const DEFAULT_LIMIT = 10;
 
@@ -94,9 +95,15 @@ function StatusUpdateDialog({
     const [selectedStatus, setSelectedStatus] =
         useState<OrderStatus>(currentStatus);
 
+    useEffect(() => {
+        setSelectedStatus(currentStatus);
+    }, [currentStatus]);
+
     const statusMutation = useMutation({
-        mutationFn: (status: OrderStatus) =>
-            updateOrderStatus(orderId, { status }),
+        mutationFn: async (status: OrderStatus) => {
+            const res = await axios.patch(`/api/proxy/orders/${orderId}/status`, { status });
+            return res.data;
+        },
         onSuccess: () => {
             toast.success("Order status updated");
             queryClient.invalidateQueries({ queryKey: adminOrderKeys.all });
@@ -340,9 +347,9 @@ export default function AdminOrdersPageClient() {
                 cell: ({ row }) => {
                     const items = row.original.items ?? [];
                     const itemCount = items.length;
-                    const productNames = items
-                        .map((item) => item.productTitleSnapshot)
-                        .join(", ");
+                    const itemLines = items.map(
+                        (item) => `${item.qty}x ${item.productTitleSnapshot}`
+                    );
                     return (
                         <div className="group relative">
                             <div className="flex flex-col">
@@ -350,13 +357,17 @@ export default function AdminOrdersPageClient() {
                                     {itemCount} item{itemCount !== 1 ? "s" : ""}
                                 </span>
                                 <span className="text-[10px] text-muted-foreground line-clamp-1 max-w-[150px]">
-                                    {productNames}
+                                    {itemLines.join(", ")}
                                 </span>
                             </div>
                             {itemCount > 0 && (
                                 <div className="absolute left-0 bottom-full mb-2 hidden w-64 rounded-xl border border-border/60 bg-popover/90 backdrop-blur-md p-3 text-xs shadow-2xl group-hover:block z-20">
                                     <p className="font-bold mb-1 border-b pb-1">Ordered Items</p>
-                                    <p className="text-muted-foreground leading-relaxed">{productNames}</p>
+                                    <ul className="space-y-0.5 text-muted-foreground">
+                                        {itemLines.map((line, i) => (
+                                            <li key={i} className="leading-relaxed">{line}</li>
+                                        ))}
+                                    </ul>
                                 </div>
                             )}
                         </div>
@@ -484,6 +495,39 @@ export default function AdminOrdersPageClient() {
                     Unified order management system. Oversee lifecycle stages from initial placement to final delivery with real-time status monitoring.
                 </p>
             </div>
+
+            {/* Stats Summary Bar */}
+            {ordersQuery.data && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-4 flex items-center gap-3">
+                        <div className="flex size-10 items-center justify-center rounded-lg bg-blue-500/10">
+                            <Package className="size-5 text-blue-500" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Orders</p>
+                            <p className="text-2xl font-black tabular-nums">{ordersQuery.data.total}</p>
+                        </div>
+                    </div>
+                    <div className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-4 flex items-center gap-3">
+                        <div className="flex size-10 items-center justify-center rounded-lg bg-emerald-500/10">
+                            <TrendingUp className="size-5 text-emerald-500" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Revenue</p>
+                            <p className="text-2xl font-black tabular-nums">৳{sortedData.reduce((s, o) => s + o.totalAmount, 0).toLocaleString()}</p>
+                        </div>
+                    </div>
+                    <div className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-4 flex items-center gap-3 col-span-2 md:col-span-1">
+                        <div className="flex size-10 items-center justify-center rounded-lg bg-amber-500/10">
+                            <Clock className="size-5 text-amber-500" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Pending</p>
+                            <p className="text-2xl font-black tabular-nums">{sortedData.filter(o => o.status === "PENDING_PAYMENT").length}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="rounded-2xl border border-border/50 bg-card/30 backdrop-blur-xl shadow-2xl shadow-primary/5 overflow-hidden">
                 <DataTable<IAdminOrder>

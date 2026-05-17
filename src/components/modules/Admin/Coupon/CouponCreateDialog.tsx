@@ -70,7 +70,21 @@ export default function CouponCreateDialog({
             endsAt: coupon?.endsAt ? new Date(coupon.endsAt).toISOString().split('T')[0] : "",
         },
         onSubmit: async ({ value }) => {
-            mutation.mutate(value);
+            const payload = { ...value } as any;
+            
+            if (!payload.startsAt) {
+                payload.startsAt = undefined;
+            } else {
+                payload.startsAt = new Date(payload.startsAt).toISOString();
+            }
+
+            if (!payload.endsAt) {
+                payload.endsAt = undefined;
+            } else {
+                payload.endsAt = new Date(payload.endsAt).toISOString();
+            }
+
+            mutation.mutate(payload);
         },
     });
 

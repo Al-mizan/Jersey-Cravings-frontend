@@ -48,6 +48,14 @@ export function ProductCard({
     const rating = product.totalRating || 0;
     const reviewCount = product.reviewCount || 0;
 
+    // Discount percentage for badge
+    const discountPercent = useMemo(() => {
+        if (compareAtAmount && compareAtAmount > priceAmount && priceAmount > 0) {
+            return Math.round(((compareAtAmount - priceAmount) / compareAtAmount) * 100);
+        }
+        return 0;
+    }, [compareAtAmount, priceAmount]);
+
     // Cart mutation
     const addToCartMutation = useMutation({
         mutationFn: async (variantId: string) => {
@@ -67,96 +75,6 @@ export function ProductCard({
     const handleAddToCart = (variantId: string) => {
         addToCartMutation.mutate(variantId);
     };
-
-    // const hasMultipleVariants = (product.variants?.length || 0) > 1;
-
-    // The single ADD TO CART button logic (if no variants, just add directly)
-    // const renderActionBtn = () => {
-    //     if (defaultVariant) {
-    //         return (
-    //             <Button
-    //                 className="w-full font-semibold rounded-lg shadow-md hover:shadow-xl transition-all active:scale-95"
-    //                 size="sm"
-    //                 disabled={addToCartMutation.isPending}
-    //                 onClick={(e) => {
-    //                     e.stopPropagation();
-    //                     e.preventDefault();
-    //                     handleAddToCart(defaultVariant.id);
-    //                 }}
-    //             >
-    //                 {addToCartMutation.isPending ? (
-    //                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-    //                 ) : (
-    //                     <ShoppingCart className="w-4 h-4 mr-2" />
-    //                 )}
-    //                 Add to Cart
-    //             </Button>
-    //         );
-    //     }
-
-    //     // if (hasMultipleVariants) {
-    //     //     return (
-    //     //         <Popover>
-    //     //             <PopoverTrigger asChild>
-    //     //                 <Button
-    //     //                     className="w-full font-semibold rounded-lg shadow-md hover:shadow-xl transition-all active:scale-95"
-    //     //                     size="sm"
-    //     //                     disabled={addToCartMutation.isPending}
-    //     //                     onClick={(e) => {
-    //     //                         e.stopPropagation();
-    //     //                         e.preventDefault();
-    //     //                     }}
-    //     //                 >
-    //     //                     {addToCartMutation.isPending ? (
-    //     //                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-    //     //                     ) : (
-    //     //                         <ShoppingCart className="w-4 h-4 mr-2" />
-    //     //                     )}
-    //     //                     Select Size
-    //     //                 </Button>
-    //     //             </PopoverTrigger>
-    //     //             <PopoverContent
-    //     //                 className="w-48 p-2"
-    //     //                 sideOffset={8}
-    //     //                 onClick={(e) => {
-    //     //                     e.stopPropagation();
-    //     //                     e.preventDefault();
-    //     //                 }}
-    //     //             >
-    //     //                 <div className="flex flex-col gap-2">
-    //     //                     <p className="text-xs font-semibold text-muted-foreground uppercase">
-    //     //                         Choose Size
-    //     //                     </p>
-    //     //                     <div className="grid grid-cols-2 gap-2">
-    //     //                         {product.variants?.map((variant) => (
-    //     //                             <Button
-    //     //                                 key={variant.id}
-    //     //                                 variant="outline"
-    //     //                                 size="sm"
-    //     //                                 className="h-8 hover:border-primary hover:text-primary transition-colors"
-    //     //                                 onClick={(e) => {
-    //     //                                     e.stopPropagation();
-    //     //                                     e.preventDefault();
-    //     //                                     handleAddToCart(variant.id);
-    //     //                                 }}
-    //     //                                 disabled={addToCartMutation.isPending}
-    //     //                             >
-    //     //                                 {variant.size}
-    //     //                             </Button>
-    //     //                         ))}
-    //     //                     </div>
-    //     //                 </div>
-    //     //             </PopoverContent>
-    //     //         </Popover>
-    //     //     );
-    //     // }
-
-    //     return (
-    //         <Button disabled size="sm" className="w-full">
-    //             Out of stock
-    //         </Button>
-    //     );
-    // };
 
     return (
         <div
@@ -194,6 +112,15 @@ export function ProductCard({
                         <Badge className="bg-zinc-900 text-white hover:bg-zinc-800 rounded shadow-md border-none px-2 py-1 text-xs font-bold uppercase tracking-wider">
                             New
                         </Badge>
+                    </div>
+                )}
+
+                {/* Discount Badge */}
+                {discountPercent > 0 && (
+                    <div className="absolute top-3 right-3 z-10">
+                        <span className="inline-block bg-red-600 text-white font-bold text-[11px] md:text-xs px-2 py-0.5 md:px-2.5 md:py-1 rounded-full shadow-lg tracking-wide">
+                            -{discountPercent}%
+                        </span>
                     </div>
                 )}
 

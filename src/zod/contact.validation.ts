@@ -5,7 +5,7 @@ import { z } from "zod";
  */
 export const contactZodSchema = z.object({
     fullName: z.string().min(2, "Full name must be at least 2 characters"),
-    credential: z.string().min(3, "Contact information is required"),
+    credential: z.string().optional().default("Not Provided"),
     subject: z.string().min(1, "Please select a subject"),
     message: z
         .string()

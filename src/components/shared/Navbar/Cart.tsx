@@ -31,6 +31,45 @@ const formatCurrency = (value: number) => `৳${value.toLocaleString("en-US")}`;
 
 const maxCartQty = 10;
 
+// ── Cart Animation Configs ─────────────────────────────────────────────────
+const CART_ANIMATION = {
+    /** Prominent animation when cart has items */
+    active: {
+        icon: {
+            scale: [1, 1.4, 1],
+            rotate: [0, -8, 8, -6, 0],
+            transition: { duration: 0.6, ease: "easeOut" as const },
+        },
+        badge: {
+            scale: [1, 1.5, 1],
+            transition: { duration: 0.35, ease: "easeOut" as const },
+        },
+    },
+    /** Subtle animation for attention when cart is empty */
+    idle: {
+        icon: {
+            scale: [1, 1.15, 1],
+            rotate: [0, -4, 4, 0],
+            transition: { duration: 0.5, ease: "easeOut" as const },
+        },
+    },
+    /** Animation when sheet closes */
+    close: {
+        icon: {
+            scale: [1, 1.12, 1],
+            transition: { duration: 0.35, ease: "easeOut" as const },
+        },
+        badge: {
+            scale: [1, 1.35, 1],
+            transition: { duration: 0.35, ease: "easeOut" as const },
+        },
+    },
+    /** Interval between attention animations (ms) */
+    intervalMs: 10_000,
+    /** Ring glow duration (ms) */
+    ringDurationMs: 1500,
+};
+
 const clampQty = (qty: number) => Math.min(Math.max(qty, 1), maxCartQty);
 
 const updateCartItemQty = (
@@ -110,39 +149,29 @@ export default function Cart() {
     const triggerCloseAnimation = useCallback(() => {
         setJustClosed(true);
         iconControls
-            .start({
-                scale: [1, 1.12, 1],
-                transition: { duration: 0.35, ease: "easeOut" },
-            })
+            .start(CART_ANIMATION.close.icon)
             .finally(() => {
                 setJustClosed(false);
             });
-        badgeControls.start({
-            scale: [1, 1.35, 1],
-            transition: { duration: 0.35, ease: "easeOut" },
-        });
+        badgeControls.start(CART_ANIMATION.close.badge);
     }, [badgeControls, iconControls]);
 
-    const triggerCartIconAnimation = useCallback(() => {
-        iconControls.start({
-            scale: [1, 1.4, 1],
-            rotate: [0, -8, 8, -6, 0],
-            transition: { duration: 0.6, ease: "easeOut" },
-        });
-        setShowRing(true);
-        if (ringTimeoutRef.current) {
-            clearTimeout(ringTimeoutRef.current);
+    const triggerCartIconAnimation = useCallback((hasItems = true) => {
+        const config = hasItems ? CART_ANIMATION.active.icon : CART_ANIMATION.idle.icon;
+        iconControls.start(config);
+        if (hasItems) {
+            setShowRing(true);
+            if (ringTimeoutRef.current) {
+                clearTimeout(ringTimeoutRef.current);
+            }
+            ringTimeoutRef.current = setTimeout(() => {
+                setShowRing(false);
+            }, CART_ANIMATION.ringDurationMs);
         }
-        ringTimeoutRef.current = setTimeout(() => {
-            setShowRing(false);
-        }, 1500);
     }, [iconControls]);
 
     const triggerBadgeAnimation = useCallback(() => {
-        badgeControls.start({
-            scale: [1, 1.5, 1],
-            transition: { duration: 0.35, ease: "easeOut" },
-        });
+        badgeControls.start(CART_ANIMATION.active.badge);
     }, [badgeControls]);
 
     useEffect(() => {
@@ -157,7 +186,7 @@ export default function Cart() {
         const handleCartAdded = () => {
             if (!ensureCartAccess()) return;
             setIsCartOpen(true);
-            triggerCartIconAnimation();
+            triggerCartIconAnimation(true);
         };
 
         window.addEventListener("cart:added", handleCartAdded as EventListener);
@@ -184,10 +213,8 @@ export default function Cart() {
 
     useEffect(() => {
         const interval = setInterval(() => {
-            if (cartCount > 0) {
-                triggerCartIconAnimation();
-            }
-        }, 10000); // 10 seconds
+            triggerCartIconAnimation(cartCount > 0);
+        }, CART_ANIMATION.intervalMs);
 
         return () => clearInterval(interval);
     }, [cartCount, triggerCartIconAnimation]);

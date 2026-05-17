@@ -32,6 +32,7 @@ const ADMIN_ENDPOINTS = {
     myActivity: "/audit-logs/my-activity",
     activityTimeline: "/audit-logs/timeline",
     contacts: "/contact",
+    smsLogs: "/sms-logs",
 };
 
 // Dashboard Services
@@ -194,6 +195,36 @@ export async function changeUserRole(
                 ),
             ),
         "Failed to change user role:",
+    );
+}
+
+// SMS Log Services
+export async function getAllSmsLogsForAdmin(
+    searchTerm?: string,
+    page: number = 1,
+    limit: number = 10,
+    sortBy?: string,
+    sortOrder?: "asc" | "desc"
+): Promise<IPaginatedResponse<any> | null | undefined> {
+    return safeServiceCall(
+        async () => {
+            const response = await httpClient.get<any[]>(
+                ADMIN_ENDPOINTS.smsLogs,
+                {
+                    params: { searchTerm, page, limit, sortBy, sortOrder },
+                },
+            );
+
+            return {
+                data: response.data,
+                page: response.meta?.page ?? page,
+                limit: response.meta?.limit ?? limit,
+                total: response.meta?.total ?? response.data.length,
+                totalPages: response.meta?.totalPages ?? 1,
+            };
+        },
+        null,
+        "Failed to fetch SMS logs:",
     );
 }
 

@@ -233,6 +233,7 @@ const DataTable = <TData,>({
         columns: tableColumns,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
         manualSorting: !!sorting,
         manualPagination: !!pagination,
         autoResetPageIndex: false,

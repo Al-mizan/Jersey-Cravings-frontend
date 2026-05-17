@@ -3,12 +3,12 @@
 import { motion } from "motion/react";
 import { useForm } from "@tanstack/react-form";
 import { contactZodSchema } from "@/zod/contact.validation";
-import { contactService } from "@/services/contact.service";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { Mail, Phone, MapPin, Send, MessageSquare, Sparkles, User as UserIcon } from "lucide-react";
 import { FaFacebook, FaInstagram } from "react-icons/fa";
+import axios from "axios";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,10 @@ export default function ContactUs() {
     const { user, isAuthenticated } = useAuth({ includeUser: true });
 
     const mutation = useMutation({
-        mutationFn: contactService.submitContactForm,
+        mutationFn: async (payload: { fullName: string; credential: string; subject: string; message: string }) => {
+            const response = await axios.post("/api/proxy/contact", payload);
+            return response.data;
+        },
         onSuccess: () => {
             toast.success("Message sent successfully!");
             form.reset();
@@ -44,18 +47,17 @@ export default function ContactUs() {
     const form = useForm({
         defaultValues: {
             fullName: user?.name || "",
-            credential: user?.identifier || "",
             subject: "",
             message: "",
         },
         onSubmit: async ({ value }) => {
             const payload = {
                 fullName: value.fullName || user?.name || "Guest",
-                credential: value.credential || user?.identifier || "Not Provided",
+                credential: user?.identifier || "Not Provided",
                 subject: value.subject,
                 message: value.message,
             };
-            mutation.mutate(payload as any);
+            mutation.mutate(payload);
         },
     });
 
@@ -114,6 +116,7 @@ export default function ContactUs() {
                                         e.preventDefault();
                                         form.handleSubmit();
                                     }}
+                                    autoComplete="off"
                                     className="space-y-6 md:space-y-8"
                                 >
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
@@ -197,7 +200,7 @@ export default function ContactUs() {
                                         {(field) => (
                                             <div className="space-y-3">
                                                 <Label htmlFor={field.name} className="text-gray-300 font-medium ml-1">Message</Label>
-                                                <div className="relative group overflow-hidden rounded-2xl">
+                                                <div className="relative group">
                                                     <MessageSquare className="absolute left-4 top-4 size-4 text-gray-500 group-focus-within:text-red-500 transition-colors z-10" />
                                                     <Textarea
                                                         id={field.name}
@@ -205,7 +208,9 @@ export default function ContactUs() {
                                                         onChange={(e) => field.handleChange(e.target.value)}
                                                         placeholder="Write your message here..."
                                                         rows={6}
-                                                        className="pl-11 pt-4 bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-red-500 focus:ring-red-500/20 transition-all rounded-2xl resize-none w-full min-h-[150px] max-w-full"
+                                                        autoComplete="off"
+                                                        style={{ resize: "vertical", width: "100%", boxSizing: "border-box" }}
+                                                        className="pl-11 pt-4 bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-red-500 focus:ring-red-500/20 transition-all rounded-2xl min-h-[150px] max-w-full"
                                                     />
                                                 </div>
                                                 {field.state.meta.errors?.[0] && (

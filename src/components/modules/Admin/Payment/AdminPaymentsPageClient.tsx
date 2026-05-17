@@ -14,12 +14,13 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { adminPaymentKeys } from "@/hooks/queries/adminQueryKeys";
+import { adminPaymentKeys, adminSmsLogKeys } from "@/hooks/queries/adminQueryKeys";
 import { cn } from "@/lib/utils";
 import {
     getAllPaymentsForAdmin,
     updatePaymentStatus,
 } from "@/services/order.service";
+import { getAllSmsLogsForAdmin } from "@/services/admin.service";
 import type {
     IPayment,
     PaymentStatus,
@@ -28,9 +29,15 @@ import type {
 import type { PaginationState, SortingState } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { DollarSign, MoreHorizontal, RotateCcw } from "lucide-react";
+import {
+    DollarSign,
+    TrendingUp,
+    AlertTriangle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import { MessageSquareText } from "lucide-react";
 
 const DEFAULT_LIMIT = 10;
 
@@ -276,9 +283,9 @@ export default function AdminPaymentsPageClient() {
                 enableSorting: false,
                 cell: ({ row }) => (
                     <div className="flex items-center gap-1.5">
-                        <span className="text-[11px] font-mono bg-muted/50 px-1.5 py-0.5 rounded border border-border/40 max-w-[120px] truncate">
+                        <code className="text-sm font-mono font-bold tracking-wide bg-muted/50 px-2 py-0.5 rounded border border-border/40">
                             {row.original.transactionId ?? "—"}
-                        </span>
+                        </code>
                     </div>
                 ),
             },
@@ -321,6 +328,48 @@ export default function AdminPaymentsPageClient() {
                     Financial command center. Monitor transaction flow, verify COD collections, and manage administrative refunds with precision.
                 </p>
             </div>
+
+            {/* Stats Summary Bar */}
+            {paymentsQuery.data && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-4 flex items-center gap-3">
+                        <div className="flex size-10 items-center justify-center rounded-lg bg-emerald-500/10">
+                            <TrendingUp className="size-5 text-emerald-500" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Collected</p>
+                            <p className="text-2xl font-black tabular-nums">
+                                ৳{sortedData
+                                    .filter(p => p.status === "SUCCEEDED")
+                                    .reduce((s, p) => s + p.amount, 0)
+                                    .toLocaleString()}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-4 flex items-center gap-3">
+                        <div className="flex size-10 items-center justify-center rounded-lg bg-amber-500/10">
+                            <DollarSign className="size-5 text-amber-500" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Pending</p>
+                            <p className="text-2xl font-black tabular-nums">
+                                {sortedData.filter(p => p.status === "UNPAID" || p.status === "PROCESSING").length}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-4 flex items-center gap-3 col-span-2 md:col-span-1">
+                        <div className="flex size-10 items-center justify-center rounded-lg bg-red-500/10">
+                            <AlertTriangle className="size-5 text-red-500" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Failed</p>
+                            <p className="text-2xl font-black tabular-nums">
+                                {sortedData.filter(p => p.status === "FAILED" || p.status === "CANCELED").length}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="rounded-2xl border border-border/50 bg-card/30 backdrop-blur-xl shadow-2xl shadow-primary/5 overflow-hidden">
                 <DataTable<IPayment>
@@ -378,6 +427,123 @@ export default function AdminPaymentsPageClient() {
                     }}
                 />
             </div>
+            
+            <div className="mt-12 space-y-6">
+                <div>
+                    <h2 className="text-xl font-bold tracking-tight">SMS Webhook Logs</h2>
+                    <p className="text-sm text-muted-foreground">Monitor automated SMS matching for manual payments</p>
+                </div>
+                <SmsLogsTable />
+            </div>
+        </div>
+    );
+}
+
+function SmsLogsTable() {
+    const [paginationState, setPaginationState] = useState<PaginationState>({
+        pageIndex: 0,
+        pageSize: 20,
+    });
+    
+    const page = paginationState.pageIndex + 1;
+    const limit = paginationState.pageSize;
+
+    const logsQuery = useQuery({
+        queryKey: adminSmsLogKeys.list({ page, limit }),
+        queryFn: () => getAllSmsLogsForAdmin(undefined, page, limit, "receivedAt", "desc"),
+    });
+
+    const columns = useMemo<ColumnDef<any>[]>(
+        () => [
+            {
+                id: "sl",
+                header: "SL",
+                enableSorting: false,
+                cell: ({ row, table }) => (
+                    <span className="text-sm text-muted-foreground tabular-nums">
+                        {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + row.index + 1}
+                    </span>
+                ),
+            },
+            {
+                accessorKey: "senderNumber",
+                header: "senderNumber",
+                enableSorting: false,
+                cell: ({ row }) => <span className="font-medium font-mono">{row.original.senderNumber || "—"}</span>,
+            },
+            {
+                accessorKey: "from",
+                header: "from",
+                enableSorting: false,
+                cell: ({ row }) => <span className="text-sm">{row.original.from}</span>,
+            },
+            {
+                accessorKey: "parsedTrxId",
+                header: "parsedTrxId",
+                enableSorting: false,
+                cell: ({ row }) => (
+                    <span className="font-mono text-sm tracking-tighter bg-muted px-1.5 py-0.5 rounded border">
+                        {row.original.parsedTrxId}
+                    </span>
+                ),
+            },
+            {
+                accessorKey: "parsedAmount",
+                header: "parsedAmount",
+                enableSorting: false,
+                cell: ({ row }) => (
+                    <span className="tabular-nums font-medium text-emerald-600">
+                        {row.original.parsedAmount ? `৳${row.original.parsedAmount.toLocaleString("en-US")}` : "—"}
+                    </span>
+                ),
+            },
+            {
+                accessorKey: "matchedOrderId",
+                header: "matchedOrderId",
+                enableSorting: false,
+                cell: ({ row }) => {
+                    const id = row.original.matchedOrderId;
+                    if (!id) return <span className="text-muted-foreground text-sm">—</span>;
+                    return (
+                        <Link href={`/admin/orders/${id}`} className="text-primary hover:underline font-mono text-sm">
+                            {id.slice(-6).toUpperCase()}
+                        </Link>
+                    );
+                },
+            },
+            {
+                accessorKey: "receivedAt",
+                header: "receivedAt",
+                enableSorting: false,
+                cell: ({ row }) => (
+                    <DateCell date={row.original.receivedAt} />
+                ),
+            },
+        ],
+        [],
+    );
+
+    return (
+        <div className="rounded-2xl border bg-card/50 shadow-sm backdrop-blur-xl">
+            <DataTable
+                columns={columns}
+                data={logsQuery.data?.data || []}
+                isLoading={logsQuery.isLoading}
+                pagination={{
+                    state: paginationState,
+                    onPaginationChange: setPaginationState,
+                }}
+                meta={
+                    logsQuery.data
+                        ? {
+                            page: logsQuery.data.page,
+                            limit: logsQuery.data.limit,
+                            total: logsQuery.data.total,
+                            totalPages: logsQuery.data.totalPages,
+                        }
+                        : undefined
+                }
+            />
         </div>
     );
 }
