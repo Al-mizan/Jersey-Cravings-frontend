@@ -24,6 +24,7 @@ import { ChevronDown, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import React, { useMemo, useState } from "react";
+import { useUrlPaginationState } from "@/hooks/useUrlPaginationState";
 
 const DEFAULT_LIMIT = 10;
 
@@ -180,10 +181,7 @@ function CustomerStatusCell({
 
 // ─── Page ─────────────────────────────────────────────────────────────────
 export default function AdminCustomersPageClient() {
-    const [paginationState, setPaginationState] = useState<PaginationState>({
-        pageIndex: 0,
-        pageSize: DEFAULT_LIMIT,
-    });
+    const { paginationState, setPaginationState, page, limit } = useUrlPaginationState(DEFAULT_LIMIT);
     const [sortingState, setSortingState] = useState<SortingState>([
         { id: "createdAt", desc: true },
     ]);
@@ -191,9 +189,6 @@ export default function AdminCustomersPageClient() {
     const [filters, setFilters] = useState<DataTableFilterValues>({
         userStatus: "active",
     });
-
-    const page = paginationState.pageIndex + 1;
-    const limit = paginationState.pageSize;
     const sortBy = sortingState[0]?.id || "createdAt";
     const sortOrder = sortingState[0]?.desc ? "desc" : "asc";
     const listSearchTerm = searchTerm.trim() || undefined;

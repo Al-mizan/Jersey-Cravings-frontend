@@ -236,6 +236,7 @@ const DataTable = <TData,>({
         getPaginationRowModel: getPaginationRowModel(),
         manualSorting: !!sorting,
         manualPagination: !!pagination,
+        autoResetPageIndex: false,
         pageCount: pagination ? Math.max(meta?.totalPages ?? 0, 0) : undefined,
         state: {
             ...(sorting ? { sorting: sorting.state } : {}),
@@ -368,7 +369,7 @@ const DataTable = <TData,>({
                     </TableBody>
                 </Table>
 
-                {pagination && !hydratedIsLoading && (
+                {pagination && (
                     <DataTablePagination
                         table={table}
                         totalPages={meta?.totalPages}

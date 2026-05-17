@@ -134,7 +134,7 @@ export default function Footer() {
                             href="/terms"
                             className="hover:text-zinc-300 transition-colors"
                         >
-                            Terms of Service
+                            Terms & Conditions
                         </Link>
                     </div>
                 </div>

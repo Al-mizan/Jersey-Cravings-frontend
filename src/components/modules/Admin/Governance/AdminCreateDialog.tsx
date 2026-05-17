@@ -50,7 +50,6 @@ export default function AdminCreateDialog({
     const form = useForm({
         defaultValues: {
             password: "",
-            role: "ADMIN" as "ADMIN" | "SUPER_ADMIN",
             admin: {
                 name: "",
                 identifier: "",
@@ -59,7 +58,11 @@ export default function AdminCreateDialog({
             },
         },
         onSubmit: async ({ value }) => {
-            createMutation.mutate(value as ICreateAdminPayload);
+            const finalValue = { ...value, role: "ADMIN" as const };
+            if (!finalValue.admin.contactNumber) {
+                delete (finalValue.admin as any).contactNumber;
+            }
+            createMutation.mutate(finalValue as ICreateAdminPayload);
         },
     });
 
@@ -121,11 +124,11 @@ export default function AdminCreateDialog({
                         {(field) => (
                             <div>
                                 <label className="block text-sm font-medium mb-2">
-                                    Identifier (Username)
+                                    Identifier (Email)
                                 </label>
                                 <Input
-                                    type="text"
-                                    placeholder="e.g., john_admin"
+                                    type="email"
+                                    placeholder="e.g., [email@example.com]"
                                     value={field.state.value}
                                     onChange={(e) =>
                                         field.handleChange(e.target.value)
@@ -201,41 +204,7 @@ export default function AdminCreateDialog({
                         )}
                     </form.Field>
 
-                    <form.Field name="role">
-                        {(field) => (
-                            <div>
-                                <label className="block text-sm font-medium mb-2">
-                                    Role
-                                </label>
-                                <Select
-                                    value={field.state.value}
-                                    onValueChange={(value) =>
-                                        field.handleChange(
-                                            value as "ADMIN" | "SUPER_ADMIN",
-                                        )
-                                    }
-                                    disabled={createMutation.isPending}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="ADMIN">
-                                            Admin
-                                        </SelectItem>
-                                        <SelectItem value="SUPER_ADMIN">
-                                            Super Admin
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {field.state.meta.errors && (
-                                    <p className="text-xs text-destructive mt-1">
-                                        {field.state.meta.errors[0]}
-                                    </p>
-                                )}
-                            </div>
-                        )}
-                    </form.Field>
+
 
                     <div className="flex gap-2 pt-4">
                         <Button

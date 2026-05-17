@@ -42,7 +42,7 @@ export default function OrderDetailCard({ order }: OrderDetailCardProps) {
                                 size?: string;
                             } | null) ?? null;
                         const thumb =
-                            getMediaUrl(item.product?.media) ||
+                            getMediaUrl(item.product?.media, "") ||
                             item.product?.thumbNail ||
                             "/jersey_cravings.png";
                         const title =
@@ -88,38 +88,54 @@ export default function OrderDetailCard({ order }: OrderDetailCardProps) {
                 <Separator />
 
                 {/* ── Shipping Address ───────────────── */}
-                {Object.keys(shippingSnapshot).length > 0 && (
+                {(Object.keys(shippingSnapshot).length > 0 ||
+                    order.fulfillmentMethod === "PICKUP") && (
                     <div className="space-y-2">
                         <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                             <MapPin className="size-3.5" />
-                            Shipping Address
+                            {order.fulfillmentMethod === "PICKUP"
+                                ? "Pickup Location"
+                                : "Shipping Address"}
                         </h4>
                         <div className="text-sm space-y-0.5 pl-5">
-                            {shippingSnapshot.recipientName && (
-                                <p className="font-medium">
-                                    {shippingSnapshot.recipientName}
-                                </p>
-                            )}
-                            {shippingSnapshot.phone && (
-                                <p className="text-muted-foreground">
-                                    {shippingSnapshot.phone}
-                                </p>
-                            )}
-                            {shippingSnapshot.address && (
-                                <p className="text-muted-foreground">
-                                    {shippingSnapshot.address}
-                                </p>
-                            )}
-                            {(shippingSnapshot.area ||
-                                shippingSnapshot.district) && (
-                                <p className="text-muted-foreground">
-                                    {[
-                                        shippingSnapshot.area,
-                                        shippingSnapshot.district,
-                                    ]
-                                        .filter(Boolean)
-                                        .join(", ")}
-                                </p>
+                            {order.fulfillmentMethod === "PICKUP" ? (
+                                <>
+                                    <p className="font-medium text-emerald-600 dark:text-emerald-400">
+                                        Jahangirnagar University
+                                    </p>
+                                    <p className="text-muted-foreground">
+                                        Savar, Dhaka
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    {shippingSnapshot.recipientName && (
+                                        <p className="font-medium">
+                                            {shippingSnapshot.recipientName}
+                                        </p>
+                                    )}
+                                    {shippingSnapshot.phone && (
+                                        <p className="text-muted-foreground">
+                                            {shippingSnapshot.phone}
+                                        </p>
+                                    )}
+                                    {shippingSnapshot.address && (
+                                        <p className="text-muted-foreground">
+                                            {shippingSnapshot.address}
+                                        </p>
+                                    )}
+                                    {(shippingSnapshot.area ||
+                                        shippingSnapshot.district) && (
+                                        <p className="text-muted-foreground">
+                                            {[
+                                                shippingSnapshot.area,
+                                                shippingSnapshot.district,
+                                            ]
+                                                .filter(Boolean)
+                                                .join(", ")}
+                                        </p>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>

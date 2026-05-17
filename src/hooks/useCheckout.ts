@@ -1,5 +1,6 @@
 "use client";
 
+import axios from "axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -178,6 +179,19 @@ export function useMyOrderById(orderId: string) {
         queryFn: () => getMyOrderById(orderId),
         enabled: !!orderId,
         staleTime: 30_000,
+        refetchInterval: (query) => {
+            const order = query.state.data as any;
+            if (!order) return false;
+            // Stop polling if order is in a terminal status
+            if (
+                ["DELIVERED", "CANCELLED", "REFUNDED", "EXPIRED"].includes(
+                    order.status,
+                )
+            ) {
+                return false;
+            }
+            return 10_000; // Poll every 10s for active orders
+        },
     });
 }
 
@@ -214,9 +228,11 @@ export function useInitiatePayment() {
 export function useVerifyTrxId() {
     const queryClient = useQueryClient();
     const router = useRouter();
-
     return useMutation({
-        mutationFn: (payload: VerifyTrxIdPayload) => verifyTrxId(payload),
+        mutationFn: async (payload: VerifyTrxIdPayload) => {
+            const res = await axios.post("/api/proxy/payments/verify-trxid", payload);
+            return res.data.data;
+        },
         onSuccess: (order) => {
             toast.success("Payment verified successfully!");
             queryClient.invalidateQueries({
@@ -225,10 +241,7 @@ export function useVerifyTrxId() {
             queryClient.invalidateQueries({ queryKey: checkoutKeys.orders });
             router.push(`/my-section/orders/${order.id}`);
         },
-        onError: (error: unknown) => {
-            const message = getErrorMessage(error);
-            toast.error(message || "Payment verification failed");
-        },
+        // onError intentionally omitted — BkashPaymentDialog handles errors inline
     });
 }
 

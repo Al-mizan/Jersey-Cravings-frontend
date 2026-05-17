@@ -130,10 +130,10 @@ export default function CheckoutForm({
             form.setFieldValue("shippingMethod", shippingMethod);
 
             if (shippingMethod === "ju") {
-                form.setFieldValue("division", "");
-                form.setFieldValue("district", "");
-                form.setFieldValue("area", "");
-                form.setFieldValue("address", "");
+                form.setFieldValue("division", "dhaka");
+                form.setFieldValue("district", "savar");
+                form.setFieldValue("area", "jahangirnagar-university");
+                form.setFieldValue("address", "Jahangirnagar University, Savar, Dhaka");
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps

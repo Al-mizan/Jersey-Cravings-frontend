@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ export default function BkashPaymentDialog({
     orderId,
     totalAmount,
 }: BkashPaymentDialogProps) {
+    const router = useRouter();
     const [trxId, setTrxId] = useState("");
     const [error, setError] = useState<string | null>(null);
 
@@ -57,9 +59,14 @@ export default function BkashPaymentDialog({
                 orderId,
                 trxId: normalizedTrxId,
             });
-            // onOpenChange(false) and navigation are handled in the hook's onSuccess
-        } catch {
-            // Error toasts are handled by the hook
+            // Success: hook handles redirect to /my-section/orders/${orderId}
+        } catch (err: any) {
+            // Show error inline instead of toast
+            const message =
+                err?.response?.data?.message ||
+                (err && typeof err === "object" && "message" in err ? err.message : null) ||
+                "Payment verification failed";
+            setError(message);
         }
     };
 
@@ -68,12 +75,14 @@ export default function BkashPaymentDialog({
             setTrxId("");
             setError(null);
             onOpenChange(false);
+            // Redirect to order page on cancel
+            router.push(`/my-section/orders/${orderId}`);
         }
     };
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader className="text-center">
                     {/* Bkash Branding */}
                     <div className="mx-auto mb-2 flex items-center justify-center">
@@ -113,19 +122,14 @@ export default function BkashPaymentDialog({
                         </div>
                     </div>
 
-                    {/* Placeholder instruction images */}
-                    {/* <div className="grid grid-cols-3 gap-2">
-                        {[1, 2, 3].map((i) => (
-                            <div
-                                key={i}
-                                className="aspect-4/3 rounded-lg bg-linear-to-br from-pink-100 to-rose-100 border border-pink-200/50 flex items-center justify-center"
-                            >
-                                <span className="text-xs text-pink-400 font-medium">
-                                    Step {i}
-                                </span>
-                            </div>
-                        ))}
-                    </div> */}
+                    {/* Reference Image for TrxID */}
+                    <div className="flex justify-center mt-2">
+                        <img 
+                            src="/eg_bkash.png" 
+                            alt="bKash TrxID Example" 
+                            className="rounded-lg max-h-48 border border-pink-200 shadow-sm"
+                        />
+                    </div>
 
                     <Separator />
 

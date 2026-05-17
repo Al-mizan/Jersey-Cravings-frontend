@@ -850,7 +850,7 @@ export default function ProductDetailsPage() {
                                                     />
                                                 )}
 
-                                                <div className="absolute right-2 top-2 opacity-0 transition group-hover:opacity-100">
+                                                <div className="absolute right-2 top-2 opacity-100">
                                                     <Button
                                                         type="button"
                                                         size="icon"

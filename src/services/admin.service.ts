@@ -18,7 +18,9 @@ import {
     ICreateAdminPayload,
     IChangeUserStatusPayload,
     IChangeUserRolePayload,
+    IAuditLog,
 } from "@/types/admin.types";
+import { IPaginatedResponse } from "@/types/product.types";
 
 const ADMIN_ENDPOINTS = {
     dashboardSummary: "/dashboard/summary",
@@ -30,6 +32,7 @@ const ADMIN_ENDPOINTS = {
     myActivity: "/audit-logs/my-activity",
     activityTimeline: "/audit-logs/timeline",
     contacts: "/contact",
+    smsLogs: "/sms-logs",
 };
 
 // Dashboard Services
@@ -89,17 +92,27 @@ export async function getAllAdmins(
     isDeleted?: boolean,
 ): Promise<IAdminListResponse | null | undefined> {
     return safeServiceCall(
-        () =>
-            unwrapData<IAdminListResponse>(
-                httpClient.get(ADMIN_ENDPOINTS.admins, {
+        async () => {
+            const response = await httpClient.get<IAdmin[]>(
+                ADMIN_ENDPOINTS.admins,
+                {
                     params: {
                         searchTerm,
                         page,
                         limit,
                         isDeleted,
                     },
-                }),
-            ),
+                },
+            );
+
+            return {
+                data: response.data,
+                page: response.meta?.page ?? page,
+                limit: response.meta?.limit ?? limit,
+                total: response.meta?.total ?? response.data.length,
+                totalPages: response.meta?.totalPages ?? 1,
+            };
+        },
         null,
         "Failed to fetch admins:",
     );
@@ -124,7 +137,9 @@ export async function createAdmin(
     return safeServiceMutation(
         () =>
             unwrapData<IAdmin>(
-                httpClient.post(ADMIN_ENDPOINTS.admins, payload),
+                httpClient.post(ADMIN_ENDPOINTS.admins, payload, {
+                    headers: { "Content-Type": "application/json" },
+                }),
             ),
         "Failed to create admin:",
     );
@@ -185,6 +200,36 @@ export async function changeUserRole(
     );
 }
 
+// SMS Log Services
+export async function getAllSmsLogsForAdmin(
+    searchTerm?: string,
+    page: number = 1,
+    limit: number = 10,
+    sortBy?: string,
+    sortOrder?: "asc" | "desc"
+): Promise<IPaginatedResponse<any> | null | undefined> {
+    return safeServiceCall(
+        async () => {
+            const response = await httpClient.get<any[]>(
+                ADMIN_ENDPOINTS.smsLogs,
+                {
+                    params: { searchTerm, page, limit, sortBy, sortOrder },
+                },
+            );
+
+            return {
+                data: response.data,
+                page: response.meta?.page ?? page,
+                limit: response.meta?.limit ?? limit,
+                total: response.meta?.total ?? response.data.length,
+                totalPages: response.meta?.totalPages ?? 1,
+            };
+        },
+        null,
+        "Failed to fetch SMS logs:",
+    );
+}
+
 // Audit Log Services
 export async function getAuditLogs(
     searchTerm?: string,
@@ -192,16 +237,26 @@ export async function getAuditLogs(
     limit: number = 10,
 ): Promise<IAuditLogListResponse | null | undefined> {
     return safeServiceCall(
-        () =>
-            unwrapData<IAuditLogListResponse>(
-                httpClient.get(ADMIN_ENDPOINTS.auditLogs, {
+        async () => {
+            const response = await httpClient.get<IAuditLog[]>(
+                ADMIN_ENDPOINTS.auditLogs,
+                {
                     params: {
                         searchTerm,
                         page,
                         limit,
                     },
-                }),
-            ),
+                },
+            );
+
+            return {
+                data: response.data,
+                page: response.meta?.page ?? page,
+                limit: response.meta?.limit ?? limit,
+                total: response.meta?.total ?? response.data.length,
+                totalPages: response.meta?.totalPages ?? 1,
+            };
+        },
         null,
         "Failed to fetch audit logs:",
     );
@@ -212,15 +267,22 @@ export async function getMyActivity(
     limit: number = 10,
 ): Promise<IActivityFeedResponse | null | undefined> {
     return safeServiceCall(
-        () =>
-            unwrapData<IActivityFeedResponse>(
-                httpClient.get(ADMIN_ENDPOINTS.myActivity, {
-                    params: {
-                        page,
-                        limit,
-                    },
-                }),
-            ),
+        async () => {
+            const response = await httpClient.get<any[]>(
+                ADMIN_ENDPOINTS.myActivity,
+                {
+                    params: { page, limit },
+                },
+            );
+
+            return {
+                data: response.data,
+                page: response.meta?.page ?? page,
+                limit: response.meta?.limit ?? limit,
+                total: response.meta?.total ?? response.data.length,
+                totalPages: response.meta?.totalPages ?? 1,
+            };
+        },
         null,
         "Failed to fetch my activity:",
     );
@@ -231,15 +293,22 @@ export async function getActivityTimeline(
     limit: number = 10,
 ): Promise<IActivityFeedResponse | null | undefined> {
     return safeServiceCall(
-        () =>
-            unwrapData<IActivityFeedResponse>(
-                httpClient.get(ADMIN_ENDPOINTS.activityTimeline, {
-                    params: {
-                        page,
-                        limit,
-                    },
-                }),
-            ),
+        async () => {
+            const response = await httpClient.get<any[]>(
+                ADMIN_ENDPOINTS.activityTimeline,
+                {
+                    params: { page, limit },
+                },
+            );
+
+            return {
+                data: response.data,
+                page: response.meta?.page ?? page,
+                limit: response.meta?.limit ?? limit,
+                total: response.meta?.total ?? response.data.length,
+                totalPages: response.meta?.totalPages ?? 1,
+            };
+        },
         null,
         "Failed to fetch activity timeline:",
     );
@@ -252,27 +321,49 @@ export async function getEntityAuditLogs(
     limit: number = 10,
 ): Promise<IAuditLogListResponse | null | undefined> {
     return safeServiceCall(
-        () =>
-            unwrapData<IAuditLogListResponse>(
-                httpClient.get(
-                    `${ADMIN_ENDPOINTS.auditLogs}/${entityType}/${entityId}`,
-                    {
-                        params: {
-                            page,
-                            limit,
-                        },
-                    },
-                ),
-            ),
+        async () => {
+            const response = await httpClient.get<IAuditLog[]>(
+                `${ADMIN_ENDPOINTS.auditLogs}/${entityType}/${entityId}`,
+                {
+                    params: { page, limit },
+                },
+            );
+
+            return {
+                data: response.data,
+                page: response.meta?.page ?? page,
+                limit: response.meta?.limit ?? limit,
+                total: response.meta?.total ?? response.data.length,
+                totalPages: response.meta?.totalPages ?? 1,
+            };
+        },
         null,
         "Failed to fetch entity audit logs:",
     );
 }
 
 // Contact Services
-export async function getAllContacts(): Promise<any[] | null | undefined> {
+export async function getAllContacts(
+    page: number = 1,
+    limit: number = 10,
+): Promise<IPaginatedResponse<any> | null | undefined> {
     return safeServiceCall(
-        () => unwrapData<any[]>(httpClient.get(ADMIN_ENDPOINTS.contacts)),
+        async () => {
+            const response = await httpClient.get<any[]>(
+                ADMIN_ENDPOINTS.contacts,
+                {
+                    params: { page, limit },
+                },
+            );
+
+            return {
+                data: response.data,
+                page: response.meta?.page ?? page,
+                limit: response.meta?.limit ?? limit,
+                total: response.meta?.total ?? response.data.length,
+                totalPages: response.meta?.totalPages ?? 1,
+            };
+        },
         null,
         "Failed to fetch contacts:",
     );

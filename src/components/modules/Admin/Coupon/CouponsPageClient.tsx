@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useState, useMemo, useCallback } from "react";
+import { useUrlPaginationState } from "@/hooks/useUrlPaginationState";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
     ColumnDef,
@@ -43,10 +44,7 @@ const STATUS_CLASS: Record<string, string> = {
 export default function CouponsPageClient() {
     const queryClient = useQueryClient();
 
-    const [paginationState, setPaginationState] = useState<PaginationState>({
-        pageIndex: 0,
-        pageSize: DEFAULT_LIMIT,
-    });
+    const { paginationState, setPaginationState, page, limit } = useUrlPaginationState(DEFAULT_LIMIT);
 
     const [sortingState, setSortingState] = useState<SortingState>([
         { id: "createdAt", desc: true },
@@ -56,9 +54,6 @@ export default function CouponsPageClient() {
     const [filters, setFilters] = useState<DataTableFilterValues>({});
     const [selectedCoupon, setSelectedCoupon] = useState<ICoupon | null>(null);
     const [showCreateDialog, setShowCreateDialog] = useState(false);
-
-    const page = paginationState.pageIndex + 1;
-    const limit = paginationState.pageSize;
 
     // Query for coupons
     const couponsQuery = useQuery({
@@ -79,7 +74,7 @@ export default function CouponsPageClient() {
         mutationFn: (couponId: string) => deleteCoupon(couponId),
         onSuccess: () => {
             toast.success("Coupon deleted successfully");
-            queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
+            queryClient.invalidateQueries({ queryKey: ["admin"] });
         },
         onError: (error: any) => {
             toast.error(error?.response?.data?.message || "Failed to delete coupon");
@@ -91,7 +86,7 @@ export default function CouponsPageClient() {
         mutationFn: (couponId: string) => restoreCoupon(couponId),
         onSuccess: () => {
             toast.success("Coupon restored successfully");
-            queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
+            queryClient.invalidateQueries({ queryKey: ["admin"] });
         },
         onError: (error: any) => {
             toast.error(error?.response?.data?.message || "Failed to restore coupon");
@@ -256,7 +251,7 @@ export default function CouponsPageClient() {
 
     const handleCreateSuccess = useCallback(() => {
         setShowCreateDialog(false);
-        queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
+        queryClient.invalidateQueries({ queryKey: ["admin"] });
     }, [queryClient]);
 
     return (

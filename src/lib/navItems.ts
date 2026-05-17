@@ -86,10 +86,15 @@ const adminNavItems: NavSection[] = [
                 icon: "Shield",
             },
             {
-                title: "Activity",
-                href: "/admin/activity",
-                icon: "History",
+                title: "Utility Cost",
+                href: "/admin/utility-cost",
+                icon: "Coins",
             },
+            // {
+            //     title: "Activity",
+            //     href: "/admin/activity",
+            //     icon: "History",
+            // },
         ],
     },
     {

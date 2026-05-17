@@ -122,6 +122,13 @@ export interface IPayment {
     createdAt: string;
     updatedAt: string;
     orderId: string;
+    order?: {
+        orderNumber: string;
+        userId: string;
+        user?: {
+            identifier: string;
+        };
+    } | null;
 }
 
 export interface IPaginatedResponse<T> {

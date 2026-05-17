@@ -67,6 +67,11 @@ export const adminOrderKeys = {
         [...adminOrderKeys.all, "detail", orderId] as const,
 };
 
+export const adminSmsLogKeys = {
+    all: ["admin-sms-logs"] as const,
+    list: (params: any) => [...adminSmsLogKeys.all, "list", params] as const,
+};
+
 export const adminCustomerKeys = {
     all: ["admin", "customers"] as const,
     list: (params: AdminCustomerListQueryParams) =>
