@@ -128,7 +128,7 @@ export default function HeroBanner() {
                     {/* Banner Image Container */}
                     <div
                         className="relative flex-1 rounded-2xl overflow-hidden bg-zinc-950"
-                        style={{ aspectRatio: "1920/640" }}
+                        style={{ aspectRatio: "1920/800" }}
                     >
                         {banners.map((banner: IBanner, index: number) => (
                             <div
