@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Star, X, Upload, Image as ImageIcon } from "lucide-react";
+import { Star, X, Upload, Image as ImageIcon, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createReview, updateReview } from "@/services/review.service";
 import { reviewKeys } from "@/hooks/queries/reviewQueryKeys";
@@ -58,6 +58,7 @@ export function WriteReviewDialog({
         existingReview?.media || [],
     );
     const [ratingError, setRatingError] = useState("");
+    const [commentError, setCommentError] = useState("");
     const queryClient = useQueryClient();
 
     const isEditMode = !!existingReview?.id;
@@ -69,6 +70,7 @@ export function WriteReviewDialog({
             setMediaFiles([]);
             setMediaPreviews(existingReview?.media || []);
             setRatingError("");
+            setCommentError("");
         }
     }, [open, existingReview]);
 
@@ -132,6 +134,12 @@ export function WriteReviewDialog({
             queryClient.invalidateQueries({ queryKey: reviewKeys.all });
             queryClient.invalidateQueries({ queryKey: reviewKeys.pending() });
             queryClient.invalidateQueries({ queryKey: reviewKeys.reviewed() });
+            queryClient.invalidateQueries({
+                queryKey: ["public", "reviews", product.id],
+            });
+            queryClient.invalidateQueries({
+                queryKey: ["public", "product", product.slug],
+            });
             onOpenChange(false);
         },
         onError: (error: Error) => {
@@ -146,11 +154,23 @@ export function WriteReviewDialog({
         }
         setRatingError("");
 
+        const trimmed = comment.trim();
+        if (trimmed.length < minCommentLength) {
+            setCommentError(
+                `Please write at least ${minCommentLength} characters`,
+            );
+            return;
+        }
+        setCommentError("");
+
         submitMutation.mutate();
     };
 
     const commentLength = comment.length;
     const maxCommentLength = 500;
+    const minCommentLength = 10;
+    const isCommentValid = comment.trim().length >= minCommentLength;
+    const canSubmit = rating > 0 && isCommentValid && !submitMutation.isPending;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -230,17 +250,33 @@ export function WriteReviewDialog({
                             htmlFor="comment"
                             className="block text-sm font-medium text-gray-700 mb-2"
                         >
-                            Describe your experience (optional)
+                            Share your experience
+                            <span className="text-red-500 ml-1">*</span>
                         </label>
                         <Textarea
                             id="comment"
-                            placeholder="Share your thoughts about this product..."
+                            placeholder="Share your experience..."
                             value={comment}
-                            onChange={(e) => setComment(e.target.value)}
+                            onChange={(e) => {
+                                const nextValue = e.target.value;
+                                setComment(nextValue);
+                                if (
+                                    commentError &&
+                                    nextValue.trim().length >=
+                                        minCommentLength
+                                ) {
+                                    setCommentError("");
+                                }
+                            }}
                             maxLength={maxCommentLength}
                             rows={4}
                             className="resize-none"
                         />
+                        {commentError && (
+                            <p className="text-sm text-red-600 mt-1">
+                                {commentError}
+                            </p>
+                        )}
                         <p className="text-sm text-gray-500 mt-1 text-right">
                             {commentLength}/{maxCommentLength}
                         </p>
@@ -330,15 +366,12 @@ export function WriteReviewDialog({
                         <Button
                             type="button"
                             onClick={handleSubmit}
-                            disabled={submitMutation.isPending}
+                            disabled={!canSubmit}
                         >
-                            {submitMutation.isPending
-                                ? isEditMode
-                                    ? "Updating..."
-                                    : "Submitting..."
-                                : isEditMode
-                                  ? "Update Review"
-                                  : "Submit Review"}
+                            {submitMutation.isPending && (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            )}
+                            {isEditMode ? "Update Review" : "Submit Review"}
                         </Button>
                     </div>
                 </div>

@@ -2,6 +2,7 @@
 
 import { httpClient } from "@/lib/axios/httpClient";
 import { safeServiceCall, safeServiceMutation } from "@/services/service-utils";
+import { revalidatePath } from "next/cache";
 import type {
     PendingReviewItem,
     Review,
@@ -80,6 +81,8 @@ export async function createReview(data: CreateReviewData): Promise<Review> {
                 },
             },
         );
+        revalidatePath("/my-section/reviews/not-reviewed");
+        revalidatePath("/my-section/reviews/reviewed");
         return response.data;
     }, "Failed to create review:");
 }
@@ -114,6 +117,8 @@ export async function updateReview(
                 },
             },
         );
+        revalidatePath("/my-section/reviews/not-reviewed");
+        revalidatePath("/my-section/reviews/reviewed");
         return response.data;
     }, "Failed to update review:");
 }

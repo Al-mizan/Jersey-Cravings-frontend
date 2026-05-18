@@ -50,6 +50,10 @@ export const createCouponZodSchema = z.object({
         .int({ message: "Max amount must be an integer" })
         .nonnegative({ message: "Max amount must be positive" })
         .optional(),
+    usageLimit: z.coerce
+        .number("Usage limit must be a number")
+        .int({ message: "Usage limit must be an integer" })
+        .min(1, { message: "Usage limit must be at least 1" }),
     startsAt: z.string().optional(),
     endsAt: z.string().optional(),
     isActive: z.boolean().optional(),
@@ -72,6 +76,11 @@ export const updateCouponZodSchema = z.object({
         .number("Max amount must be a number")
         .int({ message: "Max amount must be an integer" })
         .nonnegative({ message: "Max amount must be positive" })
+        .optional(),
+    usageLimit: z.coerce
+        .number("Usage limit must be a number")
+        .int({ message: "Usage limit must be an integer" })
+        .min(1, { message: "Usage limit must be at least 1" })
         .optional(),
     startsAt: z.string().optional(),
     endsAt: z.string().optional(),

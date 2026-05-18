@@ -1,24 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { CalendarDays, CheckCircle2, ShoppingBag } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 import { getMediaUrl } from "@/lib/media";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getPendingReviews } from "@/services/review.service";
 import { reviewKeys } from "@/hooks/queries/reviewQueryKeys";
-import { ReviewComposerDialog } from "@/components/modules/Customer/Reviews/ReviewComposerDialog";
-import type { PendingReviewItem } from "@/types/review.types";
+import { useRouter } from "next/navigation";
 
 export default function NotReviewedPage() {
-    const [selectedItem, setSelectedItem] = useState<PendingReviewItem | null>(
-        null,
-    );
+    const router = useRouter();
     const {
         data: pendingProducts,
         isLoading,
@@ -76,7 +73,7 @@ export default function NotReviewedPage() {
             <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed px-6 py-16 text-center">
                 <ShoppingBag className="mb-4 h-12 w-12 text-muted-foreground" />
                 <h3 className="text-xl font-semibold">
-                    Nothing left to review
+                    You have no delivered orders waiting for a review! 🎉
                 </h3>
                 <p className="mt-2 max-w-md text-sm text-muted-foreground">
                     Delivered orders that still need feedback will appear here.
@@ -170,9 +167,10 @@ export default function NotReviewedPage() {
                             <CardContent className="space-y-4 p-5">
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <CalendarDays className="h-4 w-4" />
-                                    {new Date(
-                                        item.orderDate,
-                                    ).toLocaleDateString()}
+                                    {format(
+                                        new Date(item.orderDate),
+                                        "dd MMM yyyy",
+                                    )}
                                 </div>
 
                                 <div className="flex flex-wrap gap-2">
@@ -219,7 +217,11 @@ export default function NotReviewedPage() {
                                 <div className="flex gap-3">
                                     <Button
                                         className="flex-1"
-                                        onClick={() => setSelectedItem(item)}
+                                        onClick={() =>
+                                            router.push(
+                                                `/products/${item.product.slug}?reviewForOrder=${item.orderId}`,
+                                            )
+                                        }
                                     >
                                         Write Review
                                     </Button>
@@ -237,15 +239,7 @@ export default function NotReviewedPage() {
                 })}
             </div>
 
-            <ReviewComposerDialog
-                open={Boolean(selectedItem)}
-                onOpenChange={(open) => {
-                    if (!open) {
-                        setSelectedItem(null);
-                    }
-                }}
-                item={selectedItem}
-            />
+            {/* Navigation flow: clicking "Write Review" opens product page with query params */}
         </>
     );
 }

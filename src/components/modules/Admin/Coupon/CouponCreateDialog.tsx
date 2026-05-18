@@ -22,7 +22,11 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { createCoupon, updateCoupon } from "@/services/coupon.service";
-import type { ICoupon, ICreateCouponPayload, IUpdateCouponPayload } from "@/types/commerce.types";
+import type {
+    ICoupon,
+    ICreateCouponPayload,
+    IUpdateCouponPayload,
+} from "@/types/commerce.types";
 
 interface CouponCreateDialogProps {
     open: boolean;
@@ -41,19 +45,23 @@ export default function CouponCreateDialog({
     const isEditing = !!coupon;
 
     const mutation = useMutation({
-        mutationFn: (payload: any) => 
-            isEditing 
-                ? updateCoupon(coupon.id, payload as IUpdateCouponPayload) 
+        mutationFn: (payload: any) =>
+            isEditing
+                ? updateCoupon(coupon.id, payload as IUpdateCouponPayload)
                 : createCoupon(payload as ICreateCouponPayload),
         onSuccess: () => {
-            toast.success(`Coupon ${isEditing ? "updated" : "created"} successfully`);
+            toast.success(
+                `Coupon ${isEditing ? "updated" : "created"} successfully`,
+            );
             queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
             onSuccess?.();
             onOpenChange(false);
             form.reset();
         },
         onError: (error: any) => {
-            const message = error?.response?.data?.message || `Failed to ${isEditing ? "update" : "create"} coupon`;
+            const message =
+                error?.response?.data?.message ||
+                `Failed to ${isEditing ? "update" : "create"} coupon`;
             toast.error(message);
         },
     });
@@ -65,13 +73,26 @@ export default function CouponCreateDialog({
             value: coupon?.value || 0,
             minOrderAmount: coupon?.minOrderAmount || 0,
             maxDiscountAmount: coupon?.maxDiscountAmount || 0,
+            usageLimit: coupon?.usageLimit ?? 1,
             isActive: coupon?.isActive ?? true,
-            startsAt: coupon?.startsAt ? new Date(coupon.startsAt).toISOString().split('T')[0] : "",
-            endsAt: coupon?.endsAt ? new Date(coupon.endsAt).toISOString().split('T')[0] : "",
+            startsAt: coupon?.startsAt
+                ? new Date(coupon.startsAt).toISOString().split("T")[0]
+                : "",
+            endsAt: coupon?.endsAt
+                ? new Date(coupon.endsAt).toISOString().split("T")[0]
+                : "",
         },
         onSubmit: async ({ value }) => {
             const payload = { ...value } as any;
-            
+
+            if (!payload.minOrderAmount) {
+                payload.minOrderAmount = undefined;
+            }
+
+            if (!payload.maxDiscountAmount) {
+                payload.maxDiscountAmount = undefined;
+            }
+
             if (!payload.startsAt) {
                 payload.startsAt = undefined;
             } else {
@@ -84,6 +105,8 @@ export default function CouponCreateDialog({
                 payload.endsAt = new Date(payload.endsAt).toISOString();
             }
 
+            payload.usageLimit = Number(payload.usageLimit);
+
             mutation.mutate(payload);
         },
     });
@@ -92,9 +115,13 @@ export default function CouponCreateDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle>{isEditing ? "Edit Coupon" : "Create Coupon"}</DialogTitle>
+                    <DialogTitle>
+                        {isEditing ? "Edit Coupon" : "Create Coupon"}
+                    </DialogTitle>
                     <DialogDescription>
-                        {isEditing ? "Update coupon details below." : "Fill in the details to create a new discount coupon."}
+                        {isEditing
+                            ? "Update coupon details below."
+                            : "Fill in the details to create a new discount coupon."}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -108,23 +135,30 @@ export default function CouponCreateDialog({
                     <form.Field
                         name="code"
                         validators={{
-                            onChange: ({ value }) => !value ? "Coupon code is required" : undefined,
+                            onChange: ({ value }) =>
+                                !value ? "Coupon code is required" : undefined,
                         }}
                     >
                         {(field) => (
                             <div>
-                                <label className="block text-sm font-medium mb-2">Coupon Code</label>
+                                <label className="block text-sm font-medium mb-2">
+                                    Coupon Code
+                                </label>
                                 <Input
                                     type="text"
                                     placeholder="e.g., SAVE20"
                                     value={field.state.value}
-                                    onChange={(e) => field.handleChange(e.target.value)}
+                                    onChange={(e) =>
+                                        field.handleChange(e.target.value)
+                                    }
                                     onBlur={field.handleBlur}
                                     disabled={mutation.isPending || isEditing}
                                     className="uppercase"
                                 />
                                 {field.state.meta.errors && (
-                                    <p className="text-xs text-destructive mt-1">{field.state.meta.errors[0]}</p>
+                                    <p className="text-xs text-destructive mt-1">
+                                        {field.state.meta.errors[0]}
+                                    </p>
                                 )}
                             </div>
                         )}
@@ -134,18 +168,28 @@ export default function CouponCreateDialog({
                         <form.Field name="discountType">
                             {(field) => (
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Discount Type</label>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Discount Type
+                                    </label>
                                     <Select
                                         value={field.state.value}
-                                        onValueChange={(value) => field.handleChange(value as "PERCENT" | "FLAT")}
+                                        onValueChange={(value) =>
+                                            field.handleChange(
+                                                value as "PERCENT" | "FLAT",
+                                            )
+                                        }
                                         disabled={mutation.isPending}
                                     >
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="PERCENT">Percentage (%)</SelectItem>
-                                            <SelectItem value="FLAT">Flat Amount (৳)</SelectItem>
+                                            <SelectItem value="PERCENT">
+                                                Percentage (%)
+                                            </SelectItem>
+                                            <SelectItem value="FLAT">
+                                                Flat Amount (৳)
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -155,11 +199,17 @@ export default function CouponCreateDialog({
                         <form.Field name="value">
                             {(field) => (
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Value</label>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Value
+                                    </label>
                                     <Input
                                         type="number"
                                         value={field.state.value}
-                                        onChange={(e) => field.handleChange(Number(e.target.value))}
+                                        onChange={(e) =>
+                                            field.handleChange(
+                                                Number(e.target.value),
+                                            )
+                                        }
                                         disabled={mutation.isPending}
                                     />
                                 </div>
@@ -171,11 +221,17 @@ export default function CouponCreateDialog({
                         <form.Field name="minOrderAmount">
                             {(field) => (
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Min Order (৳)</label>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Min Order (৳)
+                                    </label>
                                     <Input
                                         type="number"
                                         value={field.state.value}
-                                        onChange={(e) => field.handleChange(Number(e.target.value))}
+                                        onChange={(e) =>
+                                            field.handleChange(
+                                                Number(e.target.value),
+                                            )
+                                        }
                                         disabled={mutation.isPending}
                                     />
                                 </div>
@@ -185,11 +241,17 @@ export default function CouponCreateDialog({
                         <form.Field name="maxDiscountAmount">
                             {(field) => (
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Max Discount (৳)</label>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Max Discount (৳)
+                                    </label>
                                     <Input
                                         type="number"
                                         value={field.state.value}
-                                        onChange={(e) => field.handleChange(Number(e.target.value))}
+                                        onChange={(e) =>
+                                            field.handleChange(
+                                                Number(e.target.value),
+                                            )
+                                        }
                                         disabled={mutation.isPending}
                                     />
                                 </div>
@@ -197,15 +259,61 @@ export default function CouponCreateDialog({
                         </form.Field>
                     </div>
 
+                    <form.Field
+                        name="usageLimit"
+                        validators={{
+                            onChange: ({ value }) => {
+                                const parsed = Number(value);
+                                if (!Number.isFinite(parsed)) {
+                                    return "Usage limit is required";
+                                }
+                                if (parsed < 1) {
+                                    return "Usage limit must be at least 1";
+                                }
+                                return undefined;
+                            },
+                        }}
+                    >
+                        {(field) => (
+                            <div>
+                                <label className="block text-sm font-medium mb-2">
+                                    Usage Limit
+                                </label>
+                                <Input
+                                    type="number"
+                                    min={1}
+                                    step={1}
+                                    value={field.state.value}
+                                    onChange={(e) =>
+                                        field.handleChange(
+                                            Number(e.target.value),
+                                        )
+                                    }
+                                    onBlur={field.handleBlur}
+                                    disabled={mutation.isPending}
+                                />
+                                {field.state.meta.errors && (
+                                    <p className="text-xs text-destructive mt-1">
+                                        {field.state.meta.errors[0]}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </form.Field>
+
                     <div className="grid grid-cols-2 gap-4">
                         <form.Field name="startsAt">
                             {(field) => (
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Starts At</label>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Starts At
+                                    </label>
                                     <Input
                                         type="date"
                                         value={field.state.value}
-                                        onChange={(e) => field.handleChange(e.target.value)}
+                                        onChange={(e) =>
+                                            field.handleChange(e.target.value)
+                                        }
                                         disabled={mutation.isPending}
                                     />
                                 </div>
@@ -215,11 +323,15 @@ export default function CouponCreateDialog({
                         <form.Field name="endsAt">
                             {(field) => (
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Ends At</label>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Ends At
+                                    </label>
                                     <Input
                                         type="date"
                                         value={field.state.value}
-                                        onChange={(e) => field.handleChange(e.target.value)}
+                                        onChange={(e) =>
+                                            field.handleChange(e.target.value)
+                                        }
                                         disabled={mutation.isPending}
                                     />
                                 </div>
@@ -231,8 +343,12 @@ export default function CouponCreateDialog({
                         {(field) => (
                             <div className="flex items-center justify-between p-3 border rounded-lg">
                                 <div>
-                                    <p className="text-sm font-medium">Active Status</p>
-                                    <p className="text-xs text-muted-foreground">Enable or disable this coupon</p>
+                                    <p className="text-sm font-medium">
+                                        Active Status
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Enable or disable this coupon
+                                    </p>
                                 </div>
                                 <Switch
                                     checked={field.state.value}

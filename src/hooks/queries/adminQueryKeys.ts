@@ -106,4 +106,6 @@ export const adminQueryKeys = {
     auditLogs: (params: any) => ["admin", "audit-logs", params] as const,
     activity: (params: any) => ["admin", "activity", params] as const,
     coupons: (params: any) => ["admin", "coupons", params] as const,
+    utilityCostsAll: ["admin", "utility-costs"] as const,
+    utilityCosts: (params: any) => ["admin", "utility-costs", params] as const,
 };

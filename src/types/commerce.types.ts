@@ -117,6 +117,7 @@ export interface ICreateCouponPayload {
     value: number;
     minOrderAmount?: number;
     maxDiscountAmount?: number;
+    usageLimit: number;
     startsAt?: string;
     endsAt?: string;
     isActive?: boolean;
@@ -126,6 +127,7 @@ export interface IUpdateCouponPayload {
     value?: number;
     minOrderAmount?: number;
     maxDiscountAmount?: number;
+    usageLimit?: number;
     startsAt?: string;
     endsAt?: string;
     isActive?: boolean;

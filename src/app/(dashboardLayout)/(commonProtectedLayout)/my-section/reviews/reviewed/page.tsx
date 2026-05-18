@@ -61,7 +61,7 @@ export default function ReviewedPage() {
             <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed px-6 py-16 text-center">
                 <MessageSquare className="mb-4 h-12 w-12 text-muted-foreground" />
                 <h3 className="text-xl font-semibold">
-                    You have not reviewed anything yet
+                    You haven't reviewed any products yet.
                 </h3>
                 <p className="mt-2 max-w-md text-sm text-muted-foreground">
                     Once you submit a review, it will appear here with the
@@ -122,7 +122,10 @@ export default function ReviewedPage() {
                         <CardContent className="space-y-4 p-5">
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <CalendarDays className="h-4 w-4" />
-                                {format(new Date(review.createdAt), "PPP")}
+                                {format(
+                                    new Date(review.createdAt),
+                                    "dd MMM yyyy",
+                                )}
                             </div>
 
                             <ReviewStars value={review.rating} />
@@ -163,12 +166,10 @@ export default function ReviewedPage() {
                                 </div>
                             )}
 
-                            <Button
-                                asChild
-                                variant="outline"
-                                className="w-full"
-                            >
-                                <Link href={`/products/${review.product.slug}`}>
+                            <Button asChild variant="outline" className="w-full">
+                                <Link
+                                    href={`/products/${review.product.slug}?editReviewId=${review.id}`}
+                                >
                                     View product
                                 </Link>
                             </Button>

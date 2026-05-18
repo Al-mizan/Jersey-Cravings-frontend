@@ -35,6 +35,40 @@ export default function OrderTrackingPage() {
     const { data: order, isLoading, error } = useMyOrderById(orderId);
     const [bkashDialogOpen, setBkashDialogOpen] = React.useState(false);
 
+    // Extract possible customization fields from order snapshots or top-level
+    const billingSnapshot = (order?.billingAddressSnapshot ?? {}) as
+        | Record<string, unknown>
+        | null
+        | undefined;
+    const getSnapshotText = (
+        snapshot: Record<string, unknown> | null | undefined,
+        key: string,
+    ) => {
+        const value = snapshot?.[key];
+        if (typeof value !== "string") return undefined;
+        const t = value.trim();
+        return t.length > 0 ? t : undefined;
+    };
+    const normalizeText = (value?: string | null) => {
+        if (typeof value !== "string") return undefined;
+        const trimmed = value.trim();
+        return trimmed.length > 0 ? trimmed : undefined;
+    };
+    const customizationItem = order?.items?.find(
+        (item) => item.customPlayerName || item.customJerseyNumber,
+    );
+
+    const customName =
+        normalizeText(order?.customName) ||
+        getSnapshotText(billingSnapshot, "customName") ||
+        getSnapshotText(billingSnapshot, "customPlayerName") ||
+        normalizeText(customizationItem?.customPlayerName);
+    const customNumber =
+        normalizeText(order?.customNumber) ||
+        getSnapshotText(billingSnapshot, "customNumber") ||
+        getSnapshotText(billingSnapshot, "customJerseyNumber") ||
+        normalizeText(customizationItem?.customJerseyNumber);
+
     if (isLoading) {
         return (
             <div className="container mx-auto px-4 py-10 max-w-2xl space-y-6">
@@ -158,6 +192,40 @@ export default function OrderTrackingPage() {
             >
                 <OrderDetailCard order={order} />
             </motion.div>
+
+            {/* Jersey Customization (customer-facing) */}
+            {(customName || customNumber) && (
+                <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.25 }}
+                >
+                    <Card className="mt-4">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-sm">
+                                <span className="text-pink-600">🎽</span>
+                                <span>Jersey Customization</span>
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                {customName && (
+                                    <div className="rounded-lg border bg-muted/20 p-3">
+                                        <p className="text-xs text-muted-foreground">Name</p>
+                                        <p className="font-medium mt-1">{customName}</p>
+                                    </div>
+                                )}
+                                {customNumber && (
+                                    <div className="rounded-lg border bg-muted/20 p-3">
+                                        <p className="text-xs text-muted-foreground">Number</p>
+                                        <p className="font-medium mt-1">{customNumber}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </motion.div>
+            )}
 
             {/* Bkash Dialog */}
             <BkashPaymentDialog

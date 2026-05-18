@@ -27,6 +27,7 @@ import {
     deleteUtilityCost,
     IUtilityCost,
 } from "@/services/utility-cost.service";
+import { adminQueryKeys } from "@/hooks/queries/adminQueryKeys";
 
 const DEFAULT_LIMIT = 10;
 
@@ -61,7 +62,7 @@ export default function UtilityCostsPageClient() {
 
     // Fetch operational costs
     const costsQuery = useQuery({
-        queryKey: ["admin", "utility-costs", { page, limit, searchTerm }],
+        queryKey: adminQueryKeys.utilityCosts({ page, limit, searchTerm }),
         queryFn: () => getAllUtilityCosts(searchTerm || undefined, page, limit),
         placeholderData: (previousData) => previousData,
     });
@@ -72,7 +73,8 @@ export default function UtilityCostsPageClient() {
             createUtilityCost(payload),
         onSuccess: () => {
             toast.success("Operational cost logged successfully");
-            queryClient.invalidateQueries({ queryKey: ["admin", "utility-costs"] });
+            setPaginationState((prev) => ({ ...prev, pageIndex: 0 }));
+            queryClient.invalidateQueries({ queryKey: adminQueryKeys.utilityCostsAll });
             setShowCreateDialog(false);
             setFormData({ type: "", customType: "", amount: "", details: "" });
             setFormErrors({});
@@ -87,7 +89,8 @@ export default function UtilityCostsPageClient() {
         mutationFn: (id: string) => deleteUtilityCost(id),
         onSuccess: () => {
             toast.success("Operational cost deleted successfully");
-            queryClient.invalidateQueries({ queryKey: ["admin", "utility-costs"] });
+            setPaginationState((prev) => ({ ...prev, pageIndex: 0 }));
+            queryClient.invalidateQueries({ queryKey: adminQueryKeys.utilityCostsAll });
         },
         onError: (error: any) => {
             toast.error(error?.message || "Failed to delete operational cost");
