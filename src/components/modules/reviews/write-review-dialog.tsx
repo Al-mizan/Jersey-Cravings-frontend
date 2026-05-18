@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Star, X, Upload, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { createReview, updateReview } from "@/services/review.service";
+import { reviewKeys } from "@/hooks/queries/reviewQueryKeys";
 import type { CreateReviewData, UpdateReviewData } from "@/types/review.types";
 
 import {
@@ -128,8 +129,9 @@ export function WriteReviewDialog({
                     ? "Review updated successfully"
                     : "Review submitted successfully",
             );
-            queryClient.invalidateQueries({ queryKey: ["pending-reviews"] });
-            queryClient.invalidateQueries({ queryKey: ["my-reviews"] });
+            queryClient.invalidateQueries({ queryKey: reviewKeys.all });
+            queryClient.invalidateQueries({ queryKey: reviewKeys.pending() });
+            queryClient.invalidateQueries({ queryKey: reviewKeys.reviewed() });
             onOpenChange(false);
         },
         onError: (error: Error) => {
@@ -164,7 +166,11 @@ export function WriteReviewDialog({
                     <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
                         <div className="relative w-16 h-16">
                             <Image
-                                src={getMediaUrl(product.media) || product.thumbnail || "/jersey_cravings.png"}
+                                src={
+                                    getMediaUrl(product.media) ||
+                                    product.thumbnail ||
+                                    "/jersey_cravings.png"
+                                }
                                 alt={product.title}
                                 fill
                                 className="object-cover rounded-lg"

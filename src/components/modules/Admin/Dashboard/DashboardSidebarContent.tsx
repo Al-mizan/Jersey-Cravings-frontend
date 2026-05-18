@@ -60,6 +60,7 @@ const DashboardSidebarContent = ({
                                         <Link
                                             href={item.href}
                                             key={id}
+                                            onClick={(event) => event.stopPropagation()}
                                             className={cn(
                                                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all",
                                                 isActive

@@ -47,7 +47,7 @@ export default function CouponCreateDialog({
                 : createCoupon(payload as ICreateCouponPayload),
         onSuccess: () => {
             toast.success(`Coupon ${isEditing ? "updated" : "created"} successfully`);
-            queryClient.invalidateQueries({ queryKey: ["admin"] });
+            queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
             onSuccess?.();
             onOpenChange(false);
             form.reset();

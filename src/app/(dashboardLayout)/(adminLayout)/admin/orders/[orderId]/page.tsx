@@ -31,6 +31,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { adminOrderKeys } from "@/hooks/queries/adminQueryKeys";
+import { adminPaymentKeys } from "@/hooks/queries/adminQueryKeys";
 import { cn } from "@/lib/utils";
 import { getMediaUrl } from "@/lib/media";
 import {
@@ -100,13 +101,14 @@ export default function OrderDetailsPage() {
             toast.success("Order status updated");
             queryClient.invalidateQueries({ queryKey: adminOrderKeys.detail(orderId!) });
             queryClient.invalidateQueries({ queryKey: adminOrderKeys.all });
+            queryClient.invalidateQueries({ queryKey: adminPaymentKeys.all });
         },
         onError: () => toast.error("Failed to update order status"),
     });
 
     if (orderQuery.isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-[400px]">
+            <div className="flex items-center justify-center min-h-100">
                 <div className="animate-spin h-8 w-8 border-4 border-red-500 border-t-transparent rounded-full" />
             </div>
         );
@@ -114,7 +116,7 @@ export default function OrderDetailsPage() {
 
     if (!order) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+            <div className="flex flex-col items-center justify-center min-h-100 space-y-4">
                 <AlertCircle className="h-12 w-12 text-red-500" />
                 <h1 className="text-2xl font-bold">Order Not Found</h1>
                 <Button asChild variant="outline">
@@ -127,6 +129,19 @@ export default function OrderDetailsPage() {
     const billingSnapshot = (order.billingAddressSnapshot ?? {}) as Record<string, string>;
     const shippingSnapshot = (order.shippingAddressSnapshot ?? billingSnapshot) as Record<string, string>;
     const orderItems = order.items ?? [];
+    const customerName =
+        extractSnapshotText(billingSnapshot, "recipientName") ||
+        order.user?.identifier ||
+        "Guest Customer";
+    const customerPhone =
+        extractSnapshotText(billingSnapshot, "phone") ||
+        extractSnapshotText(shippingSnapshot, "phone");
+    const customName =
+        extractSnapshotText(order.billingAddressSnapshot as Record<string, unknown> | null | undefined, "customName") ||
+        extractSnapshotText(order.billingAddressSnapshot as Record<string, unknown> | null | undefined, "customPlayerName");
+    const customNumber =
+        extractSnapshotText(order.billingAddressSnapshot as Record<string, unknown> | null | undefined, "customNumber") ||
+        extractSnapshotText(order.billingAddressSnapshot as Record<string, unknown> | null | undefined, "customJerseyNumber");
 
     const handleStatusUpdate = () => {
         if (selectedStatus === order.status) return;
@@ -312,13 +327,30 @@ export default function OrderDetailsPage() {
                         <CardContent className="space-y-6">
                             <div className="flex items-center gap-4">
                                 <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold text-lg">
-                                    {billingSnapshot.recipientName?.[0] || <User className="h-6 w-6" />}
+                                    {customerName?.[0] || <User className="h-6 w-6" />}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h4 className="font-bold truncate">{billingSnapshot.recipientName || "Guest Customer"}</h4>
-                                    <p className="text-xs text-muted-foreground truncate">{order.user?.identifier}</p>
+                                    <h4 className="font-bold truncate">{customerName}</h4>
+                                    <p className="text-xs text-muted-foreground truncate">{customerPhone || order.user?.identifier}</p>
                                 </div>
                             </div>
+
+                            {(customName || customNumber) && (
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    {customName && (
+                                        <div className="rounded-2xl border bg-muted/20 p-4">
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Custom Name</p>
+                                            <p className="mt-1 font-semibold">{customName}</p>
+                                        </div>
+                                    )}
+                                    {customNumber && (
+                                        <div className="rounded-2xl border bg-muted/20 p-4">
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Custom Number</p>
+                                            <p className="mt-1 font-semibold">{customNumber}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             <Separator />
 
@@ -383,4 +415,18 @@ export default function OrderDetailsPage() {
             </div>
         </div>
     );
+}
+
+function extractSnapshotText(
+    snapshot: Record<string, unknown> | null | undefined,
+    key: string,
+) {
+    const value = snapshot?.[key];
+
+    if (typeof value !== "string") {
+        return undefined;
+    }
+
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
 }

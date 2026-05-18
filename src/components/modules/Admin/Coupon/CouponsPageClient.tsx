@@ -251,7 +251,7 @@ export default function CouponsPageClient() {
 
     const handleCreateSuccess = useCallback(() => {
         setShowCreateDialog(false);
-        queryClient.invalidateQueries({ queryKey: ["admin"] });
+        queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
     }, [queryClient]);
 
     return (

@@ -22,6 +22,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { adminOrderKeys } from "@/hooks/queries/adminQueryKeys";
+import { adminPaymentKeys } from "@/hooks/queries/adminQueryKeys";
 import { cn } from "@/lib/utils";
 import {
     getAllOrdersForAdmin,
@@ -109,6 +110,7 @@ function StatusUpdateDialog({
         onSuccess: () => {
             toast.success("Order status updated");
             queryClient.invalidateQueries({ queryKey: ["admin"] });
+            queryClient.invalidateQueries({ queryKey: adminPaymentKeys.all });
             setOpen(false);
         },
         onError: () => toast.error("Failed to update order status"),
@@ -481,6 +483,18 @@ export default function AdminOrdersPageClient() {
         return ordersQuery.data?.data ?? [];
     }, [ordersQuery.data?.data]);
 
+    const totalRevenue = useMemo(
+        () =>
+            sortedData
+                .filter(
+                    (order) =>
+                        order.status !== "PENDING_PAYMENT" &&
+                        order.status !== "CANCELLED",
+                )
+                .reduce((sum, order) => sum + order.totalAmount, 0),
+        [sortedData],
+    );
+
     return (
         <div className="space-y-8 p-1">
             <div className="flex flex-col gap-2">
@@ -510,7 +524,7 @@ export default function AdminOrdersPageClient() {
                         </div>
                         <div>
                             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Revenue</p>
-                            <p className="text-2xl font-black tabular-nums">৳{sortedData.reduce((s, o) => s + o.totalAmount, 0).toLocaleString()}</p>
+                            <p className="text-2xl font-black tabular-nums">৳{totalRevenue.toLocaleString()}</p>
                         </div>
                     </div>
                     <div className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-4 flex items-center gap-3 col-span-2 md:col-span-1">

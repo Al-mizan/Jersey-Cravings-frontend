@@ -2,12 +2,16 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
+import Link from "next/link";
+import { format } from "date-fns";
+import { CalendarDays, MessageSquare } from "lucide-react";
 import { getMediaUrl } from "@/lib/media";
-import { Star, Edit, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { getMyReviews } from "@/services/review.service";
-import type { Review } from "@/types/review.types";
+import { reviewKeys } from "@/hooks/queries/reviewQueryKeys";
+import { ReviewStars } from "@/components/modules/Customer/Reviews/ReviewComposerDialog";
 
 export default function ReviewedPage() {
     const {
@@ -15,31 +19,25 @@ export default function ReviewedPage() {
         isLoading,
         error,
     } = useQuery({
-        queryKey: ["my-reviews"],
+        queryKey: reviewKeys.reviewed(),
         queryFn: getMyReviews,
     });
 
     if (isLoading) {
         return (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {[...Array(6)].map((_, i) => (
-                    <Card key={i} className="animate-pulse">
-                        <CardContent className="p-4">
-                            <div className="flex items-start space-x-3">
-                                <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
-                                <div className="flex-1 space-y-2">
-                                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                                    <div className="flex space-x-1">
-                                        {[...Array(5)].map((_, j) => (
-                                            <div
-                                                key={j}
-                                                className="w-4 h-4 bg-gray-200 rounded"
-                                            ></div>
-                                        ))}
-                                    </div>
-                                    <div className="h-3 bg-gray-200 rounded w-full"></div>
-                                    <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                                </div>
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {[...Array(6)].map((_, index) => (
+                    <Card
+                        key={index}
+                        className="animate-pulse overflow-hidden border-muted/60"
+                    >
+                        <CardContent className="p-0">
+                            <div className="h-48 bg-muted" />
+                            <div className="space-y-3 p-5">
+                                <div className="h-4 w-2/3 rounded-full bg-muted" />
+                                <div className="h-3 w-1/3 rounded-full bg-muted" />
+                                <div className="h-24 rounded-2xl bg-muted/70" />
+                                <div className="h-10 rounded-full bg-muted" />
                             </div>
                         </CardContent>
                     </Card>
@@ -50,8 +48,8 @@ export default function ReviewedPage() {
 
     if (error) {
         return (
-            <div className="text-center py-8">
-                <p className="text-red-600">
+            <div className="rounded-3xl border border-dashed p-10 text-center">
+                <p className="text-sm font-medium text-destructive">
                     Failed to load your reviews. Please try again.
                 </p>
             </div>
@@ -60,111 +58,124 @@ export default function ReviewedPage() {
 
     if (!reviews || reviews.length === 0) {
         return (
-            <div className="text-center py-16">
-                <MessageSquare className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    You haven't reviewed any products yet
+            <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed px-6 py-16 text-center">
+                <MessageSquare className="mb-4 h-12 w-12 text-muted-foreground" />
+                <h3 className="text-xl font-semibold">
+                    You have not reviewed anything yet
                 </h3>
-                <p className="text-gray-600">
-                    Share your experience with products you've purchased to help
-                    others make informed decisions.
+                <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                    Once you submit a review, it will appear here with the
+                    rating, written feedback, and date.
                 </p>
+                <Button asChild className="mt-6">
+                    <Link href="/my-section/reviews/not-reviewed">
+                        Review products
+                    </Link>
+                </Button>
             </div>
         );
     }
 
     return (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {reviews.map((review) => (
-                <Card
-                    key={review.id}
-                    className="hover:shadow-lg transition-shadow"
-                >
-                    <CardContent className="p-4">
-                        <div className="flex items-start space-x-3">
-                            <div className="relative w-12 h-12 shrink-0">
-                                <Image
-                                    src={getMediaUrl(review.product.media) || review.product.thumbnail}
-                                    alt={review.product.title}
-                                    fill
-                                    className="object-cover rounded-lg"
-                                />
-                            </div>
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {reviews.map((review) => {
+                const imageUrl =
+                    getMediaUrl(review.product.media) ||
+                    review.product.thumbNail ||
+                    review.product.thumbnail ||
+                    "/jersey_cravings.png";
 
-                            <div className="flex-1 min-w-0">
-                                <h3 className="font-medium text-gray-900 truncate mb-1">
-                                    {review.product.title}
-                                </h3>
-
-                                <div className="flex items-center space-x-1 mb-2">
-                                    {[...Array(5)].map((_, i) => (
-                                        <Star
-                                            key={i}
-                                            className={cn(
-                                                "w-4 h-4",
-                                                i < review.rating
-                                                    ? "fill-amber-400 text-amber-400"
-                                                    : "text-gray-300",
-                                            )}
-                                        />
-                                    ))}
-                                </div>
-
-                                {review.comment && (
-                                    <p className="text-sm text-gray-600 line-clamp-3 mb-2">
-                                        {review.comment}
+                return (
+                    <Card
+                        key={review.id}
+                        className="overflow-hidden border-muted/60 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
+                    >
+                        <div className="relative h-52 overflow-hidden">
+                            <Image
+                                src={imageUrl}
+                                alt={review.product.title}
+                                fill
+                                className="object-cover"
+                            />
+                            <div
+                                className="absolute inset-0"
+                                style={{
+                                    backgroundImage:
+                                        "linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.2) 55%, transparent 100%)",
+                                }}
+                            />
+                            <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-3 text-white">
+                                <div className="min-w-0">
+                                    <p className="text-xs uppercase tracking-[0.24em] text-white/70">
+                                        Reviewed product
                                     </p>
-                                )}
-
-                                {review.media.length > 0 && (
-                                    <div className="flex space-x-1 mb-3">
-                                        {review.media
-                                            .slice(0, 3)
-                                            .map((media, index) => (
-                                                <div
-                                                    key={index}
-                                                    className="relative w-8 h-8"
-                                                >
-                                                    <Image
-                                                        src={media}
-                                                        alt={`Review image ${index + 1}`}
-                                                        fill
-                                                        className="object-cover rounded"
-                                                    />
-                                                </div>
-                                            ))}
-                                        {review.media.length > 3 && (
-                                            <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-600">
-                                                +{review.media.length - 3}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                <div className="flex items-center justify-between">
-                                    <p className="text-xs text-gray-500">
-                                        {new Date(
-                                            review.createdAt,
-                                        ).toLocaleDateString()}
-                                    </p>
-                                    <Button size="sm" variant="outline" asChild>
-                                        <a
-                                            href={`/products/${review.product.slug}?review=true&edit=${review.id}`}
-                                        >
-                                            <Edit className="w-3 h-3 mr-1" />
-                                            Edit
-                                        </a>
-                                    </Button>
+                                    <h3 className="truncate text-lg font-semibold">
+                                        {review.product.title}
+                                    </h3>
                                 </div>
+                                <Badge className="shrink-0 bg-white/15 text-white hover:bg-white/15">
+                                    {review.rating.toFixed(1)} / 5
+                                </Badge>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
-            ))}
+
+                        <CardContent className="space-y-4 p-5">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <CalendarDays className="h-4 w-4" />
+                                {format(new Date(review.createdAt), "PPP")}
+                            </div>
+
+                            <ReviewStars value={review.rating} />
+
+                            {review.comment ? (
+                                <p className="rounded-2xl border bg-muted/20 p-4 text-sm leading-relaxed text-muted-foreground">
+                                    {review.comment}
+                                </p>
+                            ) : (
+                                <p className="rounded-2xl border border-dashed bg-muted/10 p-4 text-sm text-muted-foreground">
+                                    No written comment was added for this
+                                    review.
+                                </p>
+                            )}
+
+                            {review.reviewMedias.length > 0 && (
+                                <div className="flex gap-2">
+                                    {review.reviewMedias
+                                        .slice(0, 3)
+                                        .map((media, index) => (
+                                            <div
+                                                key={index}
+                                                className="relative h-16 w-16 overflow-hidden rounded-xl border"
+                                            >
+                                                <Image
+                                                    src={media.secureUrl}
+                                                    alt={`${review.product.title} review image ${index + 1}`}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            </div>
+                                        ))}
+                                    {review.reviewMedias.length > 3 && (
+                                        <div className="flex h-16 w-16 items-center justify-center rounded-xl border bg-muted text-sm font-medium text-muted-foreground">
+                                            +{review.reviewMedias.length - 3}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="w-full"
+                            >
+                                <Link href={`/products/${review.product.slug}`}>
+                                    View product
+                                </Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                );
+            })}
         </div>
     );
-}
-
-function cn(...classes: string[]) {
-    return classes.filter(Boolean).join(" ");
 }

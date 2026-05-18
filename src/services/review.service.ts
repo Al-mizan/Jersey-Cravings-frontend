@@ -3,7 +3,7 @@
 import { httpClient } from "@/lib/axios/httpClient";
 import { safeServiceCall, safeServiceMutation } from "@/services/service-utils";
 import type {
-    PendingProduct,
+    PendingReviewItem,
     Review,
     CreateReviewData,
     UpdateReviewData,
@@ -16,10 +16,10 @@ const REVIEW_ENDPOINTS = {
     review: (id: string) => `/reviews/${id}`,
 };
 
-export async function getPendingReviews(): Promise<PendingProduct[]> {
+export async function getPendingReviews(): Promise<PendingReviewItem[]> {
     return safeServiceCall(
         async () => {
-            const response = await httpClient.get<PendingProduct[]>(
+            const response = await httpClient.get<PendingReviewItem[]>(
                 REVIEW_ENDPOINTS.pending,
             );
             return response.data;

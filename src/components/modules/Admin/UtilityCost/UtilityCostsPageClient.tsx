@@ -72,7 +72,7 @@ export default function UtilityCostsPageClient() {
             createUtilityCost(payload),
         onSuccess: () => {
             toast.success("Operational cost logged successfully");
-            queryClient.invalidateQueries({ queryKey: ["admin"] });
+            queryClient.invalidateQueries({ queryKey: ["admin", "utility-costs"] });
             setShowCreateDialog(false);
             setFormData({ type: "", customType: "", amount: "", details: "" });
             setFormErrors({});
@@ -87,7 +87,7 @@ export default function UtilityCostsPageClient() {
         mutationFn: (id: string) => deleteUtilityCost(id),
         onSuccess: () => {
             toast.success("Operational cost deleted successfully");
-            queryClient.invalidateQueries({ queryKey: ["admin"] });
+            queryClient.invalidateQueries({ queryKey: ["admin", "utility-costs"] });
         },
         onError: (error: any) => {
             toast.error(error?.message || "Failed to delete operational cost");
@@ -180,7 +180,7 @@ export default function UtilityCostsPageClient() {
                 accessorKey: "details",
                 header: "Details / Remarks",
                 cell: ({ row }) => (
-                    <span className="text-muted-foreground line-clamp-1 max-w-[300px]">
+                    <span className="text-muted-foreground line-clamp-1 max-w-75">
                         {row.original.details}
                     </span>
                 ),
@@ -229,7 +229,7 @@ export default function UtilityCostsPageClient() {
                             Log Cost Entry
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
+                    <DialogContent className="sm:max-w-106.25">
                         <DialogHeader>
                             <DialogTitle>Log Operational Cost</DialogTitle>
                             <DialogDescription>
