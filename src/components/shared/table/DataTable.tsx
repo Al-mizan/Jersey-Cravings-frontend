@@ -208,9 +208,21 @@ const DataTable = <TData,>({
 
     const hydratedIsLoading = hasHydrated ? Boolean(isLoading) : false;
 
+    const hasExplicitActionsColumn = useMemo(
+        () =>
+            columns.some((column) => {
+                if (column.id === "actions") {
+                    return true;
+                }
+
+                return "accessorKey" in column && column.accessorKey === "actions";
+            }),
+        [columns],
+    );
+
     const tableColumns: ColumnDef<TData>[] = useMemo(
         () =>
-            actions
+            actions && !hasExplicitActionsColumn
                 ? [
                     ...columns,
                     {
@@ -224,7 +236,7 @@ const DataTable = <TData,>({
                     },
                 ]
                 : columns,
-        [actions, columns],
+            [actions, columns, hasExplicitActionsColumn],
     );
 
     // eslint-disable-next-line react-hooks/incompatible-library

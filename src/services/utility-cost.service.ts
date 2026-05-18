@@ -32,16 +32,28 @@ export async function getAllUtilityCosts(
     limit: number = 10,
 ): Promise<IUtilityCostListResponse | null | undefined> {
     return safeServiceCall(
-        () =>
-            unwrapData<IUtilityCostListResponse>(
-                httpClient.get(UTILITY_COST_ENDPOINTS.utilityCosts, {
+        async () => {
+            const response = await httpClient.get<IUtilityCost[]>(
+                UTILITY_COST_ENDPOINTS.utilityCosts,
+                {
                     params: {
                         searchTerm,
                         page,
                         limit,
                     },
-                }),
-            ),
+                },
+            );
+
+            return {
+                data: response.data,
+                meta: {
+                    page: response.meta?.page ?? page,
+                    limit: response.meta?.limit ?? limit,
+                    total: response.meta?.total ?? response.data.length,
+                    totalPages: response.meta?.totalPages ?? 1,
+                },
+            };
+        },
         null,
         "Failed to fetch utility costs:",
     );

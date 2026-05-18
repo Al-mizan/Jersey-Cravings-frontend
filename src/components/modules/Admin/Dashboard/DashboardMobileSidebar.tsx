@@ -67,6 +67,7 @@ const DashboardMobileSidebar = ({
                                         <Link
                                             href={item.href}
                                             key={id}
+                                            onClick={(event) => event.stopPropagation()}
                                             className={cn(
                                                 "group flex items-center gap-3 rounded-xl px-3 py-1 text-sm font-medium transition-all duration-150",
                                                 isActive

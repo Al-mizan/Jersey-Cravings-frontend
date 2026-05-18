@@ -251,8 +251,9 @@ export default function CouponsPageClient() {
 
     const handleCreateSuccess = useCallback(() => {
         setShowCreateDialog(false);
-        queryClient.invalidateQueries({ queryKey: ["admin"] });
-    }, [queryClient]);
+        setPaginationState((prev) => ({ ...prev, pageIndex: 0 }));
+        queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
+    }, [queryClient, setPaginationState]);
 
     return (
         <div className="space-y-4">

@@ -32,7 +32,7 @@ const ADMIN_ENDPOINTS = {
     myActivity: "/audit-logs/my-activity",
     activityTimeline: "/audit-logs/timeline",
     contacts: "/contact",
-    smsLogs: "/sms-logs",
+    smsLogs: "/sms",
 };
 
 // Dashboard Services

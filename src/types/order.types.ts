@@ -30,6 +30,8 @@ export interface IOrderItem {
     variantSnapshot: Record<string, unknown>;
     unitPriceAmount: number;
     qty: number;
+    customPlayerName?: string | null;
+    customJerseyNumber?: string | null;
     lineTotalAmount: number;
     createdAt: string;
     updatedAt: string;
@@ -73,6 +75,9 @@ export interface IOrderGiftAddon {
 
 export interface IOrder {
     id: string;
+    /** Optional jersey customization fields provided by customer */
+    customName?: string | null;
+    customNumber?: string | null;
     orderNumber: string;
     status: OrderStatus;
     paymentStatus: PaymentStatus;

@@ -1,33 +1,40 @@
 export interface ProductVariant {
     size?: string;
     type?: string;
+    fit?: string;
+    sleeveType?: string;
 }
 
-export interface PendingProduct {
+export interface ReviewProductMedia {
+    secureUrl: string;
+}
+
+export interface ReviewProduct {
     id: string;
     slug: string;
     title: string;
-    thumbnail: string;
+    thumbNail?: string | null;
+    thumbnail?: string | null;
+    media?: ReviewProductMedia[];
+}
+
+export interface PendingReviewItem {
+    orderId: string;
+    orderNumber: string;
+    orderDate: string;
+    product: ReviewProduct;
+    price: number;
     variant: ProductVariant;
-    media?: {
-        secureUrl: string;
-    }[];
+    customPlayerName?: string | null;
+    customJerseyNumber?: string | null;
 }
 
 export interface Review {
     id: string;
-    product: {
-        id: string;
-        slug: string;
-        title: string;
-        thumbnail: string;
-        media?: {
-            secureUrl: string;
-        }[];
-    };
+    product: ReviewProduct;
     rating: number;
     comment?: string;
-    media: string[];
+    reviewMedias: ReviewProductMedia[];
     createdAt: string;
 }
 

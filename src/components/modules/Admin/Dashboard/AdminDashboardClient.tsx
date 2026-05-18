@@ -112,7 +112,7 @@ export default function AdminDashboardClient({
             {/* Page Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">
+                    <h1 className="text-4xl font-black tracking-tight bg-linear-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">
                         Dashboard
                     </h1>
                     <p className="text-muted-foreground font-medium">
@@ -176,8 +176,8 @@ export default function AdminDashboardClient({
                         </div>
                     </CardHeader>
                     <CardContent className="pl-2">
-                        <div className="h-[350px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
+                        <div className="h-87.5 w-full min-w-0">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                 <AreaChart data={revenueHistory}>
                                     <defs>
                                         <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
@@ -225,8 +225,8 @@ export default function AdminDashboardClient({
                         <CardDescription>Current fulfillment status</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[350px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
+                        <div className="h-87.5 w-full min-w-0">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                 <BarChart data={statusData} layout="vertical" margin={{ left: 20 }}>
                                     <XAxis type="number" hide />
                                     <YAxis
@@ -264,7 +264,7 @@ export default function AdminDashboardClient({
                         <Activity className="size-5 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <ScrollArea className="h-[400px] pr-4">
+                        <ScrollArea className="h-100 pr-4">
                             <div className="space-y-6">
                                 {recentActivities.length > 0 ? (
                                     recentActivities.map((item, i) => (
@@ -318,20 +318,20 @@ export default function AdminDashboardClient({
                         <Users className="size-5 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <ScrollArea className="h-[400px] pr-4">
+                        <ScrollArea className="h-100 pr-4">
                             <div className="space-y-4">
                                 {recentSignups.length > 0 ? (
                                     recentSignups.map((user: IRecentSignup) => (
                                         <div key={user.id} className="group flex items-center justify-between p-4 rounded-2xl border border-border/50 bg-background/50 hover:bg-primary/5 hover:border-primary/20 transition-all duration-300">
                                             <div className="flex items-center gap-4">
                                                 <Avatar className="size-10 ring-2 ring-primary/5 group-hover:ring-primary/20 transition-all">
-                                                    <AvatarFallback className="bg-gradient-to-br from-pink-500 to-rose-500 text-white font-bold text-xs">
+                                                    <AvatarFallback className="bg-linear-to-br from-pink-500 to-rose-500 text-white font-bold text-xs">
                                                         {user.name?.slice(0, 2).toUpperCase() || "GU"}
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 <div className="flex flex-col">
-                                                    <span className="text-sm font-bold truncate max-w-[150px]">{user.name}</span>
-                                                    <span className="text-xs text-muted-foreground truncate max-w-[150px]">{user.identifier}</span>
+                                                    <span className="text-sm font-bold truncate max-w-37.5">{user.name}</span>
+                                                    <span className="text-xs text-muted-foreground truncate max-w-37.5">{user.identifier}</span>
                                                 </div>
                                             </div>
                                             <div className="text-right">

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { getMediaUrl } from "@/lib/media";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -56,6 +56,7 @@ import type { IProductMedia, IProductVariant } from "@/types/product.types";
 import { cn } from "@/lib/utils";
 import { fetchProductBySlug, fetchProductReviews } from "./_action";
 import { use, useCallback, useEffect, useMemo, useState } from "react";
+import { WriteReviewDialog } from "@/components/modules/reviews/write-review-dialog";
 import {
     renderStars,
     ReviewsSection,
@@ -382,6 +383,43 @@ export default function ProductDetailsPage({
     const hasCustomization =
         customPlayerName.trim() !== "" && customJerseyNumber.trim() !== "";
     const customizationCharge = hasCustomization ? 290 : 0;
+
+    const searchParams = useSearchParams();
+    const [openReviewDialog, setOpenReviewDialog] = useState(false);
+    const [existingReview, setExistingReview] = useState<{
+        id?: string;
+        rating: number;
+        comment?: string;
+        media?: string[];
+    } | null>(null);
+
+    useEffect(() => {
+        const reviewForOrder = searchParams?.get("reviewForOrder");
+        if (reviewForOrder && product) {
+            setOpenReviewDialog(true);
+        }
+    }, [searchParams, product]);
+
+    useEffect(() => {
+        const editReviewId = searchParams?.get("editReviewId");
+        if (!editReviewId || !product || !reviewsResponse?.data) return;
+
+        const found = reviewsResponse.data.find(
+            (r: any) => String(r.id) === String(editReviewId),
+        );
+
+        if (found) {
+            setExistingReview({
+                id: found.id,
+                rating: found.rating,
+                comment: found.comment ?? undefined,
+                media: (found.reviewMedias || []).map(
+                    (m: any) => m.secureUrl,
+                ),
+            });
+            setOpenReviewDialog(true);
+        }
+    }, [searchParams, product, reviewsResponse]);
 
     // ── Loading state ─────────────────────────────────────────────────────────
     if (isLoading) {
@@ -1085,6 +1123,24 @@ export default function ProductDetailsPage({
                     </div>
                 </div>
             </div>
+            {product && (
+                <WriteReviewDialog
+                    open={openReviewDialog}
+                    onOpenChange={setOpenReviewDialog}
+                    product={{
+                        id: product.id,
+                        title: product.title,
+                        thumbnail:
+                            getMediaUrl(product.media) ||
+                            product.thumbNail ||
+                            "/jersey_cravings.png",
+                        price: priceAmount,
+                        slug: product.slug,
+                        media: product.media,
+                    }}
+                    existingReview={existingReview ?? undefined}
+                />
+            )}
         </div>
     );
 }

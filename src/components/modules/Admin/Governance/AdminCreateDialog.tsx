@@ -58,10 +58,22 @@ export default function AdminCreateDialog({
             },
         },
         onSubmit: async ({ value }) => {
-            const finalValue = { ...value, role: "ADMIN" as const };
+            const finalValue = {
+                ...value,
+                role: "ADMIN" as const,
+                admin: {
+                    ...value.admin,
+                    identifier: value.admin.identifier.trim(),
+                },
+            };
+
             if (!finalValue.admin.contactNumber) {
                 delete (finalValue.admin as any).contactNumber;
             }
+            if (!finalValue.admin.profilePhoto) {
+                delete (finalValue.admin as any).profilePhoto;
+            }
+
             createMutation.mutate(finalValue as ICreateAdminPayload);
         },
     });

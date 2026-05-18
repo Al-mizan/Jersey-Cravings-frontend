@@ -2,8 +2,9 @@
 
 import { httpClient } from "@/lib/axios/httpClient";
 import { safeServiceCall, safeServiceMutation } from "@/services/service-utils";
+import { revalidatePath } from "next/cache";
 import type {
-    PendingProduct,
+    PendingReviewItem,
     Review,
     CreateReviewData,
     UpdateReviewData,
@@ -16,10 +17,10 @@ const REVIEW_ENDPOINTS = {
     review: (id: string) => `/reviews/${id}`,
 };
 
-export async function getPendingReviews(): Promise<PendingProduct[]> {
+export async function getPendingReviews(): Promise<PendingReviewItem[]> {
     return safeServiceCall(
         async () => {
-            const response = await httpClient.get<PendingProduct[]>(
+            const response = await httpClient.get<PendingReviewItem[]>(
                 REVIEW_ENDPOINTS.pending,
             );
             return response.data;
@@ -80,6 +81,8 @@ export async function createReview(data: CreateReviewData): Promise<Review> {
                 },
             },
         );
+        revalidatePath("/my-section/reviews/not-reviewed");
+        revalidatePath("/my-section/reviews/reviewed");
         return response.data;
     }, "Failed to create review:");
 }
@@ -114,6 +117,8 @@ export async function updateReview(
                 },
             },
         );
+        revalidatePath("/my-section/reviews/not-reviewed");
+        revalidatePath("/my-section/reviews/reviewed");
         return response.data;
     }, "Failed to update review:");
 }

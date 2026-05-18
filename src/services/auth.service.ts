@@ -114,13 +114,14 @@ export async function verifyIdentifier(identifier: string, otp: string) {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({ identifier, otp }),
+            credentials: "include",
         });
         if (!res.ok) {
             const body = await res.json().catch(() => ({}));
             throw new Error(body?.message || "Failed to verify identifier");
         }
-        const { data } = await res.json();
-        return data;
+        const response = await res.json();
+        return response?.data ?? { verified: true };
     } catch (error) {
         if (error instanceof Error) throw error;
         throw new Error("Failed to verify identifier");

@@ -25,9 +25,10 @@ export async function getAllCoupons(
     limit: number = 10,
 ): Promise<ICouponListResponse | null | undefined> {
     return safeServiceCall(
-        () =>
-            unwrapData<ICouponListResponse>(
-                httpClient.get(COUPON_ENDPOINTS.coupons, {
+        async () => {
+            const response = await httpClient.get<ICoupon[]>(
+                COUPON_ENDPOINTS.coupons,
+                {
                     params: {
                         searchTerm,
                         isActive,
@@ -35,8 +36,17 @@ export async function getAllCoupons(
                         page,
                         limit,
                     },
-                }),
-            ),
+                },
+            );
+
+            return {
+                data: response.data,
+                page: response.meta?.page ?? page,
+                limit: response.meta?.limit ?? limit,
+                total: response.meta?.total ?? response.data.length,
+                totalPages: response.meta?.totalPages ?? 1,
+            };
+        },
         null,
         "Failed to fetch coupons:",
     );
